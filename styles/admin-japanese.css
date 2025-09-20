@@ -118,17 +118,38 @@
    ======================== */
 
 .glass-panel {
+  position: relative;
   background: rgba(var(--color-washi) / var(--glass-opacity));
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   transition: var(--transition-smooth);
+  /* Устраняем мерцание на hover за счёт стабильного слоя и GPU */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
+}
+
+/* Overlay для hover, чтобы не трогать базовый фон с blur */
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--transition-smooth);
+  pointer-events: none;
+}
+
+.glass-panel:hover::after {
+  opacity: 1;
 }
 
 .glass-panel:hover {
-  background: rgba(var(--color-washi) / calc(var(--glass-opacity) + 0.05));
-        box-shadow: 
+  box-shadow:
     var(--glass-shadow),
     0 0 20px rgba(var(--color-hatsune) / 0.1);
 }
