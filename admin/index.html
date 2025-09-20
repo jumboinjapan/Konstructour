@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konstructour - Вход в админ панель</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../styles/main.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .login-container {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .form-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .form-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="login-container rounded-2xl p-8 w-full max-w-md shadow-2xl">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-full mb-4">
+                <i class="fas fa-shield-alt text-2xl text-white"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-2">Konstructour</h1>
+            <p class="text-white text-opacity-80">Вход в админ панель</p>
+        </div>
+
+        <form id="adminLoginForm" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-white mb-2">
+                    <i class="fas fa-user mr-2"></i>Имя пользователя
+                </label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    class="form-input w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="Введите имя пользователя"
+                    required
+                >
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-white mb-2">
+                    <i class="fas fa-lock mr-2"></i>Пароль
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="Введите пароль"
+                    required
+                >
+            </div>
+
+            <div class="flex items-center">
+                <input 
+                    type="checkbox" 
+                    id="remember" 
+                    name="remember" 
+                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                >
+                <label for="remember" class="ml-2 text-sm text-white text-opacity-80">
+                    Запомнить меня
+                </label>
+            </div>
+
+            <button 
+                type="submit" 
+                class="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 border border-white border-opacity-30"
+            >
+                <i class="fas fa-sign-in-alt mr-2"></i>Войти
+            </button>
+        </form>
+
+        <div id="errorMessage" class="hidden mt-4 p-3 bg-red-500 bg-opacity-20 border border-red-500 border-opacity-30 rounded-lg text-red-100 text-sm"></div>
+
+        <div class="text-center mt-6">
+            <a href="../index.html" class="text-white text-opacity-70 hover:text-opacity-100 text-sm transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Вернуться на главную
+            </a>
+        </div>
+    </div>
+
+    <script src="../js/admin-auth.js"></script>
+</body>
+</html>
