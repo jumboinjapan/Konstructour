@@ -16,9 +16,9 @@ jobs:
     - name: Setup SSH key
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keygen -l -f ~/.ssh/id_ed25519
+        echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keygen -l -f ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
     - name: Deploy to server
@@ -26,7 +26,7 @@ jobs:
         echo "🚀 Starting deployment..."
         
         # Create backup or directory
-        ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           if [ -d '${{ secrets.SERVER_PATH }}' ]; then
             cp -r '${{ secrets.SERVER_PATH }}' '${{ secrets.SERVER_PATH }}_backup_$(date +%Y%m%d_%H%M%S)'
             echo 'Backup created'
@@ -37,18 +37,15 @@ jobs:
         "
         
         # Sync files
-        rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519" \
+        rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" \
           --exclude='.git' \
           --exclude='node_modules' \
           --exclude='.github' \
           --exclude='*.log' \
-          --exclude='deploy*.sh' \
-          --exclude='push.sh' \
-          --exclude='check-bluehost.sh' \
           ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}/
         
         # Set permissions
-        ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           find '${{ secrets.SERVER_PATH }}' -type f -exec chmod 644 {} \;
           find '${{ secrets.SERVER_PATH }}' -type d -exec chmod 755 {} \;
           echo '✅ Deployment completed!'

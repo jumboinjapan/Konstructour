@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konstructour - Система управления проектами</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="styles/main.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-hammer text-blue-600 text-2xl mr-3"></i>
+                        <span class="text-xl font-bold text-gray-900">Konstructour</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#about" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">
+                        О проекте
+                    </a>
+                    <a href="#features" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">
+                        Возможности
+                    </a>
+                    <a href="#contact" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">
+                        Контакты
+                    </a>
+                    <a href="admin/" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">
+                        <i class="fas fa-tools mr-2"></i>Админ панель
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="relative py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+                    Добро пожаловать в
+                    <span class="text-blue-600">Konstructour</span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                    Современная система управления строительными проектами с искусственным интеллектом
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#features" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-rocket mr-2"></i>Начать работу
+                    </a>
+                    <a href="admin/" class="bg-white hover:bg-gray-50 text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-tools mr-2"></i>Админ панель
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Возможности системы</h2>
+                <p class="text-xl text-gray-600">Мощные инструменты для управления строительными проектами</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-blue-50 p-8 rounded-xl hover:shadow-lg transition duration-300 ease-in-out">
+                    <div class="text-center">
+                        <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-brain text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">ИИ Ассистент</h3>
+                        <p class="text-gray-600">Интеллектуальная поддержка в планировании и управлении проектами</p>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-green-50 p-8 rounded-xl hover:shadow-lg transition duration-300 ease-in-out">
+                    <div class="text-center">
+                        <div class="bg-green-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-project-diagram text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Управление проектами</h3>
+                        <p class="text-gray-600">Полный контроль над всеми этапами строительства</p>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-purple-50 p-8 rounded-xl hover:shadow-lg transition duration-300 ease-in-out">
+                    <div class="text-center">
+                        <div class="bg-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-chart-line text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Аналитика</h3>
+                        <p class="text-gray-600">Детальная отчетность и прогнозирование результатов</p>
+                    </div>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="bg-yellow-50 p-8 rounded-xl hover:shadow-lg transition duration-300 ease-in-out">
+                    <div class="text-center">
+                        <div class="bg-yellow-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-users text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Команда</h3>
+                        <p class="text-gray-600">Эффективное взаимодействие всех участников проекта</p>
+                    </div>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="bg-red-50 p-8 rounded-xl hover:shadow-lg transition duration-300 ease-in-out">
+                    <div class="text-center">
+                        <div class="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-shield-alt text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Безопасность</h3>
+                        <p class="text-gray-600">Надежная защита данных и контроль доступа</p>
+                    </div>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="bg-indigo-50 p-8 rounded-xl hover:shadow-lg transition duration-300 ease-in-out">
+                    <div class="text-center">
+                        <div class="bg-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-mobile-alt text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Мобильность</h3>
+                        <p class="text-gray-600">Доступ к системе с любого устройства</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">О проекте Konstructour</h2>
+                    <p class="text-lg text-gray-600 mb-6">
+                        Konstructour - это инновационная система управления строительными проектами, 
+                        которая объединяет современные технологии с опытом профессионалов строительной отрасли.
+                    </p>
+                    <p class="text-lg text-gray-600 mb-6">
+                        Наша платформа использует искусственный интеллект для оптимизации процессов, 
+                        прогнозирования рисков и повышения эффективности работы.
+                    </p>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-blue-600">500+</div>
+                            <div class="text-gray-600">Проектов</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-green-600">50+</div>
+                            <div class="text-gray-600">Компаний</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold text-purple-600">99%</div>
+                            <div class="text-gray-600">Успешность</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="bg-white p-8 rounded-xl shadow-lg">
+                        <div class="text-center">
+                            <i class="fas fa-hammer text-blue-600 text-6xl mb-4"></i>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-4">Готовы начать?</h3>
+                            <p class="text-gray-600 mb-6">
+                                Получите доступ к админ панели и начните управлять своими проектами уже сегодня
+                            </p>
+                            <a href="admin/" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-150 ease-in-out inline-flex items-center">
+                                <i class="fas fa-tools mr-2"></i>Перейти в админ панель
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Свяжитесь с нами</h2>
+                <p class="text-xl text-gray-600">Готовы обсудить ваш проект?</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-envelope text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Email</h3>
+                    <p class="text-gray-600">info@konstructour.com</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-phone text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Телефон</h3>
+                    <p class="text-gray-600">+7 (999) 123-45-67</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-map-marker-alt text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Адрес</h3>
+                    <p class="text-gray-600">Москва, Россия</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-hammer text-blue-400 text-2xl mr-3"></i>
+                        <span class="text-xl font-bold">Konstructour</span>
+                    </div>
+                    <p class="text-gray-400">
+                        Современная система управления строительными проектами
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Продукт</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#features" class="text-gray-400 hover:text-white transition duration-150 ease-in-out">Возможности</a></li>
+                        <li><a href="#about" class="text-gray-400 hover:text-white transition duration-150 ease-in-out">О проекте</a></li>
+                        <li><a href="admin/" class="text-gray-400 hover:text-white transition duration-150 ease-in-out">Админ панель</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Поддержка</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#contact" class="text-gray-400 hover:text-white transition duration-150 ease-in-out">Контакты</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-150 ease-in-out">Документация</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-150 ease-in-out">Помощь</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Демо доступ</h3>
+                    <div class="bg-blue-900 p-4 rounded-lg">
+                        <p class="text-sm text-blue-200 mb-2">Админ панель:</p>
+                        <p class="text-xs text-blue-300">
+                            Логин: admin<br>
+                            Пароль: admin123
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+                <p class="text-gray-400">
+                    © 2025 Konstructour. Все права защищены.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
+
+
+
+
