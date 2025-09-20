@@ -1,4 +1,4 @@
-// Admin Authentication JavaScript
+// Admin Authentication JavaScript with Japanese Aesthetics
 
 // Configuration
 const ADMIN_CREDENTIALS = {
@@ -7,17 +7,98 @@ const ADMIN_CREDENTIALS = {
 };
 
 // DOM Elements
-const loginForm = document.getElementById('loginForm');
-const loginBtn = document.getElementById('loginBtn');
+const loginForm = document.getElementById('adminLoginForm');
+const loginBtn = document.querySelector('button[type="submit"]');
 const errorMessage = document.getElementById('errorMessage');
-const errorText = document.getElementById('errorText');
+const errorText = errorMessage;
 
 // Session management
 const SESSION_KEY = 'konstructour_admin_session';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
+// Japanese aesthetic animations
+function addJapaneseAnimations() {
+    // Добавляем плавную анимацию при загрузке
+    const form = document.querySelector('.login-container');
+    form.style.opacity = '0';
+    form.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+        form.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+        form.style.opacity = '1';
+        form.style.transform = 'translateY(0)';
+    }, 100);
+    
+    // Добавляем эффект ряби при клике на кнопки
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-japanese')) {
+            const button = e.target;
+            const ripple = document.createElement('span');
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.5);
+                top: ${y}px;
+                left: ${x}px;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+                pointer-events: none;
+            `;
+            
+            button.style.position = 'relative';
+            button.style.overflow = 'hidden';
+            button.appendChild(ripple);
+            
+            setTimeout(() => ripple.remove(), 600);
+        }
+    });
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .error-slide {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+`;
+document.head.appendChild(style);
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Add Japanese animations
+    addJapaneseAnimations();
+    
     // Check if already logged in
     if (isLoggedIn()) {
         redirectToDashboard();
@@ -25,11 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Add form submission handler
-    loginForm.addEventListener('submit', handleLogin);
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
     
     // Add enter key handler
     document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && !loginBtn.disabled) {
+        if (e.key === 'Enter' && loginBtn && !loginBtn.disabled) {
             handleLogin(e);
         }
     });
@@ -64,14 +147,31 @@ async function handleLogin(event) {
         // Show success message
         showSuccess('Успешный вход! Перенаправление...');
         
-        // Redirect after delay
+        // Анимация успешного входа
+        loginBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Успешно!';
+        loginBtn.classList.add('bg-green-500');
+        
+        // Анимация перехода
         setTimeout(() => {
-            redirectToDashboard();
-        }, 1500);
+            document.body.style.transition = 'opacity 0.5s ease-out';
+            document.body.style.opacity = '0';
+            
+            setTimeout(() => {
+                redirectToDashboard();
+            }, 500);
+        }, 1000);
     } else {
-        // Show error
+        // Show error with animation
         showError('Неверное имя пользователя или пароль');
         setLoadingState(false);
+        
+        // Добавляем тряску формы
+        const form = document.querySelector('.login-container');
+        form.style.animation = 'shake 0.5s ease-out';
+        
+        setTimeout(() => {
+            form.style.animation = '';
+        }, 500);
     }
 }
 
@@ -141,18 +241,15 @@ function logout() {
 
 // Set loading state
 function setLoadingState(loading) {
+    if (!loginBtn) return;
+    
     loginBtn.disabled = loading;
     
     if (loading) {
-        loginBtn.innerHTML = '<span class="spinner"></span>Вход...';
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Проверка...';
         loginBtn.classList.add('opacity-75', 'cursor-not-allowed');
     } else {
-        loginBtn.innerHTML = `
-            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                <i class="fas fa-sign-in-alt text-blue-500 group-hover:text-blue-400"></i>
-            </span>
-            Войти
-        `;
+        loginBtn.innerHTML = '<i class="fas fa-torii-gate mr-2"></i>Войти в систему';
         loginBtn.classList.remove('opacity-75', 'cursor-not-allowed');
     }
 }

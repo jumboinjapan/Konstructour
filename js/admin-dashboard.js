@@ -1,400 +1,475 @@
-// Admin Dashboard JavaScript
+// Admin Dashboard JavaScript with Japanese Aesthetics
 
-// Initialize dashboard on page load
+// Check authentication on load
 document.addEventListener('DOMContentLoaded', function() {
     // Validate session
-    if (!adminAuth.validateSession()) {
+    if (!window.adminAuth || !window.adminAuth.validateSession()) {
+        window.location.href = 'index.html';
         return;
     }
     
-    // Initialize dashboard components
+    // Initialize dashboard
     initializeDashboard();
     
-    // Load dashboard data
-    loadDashboardData();
+    // Add Japanese animations
+    addDashboardAnimations();
     
-    // Set up auto-refresh
-    setupAutoRefresh();
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Load initial data
+    loadDashboardData();
 });
 
-// Initialize dashboard components
+// Initialize dashboard
 function initializeDashboard() {
-    // Add hover effects to stat cards
-    const statCards = document.querySelectorAll('.stat-card, .bg-white');
-    statCards.forEach(card => {
-        card.classList.add('stat-card');
+    // Update user info
+    const session = window.adminAuth.getCurrentSession();
+    if (session) {
+        const userElements = document.querySelectorAll('[data-user-name]');
+        userElements.forEach(el => {
+            el.textContent = session.username;
+        });
+    }
+    
+    // Start real-time updates
+    startRealtimeUpdates();
+}
+
+// Add Japanese animations
+function addDashboardAnimations() {
+    // Анимация появления карточек
+    const cards = document.querySelectorAll('.stat-card, .tour-card, .glass-panel');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
     });
     
-    // Add hover effects to quick action buttons
-    const quickActions = document.querySelectorAll('.bg-blue-600, .bg-green-600, .bg-yellow-600, .bg-purple-600');
-    quickActions.forEach(button => {
-        button.classList.add('quick-action', 'btn-hover');
+    // Анимация чисел в статистике
+    animateCounters();
+    
+    // Добавляем интерактивность меню
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Убираем активный класс со всех
+            menuItems.forEach(mi => mi.classList.remove('active'));
+            
+            // Добавляем активный класс текущему
+            this.classList.add('active');
+            
+            // Загружаем соответствующий раздел
+            const section = this.getAttribute('href').substring(1);
+            loadSection(section);
+        });
     });
+}
+
+// Анимация счетчиков
+function animateCounters() {
+    const counters = document.querySelectorAll('[data-counter]');
     
-    // Initialize tooltips
-    initializeTooltips();
+    counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-counter') || counter.textContent);
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+        
+        const updateCounter = () => {
+            current += step;
+            if (current < target) {
+                counter.textContent = Math.floor(current);
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        
+        updateCounter();
+    });
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            if (confirm('Вы уверены, что хотите выйти?')) {
+                // Анимация выхода
+                document.body.style.transition = 'opacity 0.5s ease-out';
+                document.body.style.opacity = '0';
+                
+                setTimeout(() => {
+                    window.adminAuth.logout();
+                }, 500);
+            }
+        });
+    }
     
-    // Set up real-time updates
-    setupRealTimeUpdates();
+    // Theme toggle
+    const themeToggle = document.querySelector('[data-theme-toggle]');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+    
+    // Notification bell
+    const notificationBell = document.querySelector('[data-notifications]');
+    if (notificationBell) {
+        notificationBell.addEventListener('click', showNotifications);
+    }
+    
+    // Create tour button
+    const createTourBtn = document.querySelector('[data-create-tour]');
+    if (createTourBtn) {
+        createTourBtn.addEventListener('click', openCreateTourModal);
+    }
+    
+    // Table row actions
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action="view"]')) {
+            viewTour(e.target.closest('tr').dataset.tourId);
+        }
+        if (e.target.closest('[data-action="edit"]')) {
+            editTour(e.target.closest('tr').dataset.tourId);
+        }
+        if (e.target.closest('[data-action="delete"]')) {
+            deleteTour(e.target.closest('tr').dataset.tourId);
+        }
+    });
 }
 
 // Load dashboard data
 async function loadDashboardData() {
     try {
-        // Show loading state
-        showLoadingOverlay();
+        // Показываем индикатор загрузки
+        showLoadingIndicator();
         
-        // Simulate API calls
-        const [users, projects, activity, errors] = await Promise.all([
-            fetchUsersData(),
-            fetchProjectsData(),
-            fetchActivityData(),
-            fetchErrorsData()
-        ]);
+        // Имитация загрузки данных (в реальном проекте - API запросы)
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Update dashboard with real data
-        updateStatsCards(users, projects, activity, errors);
-        updateActivityFeed(activity);
-        updateSystemStatus();
+        // Обновляем статистику
+        updateStatistics({
+            activeTours: 24,
+            newClients: 156,
+            monthlyRevenue: 2400000,
+            rating: 4.9
+        });
         
-        // Hide loading state
-        hideLoadingOverlay();
+        // Обновляем график
+        updateChart();
         
+        // Скрываем индикатор загрузки
+        hideLoadingIndicator();
     } catch (error) {
         console.error('Error loading dashboard data:', error);
-        showNotification('Ошибка загрузки данных', 'error');
-        hideLoadingOverlay();
+        showError('Ошибка загрузки данных');
     }
 }
 
-// Fetch users data
-async function fetchUsersData() {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {
-        total: 1247,
-        active: 1189,
-        new: 23
-    };
+// Update statistics
+function updateStatistics(stats) {
+    // Активные туры
+    const activeToursEl = document.querySelector('[data-stat="active-tours"]');
+    if (activeToursEl) {
+        activeToursEl.textContent = stats.activeTours;
+        activeToursEl.setAttribute('data-counter', stats.activeTours);
+    }
+    
+    // Новые клиенты
+    const newClientsEl = document.querySelector('[data-stat="new-clients"]');
+    if (newClientsEl) {
+        newClientsEl.textContent = stats.newClients;
+        newClientsEl.setAttribute('data-counter', stats.newClients);
+    }
+    
+    // Доход
+    const revenueEl = document.querySelector('[data-stat="revenue"]');
+    if (revenueEl) {
+        revenueEl.textContent = `¥${(stats.monthlyRevenue / 1000000).toFixed(1)}M`;
+    }
+    
+    // Рейтинг
+    const ratingEl = document.querySelector('[data-stat="rating"]');
+    if (ratingEl) {
+        ratingEl.textContent = stats.rating.toFixed(1);
+    }
+    
+    // Перезапускаем анимацию счетчиков
+    animateCounters();
 }
 
-// Fetch projects data
-async function fetchProjectsData() {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 400));
-    return {
-        total: 89,
-        active: 67,
-        completed: 22
-    };
-}
-
-// Fetch activity data
-async function fetchActivityData() {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return [
-        {
-            type: 'project_created',
-            message: 'Новый проект создан',
-            user: 'Иван Петров',
-            time: '2 мин назад',
-            icon: 'fas fa-plus',
-            color: 'green'
-        },
-        {
-            type: 'user_registered',
-            message: 'Пользователь зарегистрирован',
-            user: 'Мария Сидорова',
-            time: '15 мин назад',
-            icon: 'fas fa-user',
-            color: 'blue'
-        },
-        {
-            type: 'project_updated',
-            message: 'Проект обновлен',
-            user: 'Алексей Козлов',
-            time: '1 час назад',
-            icon: 'fas fa-edit',
-            color: 'yellow'
+// Update chart
+function updateChart() {
+    const bars = document.querySelectorAll('[data-chart-bar]');
+    const heights = [60, 75, 45, 85, 70, 90];
+    
+    bars.forEach((bar, index) => {
+        if (heights[index]) {
+            bar.style.height = '0%';
+            setTimeout(() => {
+                bar.style.transition = 'height 1s ease-out';
+                bar.style.height = `${heights[index]}%`;
+            }, index * 100);
         }
-    ];
-}
-
-// Fetch errors data
-async function fetchErrorsData() {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return {
-        total: 3,
-        critical: 0,
-        warning: 3
-    };
-}
-
-// Update stats cards
-function updateStatsCards(users, projects, activity, errors) {
-    // Update users card
-    const usersCard = document.querySelector('.grid > div:nth-child(1) dd');
-    if (usersCard) {
-        usersCard.textContent = users.total.toLocaleString();
-    }
-    
-    // Update projects card
-    const projectsCard = document.querySelector('.grid > div:nth-child(2) dd');
-    if (projectsCard) {
-        projectsCard.textContent = projects.total;
-    }
-    
-    // Update activity card
-    const activityCard = document.querySelector('.grid > div:nth-child(3) dd');
-    if (activityCard) {
-        activityCard.textContent = activity.total || 342;
-    }
-    
-    // Update errors card
-    const errorsCard = document.querySelector('.grid > div:nth-child(4) dd');
-    if (errorsCard) {
-        errorsCard.textContent = errors.total;
-    }
-}
-
-// Update activity feed
-function updateActivityFeed(activities) {
-    const activityList = document.querySelector('.flow-root ul');
-    if (!activityList) return;
-    
-    // Clear existing activities
-    activityList.innerHTML = '';
-    
-    // Add new activities
-    activities.forEach((activity, index) => {
-        const li = document.createElement('li');
-        li.className = 'activity-item';
-        
-        const isLast = index === activities.length - 1;
-        const lineClass = isLast ? '' : 'pb-8';
-        
-        li.innerHTML = `
-            <div class="relative ${lineClass}">
-                ${!isLast ? '<span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>' : ''}
-                <div class="relative flex space-x-3">
-                    <div>
-                        <span class="h-8 w-8 rounded-full bg-${activity.color}-500 flex items-center justify-center ring-8 ring-white">
-                            <i class="${activity.icon} text-white text-sm"></i>
-                        </span>
-                    </div>
-                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                            <p class="text-sm text-gray-500">${activity.message}</p>
-                            <p class="text-xs text-gray-400">${activity.user}</p>
-                        </div>
-                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                            ${activity.time}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        activityList.appendChild(li);
     });
 }
 
-// Update system status
-function updateSystemStatus() {
-    // This would typically fetch real system status
-    // For now, we'll use the static status from HTML
+// Toggle theme
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Анимация переключения
+    document.body.style.transition = 'none';
+    document.body.style.opacity = '0.8';
+    
+    setTimeout(() => {
+        document.body.style.transition = 'opacity 0.3s ease-out';
+        document.body.style.opacity = '1';
+    }, 100);
 }
 
-// Setup auto-refresh
-function setupAutoRefresh() {
-    // Refresh dashboard data every 30 seconds
-    setInterval(() => {
-        loadDashboardData();
-    }, 30000);
-}
-
-// Setup real-time updates
-function setupRealTimeUpdates() {
-    // This would typically use WebSockets or Server-Sent Events
-    // For demo purposes, we'll simulate real-time updates
-    
-    setInterval(() => {
-        // Randomly update activity feed
-        if (Math.random() > 0.7) {
-            addNewActivity();
-        }
-    }, 45000);
-}
-
-// Add new activity (simulated)
-function addNewActivity() {
-    const activities = [
-        {
-            type: 'system_update',
-            message: 'Система обновлена',
-            user: 'Система',
-            time: 'только что',
-            icon: 'fas fa-sync',
-            color: 'blue'
-        },
-        {
-            type: 'backup_completed',
-            message: 'Резервное копирование завершено',
-            user: 'Система',
-            time: 'только что',
-            icon: 'fas fa-database',
-            color: 'green'
-        }
-    ];
-    
-    const randomActivity = activities[Math.floor(Math.random() * activities.length)];
-    
-    // Add to activity feed
-    const activityList = document.querySelector('.flow-root ul');
-    if (activityList) {
-        const li = document.createElement('li');
-        li.className = 'activity-item';
-        
-        li.innerHTML = `
-            <div class="relative pb-8">
-                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"></span>
-                <div class="relative flex space-x-3">
-                    <div>
-                        <span class="h-8 w-8 rounded-full bg-${randomActivity.color}-500 flex items-center justify-center ring-8 ring-white animate-pulse">
-                            <i class="${randomActivity.icon} text-white text-sm"></i>
-                        </span>
-                    </div>
-                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                            <p class="text-sm text-gray-500">${randomActivity.message}</p>
-                            <p class="text-xs text-gray-400">${randomActivity.user}</p>
-                        </div>
-                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                            ${randomActivity.time}
-                        </div>
-                    </div>
-                </div>
+// Show notifications
+function showNotifications() {
+    // Создаем модальное окно с уведомлениями
+    const modal = createModal('Уведомления', `
+        <div class="space-y-3">
+            <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <p class="text-sm text-purple-800">Новый клиент зарегистрировался</p>
+                <p class="text-xs text-purple-600 mt-1">5 минут назад</p>
             </div>
-        `;
-        
-        // Insert at the top
-        activityList.insertBefore(li, activityList.firstChild);
-        
-        // Remove oldest activity if more than 10
-        const activitiesList = activityList.querySelectorAll('li');
-        if (activitiesList.length > 10) {
-            activityList.removeChild(activitiesList[activitiesList.length - 1]);
-        }
-        
-        // Show notification
-        showNotification('Новая активность в системе', 'info');
-    }
-}
-
-// Initialize tooltips
-function initializeTooltips() {
-    // Simple tooltip implementation
-    const tooltipElements = document.querySelectorAll('[data-tooltip]');
+            <div class="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-sm text-green-800">Тур "Токио - Киото" подтвержден</p>
+                <p class="text-xs text-green-600 mt-1">1 час назад</p>
+            </div>
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">Обновление системы завершено</p>
+                <p class="text-xs text-blue-600 mt-1">3 часа назад</p>
+            </div>
+        </div>
+    `);
     
-    tooltipElements.forEach(element => {
-        element.addEventListener('mouseenter', showTooltip);
-        element.addEventListener('mouseleave', hideTooltip);
-    });
-}
-
-// Show tooltip
-function showTooltip(event) {
-    const element = event.target;
-    const tooltipText = element.getAttribute('data-tooltip');
+    document.body.appendChild(modal);
     
-    const tooltip = document.createElement('div');
-    tooltip.className = 'absolute z-50 px-2 py-1 text-xs text-white bg-gray-800 rounded shadow-lg';
-    tooltip.textContent = tooltipText;
-    tooltip.id = 'tooltip';
+    // Анимация появления
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        modal.querySelector('.modal-content').style.transform = 'scale(1)';
+    }, 10);
+}
+
+// Create modal
+function createModal(title, content) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modal.style.opacity = '0';
+    modal.style.transition = 'opacity 0.3s ease-out';
     
-    document.body.appendChild(tooltip);
-    
-    const rect = element.getBoundingClientRect();
-    tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px';
-    tooltip.style.top = rect.top - tooltip.offsetHeight - 5 + 'px';
-}
-
-// Hide tooltip
-function hideTooltip() {
-    const tooltip = document.getElementById('tooltip');
-    if (tooltip) {
-        tooltip.remove();
-    }
-}
-
-// Show loading overlay
-function showLoadingOverlay() {
-    const overlay = document.createElement('div');
-    overlay.className = 'loading-overlay';
-    overlay.innerHTML = '<div class="spinner"></div>';
-    overlay.id = 'loadingOverlay';
-    document.body.appendChild(overlay);
-}
-
-// Hide loading overlay
-function hideLoadingOverlay() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.remove();
-    }
-}
-
-// Show notification
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
-        type === 'error' ? 'bg-red-500' :
-        type === 'success' ? 'bg-green-500' :
-        type === 'warning' ? 'bg-yellow-500' :
-        'bg-blue-500'
-    }`;
-    
-    notification.innerHTML = `
-        <div class="flex items-center">
-            <i class="fas fa-${
-                type === 'error' ? 'exclamation-circle' :
-                type === 'success' ? 'check-circle' :
-                type === 'warning' ? 'exclamation-triangle' :
-                'info-circle'
-            } mr-2"></i>
-            ${message}
+    modal.innerHTML = `
+        <div class="modal-content glass-panel texture-washi max-w-md w-full p-6 rounded-lg" style="transform: scale(0.9); transition: transform 0.3s ease-out;">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-800">${title}</h3>
+                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            ${content}
         </div>
     `;
     
-    document.body.appendChild(notification);
+    // Закрытие по клику вне модала
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
     
-    // Animate in
-    notification.style.transform = 'translateX(100%)';
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-        notification.style.transition = 'transform 0.3s ease';
-    }, 100);
+    return modal;
+}
+
+// Load section
+async function loadSection(section) {
+    showLoadingIndicator();
     
-    // Auto remove after 5 seconds
+    // Имитация загрузки раздела
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    switch(section) {
+        case 'dashboard':
+            loadDashboardData();
+            break;
+        case 'tours':
+            loadToursSection();
+            break;
+        case 'clients':
+            loadClientsSection();
+            break;
+        case 'locations':
+            loadLocationsSection();
+            break;
+        case 'ai-tools':
+            loadAIToolsSection();
+            break;
+        case 'settings':
+            loadSettingsSection();
+            break;
+    }
+    
+    hideLoadingIndicator();
+}
+
+// Tour actions
+function viewTour(tourId) {
+    console.log('Viewing tour:', tourId);
+    // Здесь будет логика просмотра тура
+}
+
+function editTour(tourId) {
+    console.log('Editing tour:', tourId);
+    // Здесь будет логика редактирования тура
+}
+
+function deleteTour(tourId) {
+    if (confirm('Вы уверены, что хотите удалить этот тур?')) {
+        console.log('Deleting tour:', tourId);
+        // Здесь будет логика удаления тура
+    }
+}
+
+function openCreateTourModal() {
+    const modal = createModal('Создать новый тур', `
+        <form class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Название тура
+                </label>
+                <input type="text" class="input-japanese" placeholder="Токио - Киото - Осака">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Клиент
+                </label>
+                <select class="input-japanese">
+                    <option>Выберите клиента</option>
+                    <option>Иван Петров</option>
+                    <option>Мария Сидорова</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Дата начала
+                    </label>
+                    <input type="date" class="input-japanese">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Дата окончания
+                    </label>
+                    <input type="date" class="input-japanese">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="this.closest('.fixed').remove()" class="btn-japanese">
+                    Отмена
+                </button>
+                <button type="submit" class="btn-japanese accent">
+                    <i class="fas fa-plus mr-2"></i>
+                    Создать тур
+                </button>
+            </div>
+        </form>
+    `);
+    
+    document.body.appendChild(modal);
+    
     setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
+        modal.style.opacity = '1';
+        modal.querySelector('.modal-content').style.transform = 'scale(1)';
+    }, 10);
+}
+
+// Loading indicator
+function showLoadingIndicator() {
+    const loader = document.createElement('div');
+    loader.id = 'loading-indicator';
+    loader.className = 'fixed top-4 right-4 glass-panel px-4 py-2 rounded-lg flex items-center';
+    loader.innerHTML = `
+        <div class="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+        <span class="text-sm text-gray-600">Загрузка...</span>
+    `;
+    
+    document.body.appendChild(loader);
+}
+
+function hideLoadingIndicator() {
+    const loader = document.getElementById('loading-indicator');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 300);
+    }
+}
+
+// Show error
+function showError(message) {
+    const error = document.createElement('div');
+    error.className = 'fixed top-4 right-4 glass-panel bg-red-50 border border-red-200 px-4 py-3 rounded-lg';
+    error.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+            <span class="text-sm text-red-800">${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(error);
+    
+    setTimeout(() => {
+        error.style.opacity = '0';
+        setTimeout(() => error.remove(), 300);
     }, 5000);
 }
 
-// Export functions
-window.adminDashboard = {
-    loadDashboardData,
-    showNotification,
-    addNewActivity
-};
+// Start realtime updates
+function startRealtimeUpdates() {
+    // Обновляем статистику каждые 30 секунд
+    setInterval(() => {
+        updateRealtimeStats();
+    }, 30000);
+}
 
+// Update realtime stats
+function updateRealtimeStats() {
+    // Имитация обновления в реальном времени
+    const activeTours = document.querySelector('[data-stat="active-tours"]');
+    if (activeTours) {
+        const current = parseInt(activeTours.textContent);
+        const change = Math.floor(Math.random() * 3) - 1; // -1, 0, или 1
+        const newValue = Math.max(0, current + change);
+        
+        if (change !== 0) {
+            activeTours.textContent = newValue;
+            activeTours.style.color = change > 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)';
+            
+            setTimeout(() => {
+                activeTours.style.color = '';
+            }, 2000);
+        }
+    }
+}
 
-
-
+// Initialize theme
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
