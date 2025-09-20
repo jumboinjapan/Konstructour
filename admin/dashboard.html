@@ -75,7 +75,7 @@
             height: 200%;
             background: radial-gradient(
                 circle,
-                rgba(var(--stat-color, 255, 183, 197), 0.1),
+                rgba(var(--stat-color, 179, 38, 30), 0.1),
                 transparent
             );
             animation: pulse 4s ease-in-out infinite;
@@ -101,8 +101,8 @@
             height: 0;
             background: linear-gradient(
                 to bottom,
-                rgba(255, 183, 197, 0.8),
-                rgba(147, 125, 194, 0.8)
+                rgba(179, 38, 30, 0.8),
+                rgba(38, 67, 120, 0.8)
             );
             transition: all 0.3s ease;
             transform: translateY(-50%);
@@ -116,7 +116,7 @@
         .menu-item.active {
             background: linear-gradient(
                 to right,
-                rgba(255, 183, 197, 0.1),
+                rgba(179, 38, 30, 0.1),
                 transparent
             );
         }
@@ -140,7 +140,7 @@
         }
         
         .japanese-table tbody tr:hover {
-            background: rgba(255, 183, 197, 0.05);
+            background: rgba(179, 38, 30, 0.05);
         }
         
         /* График в японском стиле */
@@ -160,7 +160,7 @@
             height: 60px;
             background: linear-gradient(
                 to top,
-                rgba(255, 183, 197, 0.1),
+                rgba(179, 38, 30, 0.1),
                 transparent
             );
             pointer-events: none;
@@ -175,7 +175,7 @@
                 <!-- Логотип -->
                 <div class="flex items-center mb-8">
                     <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mr-3">
-                        <svg class="w-8 h-8 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <svg class="w-8 h-8 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
                         </svg>
                     </div>
@@ -188,11 +188,11 @@
                 <!-- Меню навигации -->
                 <nav class="space-y-2">
                     <a href="#dashboard" class="menu-item active block px-4 py-3 rounded-lg text-gray-700 hover:text-gray-900">
-                        <i class="fas fa-th-large mr-3 text-purple-500"></i>
+                        <i class="fas fa-th-large mr-3 text-indigo-600"></i>
                         Главная
                     </a>
                     <a href="#tours" class="menu-item block px-4 py-3 rounded-lg text-gray-700 hover:text-gray-900">
-                        <i class="fas fa-route mr-3 text-pink-500"></i>
+                        <i class="fas fa-route mr-3 text-red-600"></i>
                         Туры
                     </a>
                     <a href="#clients" class="menu-item block px-4 py-3 rounded-lg text-gray-700 hover:text-gray-900">
@@ -207,7 +207,7 @@
                     <div class="divider-wave"></div>
                     
                     <a href="#ai-tools" class="menu-item block px-4 py-3 rounded-lg text-gray-700 hover:text-gray-900">
-                        <i class="fas fa-robot mr-3 text-purple-500"></i>
+                        <i class="fas fa-robot mr-3 text-indigo-600"></i>
                         AI инструменты
                     </a>
                     <a href="#settings" class="menu-item block px-4 py-3 rounded-lg text-gray-700 hover:text-gray-900">
@@ -220,7 +220,7 @@
             <!-- Профиль пользователя -->
             <div class="absolute bottom-0 left-0 right-0 p-6 glass-panel border-t border-gray-200">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-medium mr-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-red-500 flex items-center justify-center text-white font-medium mr-3">
                         А
                     </div>
                     <div class="flex-1">
@@ -263,7 +263,7 @@
             
             <!-- Статистические карточки -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="stat-card glass-panel p-6 rounded-lg" style="--stat-color: 255, 183, 197;">
+                <div class="stat-card glass-panel p-6 rounded-lg" style="--stat-color: 179, 38, 30;">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600 mb-1">Активные туры</p>
@@ -272,13 +272,13 @@
                                 <i class="fas fa-arrow-up mr-1"></i>12% за месяц
                             </p>
                         </div>
-                        <div class="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center">
-                            <i class="fas fa-route text-pink-500"></i>
+                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                            <i class="fas fa-route text-red-600"></i>
                         </div>
                     </div>
                 </div>
                 
-                <div class="stat-card glass-panel p-6 rounded-lg" style="--stat-color: 147, 125, 194;">
+                <div class="stat-card glass-panel p-6 rounded-lg" style="--stat-color: 38, 67, 120;">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600 mb-1">Новые клиенты</p>
@@ -287,8 +287,8 @@
                                 <i class="fas fa-arrow-up mr-1"></i>8% за месяц
                             </p>
                         </div>
-                        <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                            <i class="fas fa-users text-purple-500"></i>
+                        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <i class="fas fa-users text-indigo-600"></i>
                         </div>
                     </div>
                 </div>
@@ -328,7 +328,7 @@
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xl font-light text-gray-800">
-                        <i class="fas fa-map-marked-alt mr-2 text-purple-500"></i>
+                        <i class="fas fa-map-marked-alt mr-2 text-indigo-600"></i>
                         Активные туры
                     </h3>
                     <button class="btn-japanese">
@@ -352,7 +352,7 @@
                             <tr>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center text-white text-sm font-medium mr-3">
+                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-indigo-500 flex items-center justify-center text-white text-sm font-medium mr-3">
                                             ИП
                                         </div>
                                         <div>
@@ -391,7 +391,7 @@
                             <tr>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-400 flex items-center justify-center text-white text-sm font-medium mr-3">
+                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white text-sm font-medium mr-3">
                                             МС
                                         </div>
                                         <div>
@@ -437,16 +437,16 @@
                 <!-- График -->
                 <div class="chart-container glass-panel p-6">
                     <h3 class="text-lg font-light text-gray-800 mb-4">
-                        <i class="fas fa-chart-line mr-2 text-purple-500"></i>
+                        <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
                         Динамика туров
                     </h3>
                     <div class="h-64 flex items-end justify-between space-x-2">
-                        <div class="flex-1 bg-gradient-to-t from-pink-400 to-pink-300 rounded-t" style="height: 60%;"></div>
-                        <div class="flex-1 bg-gradient-to-t from-purple-400 to-purple-300 rounded-t" style="height: 75%;"></div>
-                        <div class="flex-1 bg-gradient-to-t from-pink-400 to-pink-300 rounded-t" style="height: 45%;"></div>
-                        <div class="flex-1 bg-gradient-to-t from-purple-400 to-purple-300 rounded-t" style="height: 85%;"></div>
-                        <div class="flex-1 bg-gradient-to-t from-pink-400 to-pink-300 rounded-t" style="height: 70%;"></div>
-                        <div class="flex-1 bg-gradient-to-t from-purple-400 to-purple-300 rounded-t" style="height: 90%;"></div>
+                        <div class="flex-1 bg-gradient-to-t from-red-500 to-red-400 rounded-t" style="height: 60%;"></div>
+                        <div class="flex-1 bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t" style="height: 75%;"></div>
+                        <div class="flex-1 bg-gradient-to-t from-red-500 to-red-400 rounded-t" style="height: 45%;"></div>
+                        <div class="flex-1 bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t" style="height: 85%;"></div>
+                        <div class="flex-1 bg-gradient-to-t from-red-500 to-red-400 rounded-t" style="height: 70%;"></div>
+                        <div class="flex-1 bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t" style="height: 90%;"></div>
                     </div>
                     <div class="flex justify-between mt-2 text-xs text-gray-600">
                         <span>Янв</span>
@@ -461,16 +461,16 @@
                 <!-- AI рекомендации -->
                 <div class="glass-panel texture-washi p-6 rounded-lg">
                     <h3 class="text-lg font-light text-gray-800 mb-4">
-                        <i class="fas fa-robot mr-2 text-purple-500"></i>
+                        <i class="fas fa-robot mr-2 text-indigo-600"></i>
                         AI рекомендации
                     </h3>
                     <div class="space-y-4">
-                        <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                            <p class="text-sm text-purple-800 mb-1">
+                        <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                            <p class="text-sm text-indigo-800 mb-1">
                                 <i class="fas fa-lightbulb mr-2"></i>
                                 Популярный маршрут
                             </p>
-                            <p class="text-xs text-purple-600">
+                            <p class="text-xs text-indigo-600">
                                 Маршрут "Токио - Киото - Осака" пользуется наибольшим спросом. 
                                 Рекомендуем создать шаблон для быстрого оформления.
                             </p>

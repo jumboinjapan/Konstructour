@@ -4,15 +4,15 @@
 
 :root {
   /* Японская цветовая палитра */
-  --color-sakura: 255 183 197;        /* Сакура */
-  --color-fuji: 147 125 194;          /* Фиолетовый Фудзи */
+  --color-hatsune: 179 38 30;         /* 初音 Хацунэ - сдержанный красный */
+  --color-aizome: 38 67 120;          /* 藍染 Айдзомэ - традиционный индиго */
   --color-matcha: 193 216 153;        /* Матча */
   --color-bamboo: 214 233 198;        /* Бамбук */
   --color-sumi: 51 51 51;             /* Чернила суми */
   --color-washi: 254 251 243;         /* Рисовая бумага */
   --color-cedar: 139 90 43;           /* Японский кедр */
   --color-ceramic: 236 229 221;       /* Керамика */
-  --color-indigo: 38 67 120;          /* Индиго */
+  --color-indigo: 38 67 120;          /* Индиго (дублируется для совместимости) */
   --color-gold: 212 175 55;           /* Золото */
   
   /* Liquid Glass переменные */
@@ -128,9 +128,9 @@
 
 .glass-panel:hover {
   background: rgba(var(--color-washi) / calc(var(--glass-opacity) + 0.05));
-  box-shadow: 
+        box-shadow: 
     var(--glass-shadow),
-    0 0 20px rgba(var(--color-sakura) / 0.1);
+    0 0 20px rgba(var(--color-hatsune) / 0.1);
 }
 
 /* Кнопки в японском стиле */
@@ -160,7 +160,7 @@
   height: 0;
   background: radial-gradient(
     circle,
-    rgba(var(--color-sakura) / 0.3),
+    rgba(var(--color-hatsune) / 0.3),
     transparent
   );
   transition: all 0.6s ease-out;
@@ -183,8 +183,8 @@
 .btn-japanese.accent {
   background: linear-gradient(
     135deg,
-    rgba(var(--color-sakura) / 0.9),
-    rgba(var(--color-fuji) / 0.9)
+    rgba(var(--color-hatsune) / 0.9),
+    rgba(var(--color-aizome) / 0.9)
   );
   color: white;
   border-color: transparent;
@@ -207,9 +207,9 @@
 .input-japanese:focus {
   outline: none;
   background: rgba(var(--color-washi) / 0.8);
-  border-color: rgba(var(--color-sakura) / 0.5);
+  border-color: rgba(var(--color-hatsune) / 0.5);
   box-shadow: 
-    0 0 0 3px rgba(var(--color-sakura) / 0.1),
+    0 0 0 3px rgba(var(--color-hatsune) / 0.1),
     inset 0 1px 2px rgba(var(--color-sumi) / 0.05);
 }
 
@@ -238,8 +238,8 @@
   height: 4px;
   background: linear-gradient(
     90deg,
-    rgb(var(--color-sakura)),
-    rgb(var(--color-fuji)),
+    rgb(var(--color-hatsune)),
+    rgb(var(--color-aizome)),
     rgb(var(--color-matcha))
   );
   opacity: 0.8;
@@ -302,7 +302,7 @@
   left: 50%;
   width: 0;
   height: 2px;
-  background: rgb(var(--color-sakura));
+  background: rgb(var(--color-hatsune));
   transition: var(--transition-smooth);
   transform: translateX(-50%);
 }
@@ -339,8 +339,8 @@
   height: 10px;
   background: radial-gradient(
     circle,
-    rgba(var(--color-sakura) / 0.8),
-    rgba(var(--color-sakura) / 0.4)
+    rgba(var(--color-hatsune) / 0.8),
+    rgba(var(--color-hatsune) / 0.4)
   );
   border-radius: 50% 0;
   animation: sakura-fall 10s linear infinite;
@@ -397,7 +397,7 @@
   left: 50%;
   width: 8px;
   height: 8px;
-  background: rgb(var(--color-sakura));
+  background: rgb(var(--color-hatsune));
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
