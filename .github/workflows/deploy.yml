@@ -25,12 +25,14 @@ jobs:
       run: |
         echo "🚀 Starting deployment..."
         
-        # Create backup or directory
+        # Clean up old backups and ensure directory exists
         ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-          if [ -d '${{ secrets.SERVER_PATH }}' ]; then
-            cp -r '${{ secrets.SERVER_PATH }}' '${{ secrets.SERVER_PATH }}_backup_$(date +%Y%m%d_%H%M%S)'
-            echo 'Backup created'
-          else
+          # Remove old backup directories
+          rm -rf '${{ secrets.SERVER_PATH }}_backup_'*
+          echo 'Old backups cleaned up'
+          
+          # Ensure main directory exists
+          if [ ! -d '${{ secrets.SERVER_PATH }}' ]; then
             mkdir -p '${{ secrets.SERVER_PATH }}'
             echo 'Directory created'
           fi
