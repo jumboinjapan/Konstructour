@@ -459,3 +459,45 @@
   backdrop-filter: blur(6px);
   border: 1px solid rgba(var(--color-cedar) / 0.1);
 }
+
+/* ========================
+   Единый каркас админ-панелей
+   ======================== */
+.admin-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--color-washi) / 0.98),
+    rgba(var(--color-washi) / 0.95)
+  );
+  border-right: 1px solid rgba(var(--color-cedar) / 0.12);
+  position: relative;
+  backdrop-filter: blur(8px);
+}
+
+.admin-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 60px,
+    rgba(var(--color-cedar) / 0.05) 60px,
+    rgba(var(--color-cedar) / 0.05) 61px
+  );
+  pointer-events: none;
+}
+
+.admin-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; }
+.admin-topbar .top-actions { display:flex; align-items:center; gap:0.75rem; }
+
+.sidebar-link { display:block; padding:0.75rem 1rem; border-radius:0.5rem; color:rgb(55 65 81); transition:all 0.3s ease; }
+.sidebar-link:hover { color:rgb(17 24 39); }
+.sidebar-link i { width:1.25rem; }
