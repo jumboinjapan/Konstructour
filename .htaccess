@@ -6,9 +6,14 @@ RewriteEngine On
 # Allow Let's Encrypt HTTP-01 challenge without rewrites/redirects
 RewriteRule ^\.well-known/acme-challenge/ - [L]
 
-# Canonical www (без HTTPS до выпуска SSL)
+# Canonical www + HTTPS (SSL активен)
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/ [NC]
 RewriteCond %{HTTP_HOST} !^www\.konstructour\.com$ [NC]
-RewriteRule ^(.*)$ http://www.konstructour.com/$1 [L,R=301]
+RewriteRule ^(.*)$ https://www.konstructour.com/$1 [L,R=301]
+
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/ [NC]
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://www.konstructour.com/$1 [L,R=301]
 
 # Remove trailing slash from URLs (except for directories)
 RewriteCond %{REQUEST_FILENAME} !-d
