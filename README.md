@@ -30,9 +30,11 @@ VftM6MKeXUF8kSfdRKpnAAAAG2tvbnN0cnVjdG91ci1jbGVhbi0yMDI1MDkyMAEC
 ### Структура проекта
 
 ```
-├── admin/              # Админ панель
+├── user-admin/         # User Admin (панель для менеджеров/гидов)
 │   ├── index.html      # Страница входа
 │   └── dashboard.html  # Панель управления
+├── site-admin/         # Site Admin (системное администрирование)
+│   └── index.html      # Разделы: API, БД, гиды, AI аналитика, настройки
 ├── styles/             # CSS стили
 ├── js/                 # JavaScript
 ├── index.html          # Главная страница
@@ -42,7 +44,8 @@ VftM6MKeXUF8kSfdRKpnAAAAG2tvbnN0cnVjdG91ci1jbGVhbi0yMDI1MDkyMAEC
 ### Домен
 
 - **Основной сайт**: https://www.konstructour.com
-- **Админ панель**: https://www.konstructour.com/admin
+- **User Admin**: https://www.konstructour.com/user-admin
+- **Site Admin**: https://www.konstructour.com/site-admin
 
 ### Деплой
 

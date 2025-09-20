@@ -20,7 +20,8 @@
 
 ### Домен
 - **Основной сайт**: https://www.konstructour.com
-- **Админ панель**: https://www.konstructour.com/admin
+- **User Admin**: https://www.konstructour.com/user-admin
+- **Site Admin**: https://www.konstructour.com/site-admin
 
 ## 🎯 Как использовать
 
