@@ -17,7 +17,7 @@
   
   /* Liquid Glass переменные */
   --glass-blur: 8px;
-  --glass-opacity: 0.9;
+  --glass-opacity: 0.5;
   --glass-border: rgba(139 90 43 / 0.15);
   --glass-shadow: 0 4px 16px rgba(0 0 0 / 0.08);
   
@@ -33,7 +33,7 @@
 [data-theme="dark"] {
   --color-sumi: 254 251 243;
   --color-washi: 51 51 51;
-  --glass-opacity: 0.8;
+  --glass-opacity: 0.5;
   --glass-border: rgba(139 90 43 / 0.08);
   --glass-shadow: 0 4px 16px rgba(0 0 0 / 0.3);
 }
@@ -453,8 +453,8 @@
 .glass-panel.texture-ceramic {
   background: linear-gradient(
     135deg,
-    rgba(var(--color-washi) / 0.95),
-    rgba(var(--color-ceramic) / 0.9)
+    rgba(var(--color-washi) / 0.5),
+    rgba(var(--color-ceramic) / 0.5)
   );
   backdrop-filter: blur(6px);
   border: 1px solid rgba(var(--color-cedar) / 0.1);
