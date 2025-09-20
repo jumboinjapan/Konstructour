@@ -472,13 +472,13 @@
 
 .admin-sidebar {
   background: linear-gradient(
-    180deg,
-    rgba(var(--color-washi) / 0.98) 0%,
-    rgba(var(--color-ceramic) / 0.96) 100%
+    to bottom,
+    rgba(var(--color-washi) / 0.98),
+    rgba(var(--color-washi) / 0.95)
   );
   border-right: 1px solid rgba(var(--color-cedar) / 0.12);
   position: relative;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
 }
 
 .admin-sidebar::before {
@@ -486,14 +486,12 @@
   position: absolute;
   inset: 0;
   background-image: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 72px,
-      rgba(var(--color-cedar) / 0.04) 72px,
-      rgba(var(--color-cedar) / 0.04) 73px
-    ),
-    radial-gradient(circle at 30% 20%, rgba(var(--color-ceramic) / 0.06) 2px, transparent 2px);
-  background-size: auto, 18px 18px; /* лёгкая бумажная зернистость */
+    0deg,
+    transparent,
+    transparent 60px,
+    rgba(var(--color-cedar) / 0.05) 60px,
+    rgba(var(--color-cedar) / 0.05) 61px
+  );
   pointer-events: none;
 }
 
