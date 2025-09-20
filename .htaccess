@@ -3,12 +3,9 @@
 # Enable rewrite engine
 RewriteEngine On
 
-# Force HTTPS and www subdomain
+# Canonical www (без HTTPS до выпуска SSL)
 RewriteCond %{HTTP_HOST} !^www\.konstructour\.com$ [NC]
-RewriteRule ^(.*)$ https://www.konstructour.com/$1 [L,R=301]
-
-RewriteCond %{HTTPS} off
-RewriteRule ^(.*)$ https://www.konstructour.com/$1 [L,R=301]
+RewriteRule ^(.*)$ http://www.konstructour.com/$1 [L,R=301]
 
 # Remove trailing slash from URLs (except for directories)
 RewriteCond %{REQUEST_FILENAME} !-d
