@@ -26,11 +26,12 @@
         .sidebar {
             background: linear-gradient(
                 to bottom,
-                rgba(254, 251, 243, 0.95),
-                rgba(254, 251, 243, 0.9)
+                rgba(254, 251, 243, 0.98),
+                rgba(254, 251, 243, 0.95)
             );
-            border-right: 1px solid rgba(139, 90, 43, 0.15);
+            border-right: 1px solid rgba(139, 90, 43, 0.12);
             position: relative;
+            backdrop-filter: blur(8px);
         }
         
         .sidebar::before {
@@ -462,38 +463,38 @@
                 </div>
                 
                 <!-- AI рекомендации -->
-                <div class="glass-panel p-6 rounded-lg">
+                <div class="glass-panel texture-ceramic p-6 rounded-lg">
                     <h3 class="text-lg font-light text-gray-800 mb-4">
                         <i class="fas fa-robot mr-2 text-indigo-600"></i>
                         AI рекомендации
                     </h3>
                     <div class="space-y-4">
-                        <div class="p-4 bg-white border border-indigo-200 rounded-lg">
-                            <p class="text-sm font-medium text-gray-800 mb-1">
+                        <div class="p-4 bg-gradient-to-r from-indigo-50 to-white border border-indigo-200 rounded-lg">
+                            <p class="text-sm font-semibold text-indigo-900 mb-1">
                                 <i class="fas fa-lightbulb mr-2 text-indigo-600"></i>
                                 Популярный маршрут
                             </p>
-                            <p class="text-xs text-gray-600">
+                            <p class="text-xs text-indigo-700">
                                 Маршрут "Токио - Киото - Осака" пользуется наибольшим спросом. 
                                 Рекомендуем создать шаблон для быстрого оформления.
                             </p>
                         </div>
-                        <div class="p-4 bg-white border border-green-200 rounded-lg">
-                            <p class="text-sm font-medium text-gray-800 mb-1">
+                        <div class="p-4 bg-gradient-to-r from-green-50 to-white border border-green-200 rounded-lg">
+                            <p class="text-sm font-semibold text-green-900 mb-1">
                                 <i class="fas fa-chart-line mr-2 text-green-600"></i>
                                 Тренд сезона
                             </p>
-                            <p class="text-xs text-gray-600">
+                            <p class="text-xs text-green-700">
                                 Наблюдается повышенный интерес к турам в период цветения сакуры. 
                                 Увеличьте количество предложений на март-апрель.
                             </p>
                         </div>
-                        <div class="p-4 bg-white border border-blue-200 rounded-lg">
-                            <p class="text-sm font-medium text-gray-800 mb-1">
+                        <div class="p-4 bg-gradient-to-r from-blue-50 to-white border border-blue-200 rounded-lg">
+                            <p class="text-sm font-semibold text-blue-900 mb-1">
                                 <i class="fas fa-users mr-2 text-blue-600"></i>
                                 Целевая аудитория
                             </p>
-                            <p class="text-xs text-gray-600">
+                            <p class="text-xs text-blue-700">
                                 80% клиентов предпочитают культурные туры. 
                                 Добавьте больше храмов и музеев в маршруты.
                             </p>
