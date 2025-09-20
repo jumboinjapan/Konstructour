@@ -463,14 +463,14 @@
 /* ========================
    Единый каркас админ-панелей
    ======================== */
-.admin-grid {
+.dashboard-grid {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 0;
   min-height: 100vh;
 }
 
-.admin-sidebar {
+.sidebar {
   background: linear-gradient(
     to bottom,
     rgba(var(--color-washi) / 0.98),
@@ -481,7 +481,7 @@
   backdrop-filter: blur(8px);
 }
 
-.admin-sidebar::before {
+.sidebar::before {
   content: '';
   position: absolute;
   inset: 0;
