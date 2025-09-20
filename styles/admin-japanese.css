@@ -16,10 +16,10 @@
   --color-gold: 212 175 55;           /* Золото */
   
   /* Liquid Glass переменные */
-  --glass-blur: 12px;
-  --glass-opacity: 0.85;
-  --glass-border: rgba(255 255 255 / 0.2);
-  --glass-shadow: 0 8px 32px rgba(31 38 135 / 0.15);
+  --glass-blur: 8px;
+  --glass-opacity: 0.9;
+  --glass-border: rgba(255 255 255 / 0.15);
+  --glass-shadow: 0 4px 16px rgba(0 0 0 / 0.08);
   
   /* Текстуры */
   --texture-opacity: 0.03;
@@ -33,9 +33,9 @@
 [data-theme="dark"] {
   --color-sumi: 254 251 243;
   --color-washi: 51 51 51;
-  --glass-opacity: 0.75;
-  --glass-border: rgba(255 255 255 / 0.1);
-  --glass-shadow: 0 8px 32px rgba(0 0 0 / 0.5);
+  --glass-opacity: 0.8;
+  --glass-border: rgba(255 255 255 / 0.08);
+  --glass-shadow: 0 4px 16px rgba(0 0 0 / 0.3);
 }
 
 /* ========================
@@ -164,7 +164,7 @@
     rgba(var(--color-ceramic) / 0.9)
   );
   border: 1px solid rgba(var(--color-sumi) / 0.2);
-  border-radius: 4px;
+  border-radius: 8px;
   color: rgb(var(--color-sumi));
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -196,8 +196,8 @@
 .btn-japanese:hover {
   transform: translateY(-1px);
   box-shadow: 
-    0 4px 12px rgba(var(--color-sumi) / 0.15),
-    0 1px 3px rgba(var(--color-sumi) / 0.1);
+    0 4px 12px rgba(var(--color-sumi) / 0.1),
+    0 1px 3px rgba(var(--color-sumi) / 0.05);
 }
 
 /* Акцентная кнопка */
@@ -220,7 +220,7 @@
   padding: 12px 16px;
   background: rgba(var(--color-washi) / 0.5);
   border: 1px solid rgba(var(--color-sumi) / 0.1);
-  border-radius: 4px;
+  border-radius: 8px;
   color: rgb(var(--color-sumi));
   transition: var(--transition-smooth);
 }
@@ -269,8 +269,8 @@
 .tour-card:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 12px 24px rgba(var(--color-sumi) / 0.1),
-    0 4px 8px rgba(var(--color-sumi) / 0.05);
+    0 8px 16px rgba(var(--color-sumi) / 0.08),
+    0 2px 4px rgba(var(--color-sumi) / 0.04);
 }
 
 /* ========================
