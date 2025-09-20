@@ -41,8 +41,8 @@ VftM6MKeXUF8kSfdRKpnAAAAG2tvbnN0cnVjdG91ci1jbGVhbi0yMDI1MDkyMAEC
 
 ### Домен
 
-- **Основной сайт**: https://konstructour.com
-- **Админ панель**: https://konstructour.com/admin
+- **Основной сайт**: https://www.konstructour.com
+- **Админ панель**: https://www.konstructour.com/admin
 
 ### Деплой
 

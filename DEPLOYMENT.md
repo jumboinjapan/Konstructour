@@ -10,13 +10,17 @@
 - **Файл**: `.github/workflows/deploy.yml`
 - **Триггер**: Push в ветку `main` или ручной запуск
 - **Сервер**: Bluehost (revidovich.net)
-- **Путь**: `/home2/revidovi/public_html/konstructour`
+- **Путь**: `/home/revidovi/public_html/konstructour`
 
 ### Используемые секреты в GitHub
 - `DEPLOY_SSH_KEY` - SSH ключ для подключения к серверу
-- `SERVER_HOST` - `revidovich.net`
-- `SERVER_USER` - `revidovi`
-- `SERVER_PATH` - `/home2/revidovi/public_html/konstructour`
+- `SERVER_HOST` - `162.241.225.33` (IP адрес Bluehost)
+- `SERVER_USER` - `revidovi@revidovich.net`
+- `SERVER_PATH` - `/home/revidovi/public_html/konstructour`
+
+### Домен
+- **Основной сайт**: https://www.konstructour.com
+- **Админ панель**: https://www.konstructour.com/admin
 
 ## 🎯 Как использовать
 
