@@ -3,6 +3,9 @@
 # Enable rewrite engine
 RewriteEngine On
 
+# Allow Let's Encrypt HTTP-01 challenge without rewrites/redirects
+RewriteRule ^\.well-known/acme-challenge/ - [L]
+
 # Canonical www (без HTTPS до выпуска SSL)
 RewriteCond %{HTTP_HOST} !^www\.konstructour\.com$ [NC]
 RewriteRule ^(.*)$ http://www.konstructour.com/$1 [L,R=301]
@@ -105,12 +108,7 @@ ErrorDocument 404 /404.html
 ErrorDocument 403 /403.html
 ErrorDocument 500 /500.html
 
-# Admin panel protection (optional - can be removed if not needed)
-<Directory "admin">
-    # Allow access to admin panel
-    Order Allow,Deny
-    Allow from all
-</Directory>
+# Note: <Directory> directives are not allowed in .htaccess on shared hosting
 
 # Default index files
 DirectoryIndex index.html index.htm
