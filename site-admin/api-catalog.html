@@ -20,7 +20,7 @@
       @keyframes spin{ 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
     </style>
 </head>
-<body>
+<body data-no-redirect="true">
     <div class="dashboard-grid">
         <aside class="sidebar texture-wood">
             <div class="p-6">
@@ -205,36 +205,8 @@
         </main>
     </div>
 
-    <script src="../js/admin-auth.js?v=20250921-08"></script>
-    <script src="../js/api-settings.js?v=20250921-09"></script>
-    <script>
-      // Hard block any navigations/redirects from this page (Chrome/Safari quirks safe)
-      (function(){
-        // Flag to allow nav intentionally from console if needed
-        window.__apiNavAllowed = false;
-        try {
-          var _assign = window.location.assign.bind(window.location);
-          var _replace = window.location.replace.bind(window.location);
-          window.location.assign = function(url){ if (window.__apiNavAllowed) return _assign(url); console.warn('Navigation blocked on API page:', url); };
-          window.location.replace = function(url){ if (window.__apiNavAllowed) return _replace(url); console.warn('Navigation blocked on API page:', url); };
-        } catch(e) { /* ignore */ }
-        try {
-          var _push = history.pushState.bind(history);
-          var _rep = history.replaceState.bind(history);
-          history.pushState = function(s,t,u){ if (window.__apiNavAllowed) return _push(s,t,u); console.warn('History push blocked:', u); };
-          history.replaceState = function(s,t,u){ if (window.__apiNavAllowed) return _rep(s,t,u); console.warn('History replace blocked:', u); };
-        } catch(e) { /* ignore */ }
-        // Block anchor clicks and form submits
-        var guard = function(e){
-          var tag = e.target.tagName;
-          if (e.target.closest && (e.target.closest('a[href]') || e.target.closest('form'))) {
-            if (!window.__apiNavAllowed) { e.preventDefault(); e.stopImmediatePropagation(); }
-          }
-        };
-        document.addEventListener('click', guard, true);
-        document.addEventListener('submit', guard, true);
-      })();
-    </script>
+    <script src="../js/admin-auth.js?v=20250921-10"></script>
+    <script src="../js/api-settings.js?v=20250921-10"></script>
 </body>
 </html>
 

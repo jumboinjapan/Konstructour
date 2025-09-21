@@ -246,7 +246,8 @@ function getCurrentSession() {
 
 // Redirect to dashboard
 function redirectToDashboard() {
-    // Navigate to dashboard only when invoked from login page
+    const noRedirect = document.body && document.body.dataset && document.body.dataset.noRedirect;
+    if (noRedirect) return;
     const isLoginPage = !!document.getElementById('adminLoginForm');
     if (!isLoginPage) return;
     window.location.href = 'dashboard.html';
@@ -316,8 +317,12 @@ function showSuccess(message) {
 
 // Validate session on dashboard load
 function validateSession() {
+    // On pages marked with data-no-redirect, do not navigate away
+    const noRedirect = document.body && document.body.dataset && document.body.dataset.noRedirect;
     const session = getCurrentSession();
-    
+    if (noRedirect) {
+        return !!session;
+    }
     if (!session) {
         window.location.href = 'index.html';
         return false;
