@@ -254,9 +254,13 @@ function renderApiStatuses(){
         const dot = row.querySelector('[data-dot]');
         const text = row.querySelector('[data-text]');
         const entry = map[provider];
-        const state = entry && entry.state ? entry.state : 'err';
-        const label = entry && entry.text ? entry.text : 'Нет данных';
-        dot.className = 'w-2 h-2 rounded-full mr-2 ' + (state==='ok' ? 'bg-green-500' : state==='loading' ? 'bg-yellow-500' : 'bg-red-500');
+        const state = entry && entry.state ? entry.state : 'none';
+        const label = entry && entry.text ? entry.text : '—';
+        let color = 'bg-gray-300';
+        if (state === 'ok') color = 'bg-green-500';
+        else if (state === 'err') color = 'bg-red-500';
+        else if (state === 'loading') color = 'bg-purple-500';
+        dot.className = 'w-2 h-2 rounded-full mr-2 ' + color;
         text.textContent = label;
     });
 }
