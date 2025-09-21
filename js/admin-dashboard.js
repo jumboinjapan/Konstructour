@@ -58,8 +58,7 @@ function addDashboardAnimations() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            // Игнорируем клики, пришедшие из кнопок внутри карточек (API actions)
-            if (e.target.closest('.api-actions')) { return; }
+            if (e.target && e.target.closest && e.target.closest('.api-actions')) { e.preventDefault(); return; }
             const href = this.getAttribute('href') || '';
             if (href.startsWith('#')) {
                 e.preventDefault();
@@ -68,10 +67,9 @@ function addDashboardAnimations() {
                 const section = href.substring(1);
                 loadSection(section);
             } else if (href) {
-                e.preventDefault();
-                window.location.assign(href);
+                // allow default navigation for external links
             }
-        }, true);
+        });
     });
 }
 

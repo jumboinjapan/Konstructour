@@ -1,8 +1,7 @@
 // API Settings page logic (client-side storage)
 (function(){
   function init(){
-    // Check session without triggering redirects on non-login pages
-    if (!window.adminAuth || !window.adminAuth.isLoggedIn || !window.adminAuth.isLoggedIn()) return;
+    // Do not rely on adminAuth here; attach handlers unconditionally on this page
 
     const fields = [
       'airtable_api_key','airtable_base_id','airtable_table',
