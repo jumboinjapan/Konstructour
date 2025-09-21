@@ -11,6 +11,16 @@ if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') respond(false, ['err
 $ref = $_SERVER['HTTP_REFERER'] ?? '';
 if ($ref && strpos($ref, (isset($_SERVER['HTTPS'])?'https':'http').'://'.$_SERVER['HTTP_HOST'].'/') !== 0) respond(false, ['error'=>'Invalid origin'], 403);
 
+// Optional admin token protection: create api/admin-token.php returning ['token'=>'...']
+$adminTokenCfg = __DIR__.'/admin-token.php';
+if (file_exists($adminTokenCfg)){
+  $cfgToken = require $adminTokenCfg; $cfgToken = is_array($cfgToken)?($cfgToken['token']??''):'';
+  $hdrToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
+  if (!$cfgToken || !$hdrToken || !hash_equals($cfgToken, $hdrToken)){
+    respond(false, ['error'=>'Auth token required'], 401);
+  }
+}
+
 $raw = file_get_contents('php://input');
 $payload = json_decode($raw, true);
 if (!$payload || !is_array($payload)) respond(false, ['error'=>'Invalid JSON'], 400);
@@ -27,9 +37,25 @@ if (file_exists($cfgFile)) { $cfg = require $cfgFile; if (!is_array($cfg)) $cfg 
 // Merge
 foreach ($incoming as $prov=>$data){ if (is_array($data)) { $cfg[$prov] = array_merge($cfg[$prov] ?? [], $data); } }
 
-// Export to PHP file with safe perms
+// Backup current config (retain last 10)
+$backupsDir = __DIR__.'/backups';
+if (!is_dir($backupsDir)) { @mkdir($backupsDir, 0700, true); }
+if (file_exists($cfgFile)){
+  $stamp = date('Ymd-His');
+  @copy($cfgFile, $backupsDir.'/config.php.'.$stamp.'.bak');
+  // prune old backups
+  $files = @glob($backupsDir.'/config.php.*.bak');
+  if (is_array($files) && count($files) > 10){
+    sort($files); // oldest first
+    foreach (array_slice($files, 0, count($files)-10) as $old){ @unlink($old); }
+  }
+}
+
+// Export to PHP file with safe perms (atomic write)
 $export = "<?php\nreturn ".var_export($cfg, true).";\n";
-if (file_put_contents($cfgFile, $export) === false) respond(false, ['error'=>'Write failed'], 500);
+$tmp = $cfgFile.'.tmp';
+if (file_put_contents($tmp, $export) === false) respond(false, ['error'=>'Write failed (tmp)'], 500);
+if (!@rename($tmp, $cfgFile)) { @unlink($tmp); respond(false, ['error'=>'Write failed (rename)'], 500); }
 @chmod($cfgFile, 0600);
 
 respond(true, ['message'=>'Saved','providers'=>array_keys($incoming)]);
