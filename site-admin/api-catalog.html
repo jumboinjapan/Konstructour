@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konstructour — Каталог API</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../styles/admin-japanese.css" rel="stylesheet">
+    <style> body{ background: rgb(var(--color-washi)); min-height:100vh; } .api-card{ transition:transform .2s ease, box-shadow .2s ease; } .api-card:hover{ transform: translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,.08);} </style>
+</head>
+<body>
+    <div class="dashboard-grid">
+        <aside class="sidebar texture-wood">
+            <div class="p-6">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mr-3">
+                        <svg class="w-8 h-8 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-light text-gray-800">Konstructour</h1>
+                        <p class="text-xs text-gray-600">Site Admin</p>
+                    </div>
+                </div>
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор</a>
+                    <a href="api-catalog.html" class="menu-item active sidebar-link"><i class="fas fa-list mr-3 text-gray-600"></i>Каталог API</a>
+                    <a href="api-settings.html" class="sidebar-link"><i class="fas fa-key mr-3 text-gray-600"></i>API настройки</a>
+                </nav>
+            </div>
+        </aside>
+        <main class="p-8">
+            <header class="mb-8">
+                <h2 class="text-3xl font-light text-gray-800 mb-1">Каталог доступных API</h2>
+                <p class="text-gray-600">Справочная информация и ссылки на документацию</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Airtable -->
+                <div class="api-card glass-panel p-6 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
+                        <a href="https://airtable.com/developers" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Хранилище табличных данных с удобной схемой API для CRUD операций.</p>
+                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                        <li>Быстрый CRUD по Base/Table</li>
+                        <li>ideal для прототипов и справочников</li>
+                    </ul>
+                </div>
+
+                <!-- OpenAI -->
+                <div class="api-card glass-panel p-6 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
+                        <a href="https://platform.openai.com/docs" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Модели генерации текста и анализа данных (Chat Completions, Embeddings).</p>
+                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                        <li>Чаты, резюмирование, классификация</li>
+                        <li>Embeddings для поиска и рекомендаций</li>
+                    </ul>
+                </div>
+
+                <!-- Google Sheets -->
+                <div class="api-card glass-panel p-6 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
+                        <a href="https://developers.google.com/sheets/api" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Чтение/запись табличных данных в Google таблицах.</p>
+                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                        <li>Публичное чтение по API Key</li>
+                        <li>Запись через сервисный аккаунт</li>
+                    </ul>
+                </div>
+
+                <!-- Google Maps -->
+                <div class="api-card glass-panel p-6 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
+                        <a href="https://developers.google.com/maps/documentation" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Картографические сервисы, геокодинг, маршруты.</p>
+                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                        <li>Ограничение ключа по доменам</li>
+                        <li>Сенситивные вызовы через прокси</li>
+                    </ul>
+                </div>
+
+                <!-- Google reCAPTCHA -->
+                <div class="api-card glass-panel p-6 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
+                        <a href="https://developers.google.com/recaptcha" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Защита форм от ботов (v2/v3/Enterprise).</p>
+                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                        <li>Site key на клиенте</li>
+                        <li>Secret — на сервере для валидации</li>
+                    </ul>
+                </div>
+
+                <!-- Brilliant DB -->
+                <div class="api-card glass-panel p-6 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant DB</h3>
+                        <a href="https://brilliantdatabase.com/" target="_blank" class="text-sm text-indigo-600 hover:underline">Сайт/Docs</a>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">Облачная БД/конструктор с REST API (название по ТЗ). Планируется хранение каталогов/справочников.</p>
+                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                        <li>CRUD коллекций (REST)</li>
+                        <li>Авторизация по ключу/токену</li>
+                        <li>Кэширование на стороне клиента</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/admin-auth.js"></script>
+</body>
+</html>
+
+
