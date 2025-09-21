@@ -92,7 +92,7 @@
       }).catch(()=>{ cardStatus('statusAirtable','err','Network error'); setStatus('Airtable: сеть/сервер недоступны'); });
     });
 
-    document.getElementById('btnTestOpenAI')?.addEventListener('click', function(){
+    const testOpenAI = function(){
       const key = document.getElementById('openai_api_key')?.value.trim();
       const model = document.getElementById('openai_model')?.value.trim();
       if (!key || !model) return setStatus('OpenAI: заполните API Key и модель');
@@ -102,7 +102,11 @@
       .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
         cardStatus('statusOpenAI', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>{ cardStatus('statusOpenAI','err','Network error'); setStatus('OpenAI: сеть/сервер недоступны'); });
-    });
+    };
+    document.getElementById('btnTestOpenAI')?.addEventListener('click', testOpenAI);
+    // Enter key on fields triggers Test
+    document.getElementById('openai_api_key')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); testOpenAI(); }});
+    document.getElementById('openai_model')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); testOpenAI(); }});
 
     document.getElementById('btnTestGSheets')?.addEventListener('click', function(){
       const key = document.getElementById('gsheets_api_key')?.value.trim();
