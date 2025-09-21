@@ -13,6 +13,7 @@
     ];
 
     const STORAGE_KEY = 'konstructour_api_settings';
+    const STATUS_KEY = 'konstructour_api_status';
     const statusText = document.getElementById('statusText');
 
     function load(){
@@ -65,6 +66,23 @@
       if (state==='ok') dot.classList.add('ok');
       if (state==='err') dot.classList.add('err');
       if (label) label.textContent = text || '';
+
+      // Persist status for dashboard consumption
+      const ID_TO_PROVIDER = {
+        statusAirtable: 'airtable',
+        statusOpenAI: 'openai',
+        statusGSheets: 'gsheets',
+        statusGMaps: 'gmaps',
+        statusRecaptcha: 'recaptcha',
+        statusBrilliant: 'brilliantdirectory'
+      };
+      const provider = ID_TO_PROVIDER[id];
+      if (provider){
+        let statusMap = {};
+        try { statusMap = JSON.parse(localStorage.getItem(STATUS_KEY)||'{}') || {}; } catch(_) {}
+        statusMap[provider] = { state: state, text: text || '', ts: Date.now() };
+        localStorage.setItem(STATUS_KEY, JSON.stringify(statusMap));
+      }
     }
 
     document.getElementById('btnSaveAirtable')?.addEventListener('click', save);

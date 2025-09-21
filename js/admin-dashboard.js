@@ -34,6 +34,9 @@ function initializeDashboard() {
     
     // Start real-time updates
     startRealtimeUpdates();
+
+    // Render API statuses from localStorage
+    try { renderApiStatuses(); } catch(_) {}
 }
 
 // Add Japanese animations
@@ -155,6 +158,13 @@ function setupEventListeners() {
             window.location.assign(this.getAttribute('href'));
         });
     }
+
+    // Listen for storage changes from api-settings page
+    window.addEventListener('storage', function(e){
+        if (e.key === 'konstructour_api_status') {
+            try { renderApiStatuses(); } catch(_) {}
+        }
+    });
 }
 
 // Load dashboard data
@@ -230,6 +240,24 @@ function updateChart() {
                 bar.style.height = `${heights[index]}%`;
             }, index * 100);
         }
+    });
+}
+
+// Render API status list from localStorage shared state
+function renderApiStatuses(){
+    const list = document.getElementById('api-status-list');
+    if (!list) return;
+    let map = {};
+    try { map = JSON.parse(localStorage.getItem('konstructour_api_status')||'{}') || {}; } catch(_) {}
+    list.querySelectorAll('[data-provider]').forEach(row => {
+        const provider = row.getAttribute('data-provider');
+        const dot = row.querySelector('[data-dot]');
+        const text = row.querySelector('[data-text]');
+        const entry = map[provider];
+        const state = entry && entry.state ? entry.state : 'err';
+        const label = entry && entry.text ? entry.text : 'Нет данных';
+        dot.className = 'w-2 h-2 rounded-full mr-2 ' + (state==='ok' ? 'bg-green-500' : state==='loading' ? 'bg-yellow-500' : 'bg-red-500');
+        text.textContent = label;
     });
 }
 
