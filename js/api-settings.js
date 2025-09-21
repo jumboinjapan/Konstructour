@@ -68,16 +68,18 @@
       section.addEventListener('focusin', restart);
     }
 
-    async function save(){
-      // collect current visible fields and submit to server config-store
-      const payload = {};
-      const put = (prov, map)=>{ payload[prov] = map; };
-      put('openai', { api_key: document.getElementById('openai_api_key')?.value.trim(), model: document.getElementById('openai_model')?.value.trim() });
-      put('airtable', { api_key: document.getElementById('airtable_api_key')?.value.trim(), base_id: document.getElementById('airtable_base_id')?.value.trim(), table: document.getElementById('airtable_table')?.value.trim() });
-      put('gsheets', { api_key: document.getElementById('gsheets_api_key')?.value.trim(), spreadsheet_id: document.getElementById('gsheets_spreadsheet_id')?.value.trim() });
-      put('gmaps', { api_key: document.getElementById('gmaps_api_key')?.value.trim() });
-      put('recaptcha', { site_key: document.getElementById('recaptcha_site_key')?.value.trim(), secret: document.getElementById('recaptcha_secret')?.value.trim() });
-      put('brilliantdb', { api_key: document.getElementById('brilliantdb_api_key')?.value.trim(), base_url: document.getElementById('brilliantdb_base_url')?.value.trim(), collection: document.getElementById('brilliantdb_collection')?.value.trim() });
+    async function save(provider){
+      // Collect only the provider that was requested; avoid wiping others
+      const filter = (obj)=>{
+        const out = {}; Object.entries(obj).forEach(([k,v])=>{ if (v && String(v).trim() !== '') out[k]=String(v).trim(); }); return out;
+      };
+      let payload = {};
+      if (provider === 'openai') payload.openai = filter({ api_key: document.getElementById('openai_api_key')?.value, model: document.getElementById('openai_model')?.value });
+      if (provider === 'airtable') payload.airtable = filter({ api_key: document.getElementById('airtable_api_key')?.value, base_id: document.getElementById('airtable_base_id')?.value, table: document.getElementById('airtable_table')?.value });
+      if (provider === 'gsheets') payload.gsheets = filter({ api_key: document.getElementById('gsheets_api_key')?.value, spreadsheet_id: document.getElementById('gsheets_spreadsheet_id')?.value });
+      if (provider === 'gmaps') payload.gmaps = filter({ api_key: document.getElementById('gmaps_api_key')?.value });
+      if (provider === 'recaptcha') payload.recaptcha = filter({ site_key: document.getElementById('recaptcha_site_key')?.value, secret: document.getElementById('recaptcha_secret')?.value });
+      if (provider === 'brilliantdb') payload.brilliantdb = filter({ api_key: document.getElementById('brilliantdb_api_key')?.value, base_url: document.getElementById('brilliantdb_base_url')?.value, collection: document.getElementById('brilliantdb_collection')?.value });
       try{
         const res = await fetch('/api/config-store.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload), credentials:'same-origin' });
         const j = await res.json();
@@ -262,22 +264,22 @@
       // Только после того как убедились, что это кнопка, гасим навигацию и всплытие
       e.preventDefault(); e.stopPropagation();
       if (el.id === 'btnTestOpenAI') { testOpenAI(); }
-      if (el.id === 'btnSaveOpenAI') { e.preventDefault(); save(); }
+      if (el.id === 'btnSaveOpenAI') { e.preventDefault(); save('openai'); }
       if (el.id === 'btnEraseOpenAI') { eraseProvider('openai'); }
       if (el.id === 'btnTestAirtable') { e.preventDefault(); document.getElementById('statusAirtable') && cardStatus('statusAirtable','loading','Проверка...'); /* оставим текущий обработчик ниже */ }
-      if (el.id === 'btnSaveAirtable') { e.preventDefault(); save(); }
+      if (el.id === 'btnSaveAirtable') { e.preventDefault(); save('airtable'); }
       if (el.id === 'btnEraseAirtable') { eraseProvider('airtable'); }
       if (el.id === 'btnTestGSheets') { e.preventDefault(); document.getElementById('statusGSheets') && cardStatus('statusGSheets','loading','Проверка...'); }
-      if (el.id === 'btnSaveGSheets') { e.preventDefault(); save(); }
+      if (el.id === 'btnSaveGSheets') { e.preventDefault(); save('gsheets'); }
       if (el.id === 'btnEraseGSheets') { eraseProvider('gsheets'); }
       if (el.id === 'btnTestGMaps') { e.preventDefault(); document.getElementById('statusGMaps') && cardStatus('statusGMaps','loading','Проверка...'); }
-      if (el.id === 'btnSaveGMaps') { e.preventDefault(); save(); }
+      if (el.id === 'btnSaveGMaps') { e.preventDefault(); save('gmaps'); }
       if (el.id === 'btnEraseGMaps') { eraseProvider('gmaps'); }
       if (el.id === 'btnTestRecaptcha') { e.preventDefault(); document.getElementById('statusRecaptcha') && cardStatus('statusRecaptcha','loading','Проверка...'); }
-      if (el.id === 'btnSaveRecaptcha') { e.preventDefault(); save(); }
+      if (el.id === 'btnSaveRecaptcha') { e.preventDefault(); save('recaptcha'); }
       if (el.id === 'btnEraseRecaptcha') { eraseProvider('recaptcha'); }
       if (el.id === 'btnTestBrilliant') { testBrilliant(); }
-      if (el.id === 'btnSaveBrilliant') { e.preventDefault(); save(); }
+      if (el.id === 'btnSaveBrilliant') { e.preventDefault(); save('brilliantdb'); }
       if (el.id === 'btnEraseBrilliant') { eraseProvider('brilliantdb'); }
     });
   }
