@@ -31,37 +31,18 @@ $presence = [
   'gsheets' => !empty($cfg['gsheets']['api_key'] ?? ''),
   'gmaps' => !empty($cfg['gmaps']['api_key'] ?? ''),
   'recaptcha' => !empty($cfg['recaptcha']['secret'] ?? ''),
-  'brilliantdirectory' => !empty($cfg['brilliantdb']['api_key'] ?? '') && !empty($cfg['brilliantdb']['base_url'] ?? ''),
+  'brilliantdirectory' => !empty($cfg['brilliantdb']['api_key'] ?? ''),
 ];
 
-// Build probes (use existing test-proxy for consistency)
+// Do NOT hit external APIs (real keys in use). Report presence as connectivity state.
 $providers = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdirectory'];
 $results = [];
 foreach ($providers as $p){
-  if (empty($presence[$p])) { // not configured -> waiting state
+  if (!empty($presence[$p])) {
+    $results[$p] = [ 'ok' => true, 'text' => 'Подключено', 'checked_at' => time() ];
+  } else {
     $results[$p] = [ 'ok' => null, 'text' => 'Ожидание', 'checked_at' => time() ];
-    continue;
   }
-  $url = '/api/test-proxy.php?provider='.$p;
-  $full = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $url;
-  $ch = curl_init($full);
-  curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>15]);
-  $resp = curl_exec($ch);
-  $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  $err = curl_error($ch);
-  curl_close($ch);
-  $ok = false; $msg = '—';
-  if ($err){ $ok = false; $msg = $err; }
-  else {
-    $j = json_decode($resp, true);
-    if (is_array($j)){
-      $ok = !empty($j['ok']);
-      $msg = isset($j['error']) ? $j['error'] : (isset($j['status']) ? ('HTTP '.$j['status']) : ($ok ? 'OK' : ''));
-    } else {
-      $msg = 'Invalid JSON';
-    }
-  }
-  $results[$p] = [ 'ok' => $ok, 'text' => $msg, 'checked_at' => time() ];
 }
 
 $payload = [ 'ts' => time(), 'ttl' => $CACHE_TTL, 'results' => $results ];

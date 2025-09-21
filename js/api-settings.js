@@ -81,7 +81,10 @@
       if (provider === 'recaptcha') payload.recaptcha = filter({ site_key: document.getElementById('recaptcha_site_key')?.value, secret: document.getElementById('recaptcha_secret')?.value });
       if (provider === 'brilliantdb') payload.brilliantdb = filter({ api_key: document.getElementById('brilliantdb_api_key')?.value, base_url: document.getElementById('brilliantdb_base_url')?.value, collection: document.getElementById('brilliantdb_collection')?.value });
       try{
-        const res = await fetch('/api/config-store.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload), credentials:'same-origin' });
+        // If present, include admin token (optional). Fill window.ADMIN_TOKEN from auth when available.
+        const headers = { 'Content-Type':'application/json' };
+        if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
+        const res = await fetch('/api/config-store.php', { method:'POST', headers, body: JSON.stringify(payload), credentials:'same-origin' });
         const j = await res.json();
         if (j && j.ok){ setStatus('Серверный ключ сохранён'); loadServerKeyBadges(); }
         else { setStatus('Ошибка сохранения: '+(j?.error||'')); }

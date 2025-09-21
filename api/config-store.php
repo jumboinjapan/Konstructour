@@ -26,6 +26,16 @@ $payload = json_decode($raw, true);
 if (!$payload || !is_array($payload)) respond(false, ['error'=>'Invalid JSON'], 400);
 
 $providersAllowed = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdb'];
+
+// Bootstrap: allow setting admin token once if file does not exist yet
+$adminTokenFile = __DIR__.'/admin-token.php';
+if (!file_exists($adminTokenFile) && !empty($payload['admin_token'])){
+  $tokenExport = "<?php\nreturn ['token'=>'".str_replace(["\\","'"],["\\\\","\\'"], $payload['admin_token'])."'];\n";
+  if (file_put_contents($adminTokenFile, $tokenExport) === false) {
+    respond(false, ['error'=>'Token write failed'], 500);
+  }
+  @chmod($adminTokenFile, 0600);
+}
 $incoming = array_intersect_key($payload, array_flip($providersAllowed));
 if (!$incoming) respond(false, ['error'=>'No providers'], 400);
 
