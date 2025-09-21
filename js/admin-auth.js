@@ -2,8 +2,8 @@
 
 // Configuration
 const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'admin123'
+    username: 'eduard@revidovich.net',
+    password: 'Par221706kht@rev'
 };
 
 // DOM Elements
