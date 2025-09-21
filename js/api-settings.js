@@ -134,6 +134,34 @@
       }
     }
 
+    // Render statuses in catalog based on server health
+    function applyHealthMap(results){
+      const map = {
+        airtable: 'statusAirtable',
+        openai: 'statusOpenAI',
+        gsheets: 'statusGSheets',
+        gmaps: 'statusGMaps',
+        recaptcha: 'statusRecaptcha',
+        brilliantdirectory: 'statusBrilliant'
+      };
+      Object.keys(map).forEach(p=>{
+        const id = map[p];
+        const r = results && results[p];
+        if (!r){ cardStatus(id, 'err', 'Нет данных'); return; }
+        if (r.ok === true) cardStatus(id, 'ok', 'Подключено');
+        else if (r.ok === null) cardStatus(id, 'loading', 'Ожидание');
+        else cardStatus(id, 'err', r.text || 'Ошибка');
+      });
+    }
+
+    async function loadHealth(){
+      try{
+        const res = await fetch('/api/health.php', { cache:'no-store' });
+        const j = await res.json();
+        if (j && j.results) applyHealthMap(j.results);
+      }catch(_){ /* ignore */ }
+    }
+
     document.getElementById('btnSaveAirtable')?.addEventListener('click', save);
     document.getElementById('btnSaveOpenAI')?.addEventListener('click', save);
     document.getElementById('btnSaveGSheets')?.addEventListener('click', save);
@@ -247,6 +275,7 @@
 
     load();
     loadServerKeyBadges();
+    loadHealth();
     ['OpenAI','Airtable','GSheets','GMaps','Recaptcha','Brilliant'].forEach(setupAddFlow);
     // Убрали прежний capture-блокировщик кликов внутри .api-actions,
     // чтобы не гасить обработчики кнопок (Test/Save)
