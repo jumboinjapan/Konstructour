@@ -1,6 +1,6 @@
 // API Settings page logic (client-side storage)
 (function(){
-  document.addEventListener('DOMContentLoaded', function(){
+  function init(){
     if (!window.adminAuth || !window.adminAuth.validateSession()) return;
 
     const fields = [
@@ -159,7 +159,13 @@
     });
 
     load();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 
 
