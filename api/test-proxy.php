@@ -208,6 +208,18 @@ switch ($provider) {
     }
 
   default:
+    if ($provider === 'server_keys') {
+      // Report which providers have keys configured server-side
+      $presence = [
+        'openai' => !empty($cfg['openai']['api_key'] ?? ''),
+        'airtable' => !empty($cfg['airtable']['api_key'] ?? ''),
+        'gsheets' => !empty($cfg['gsheets']['api_key'] ?? ''),
+        'gmaps' => !empty($cfg['gmaps']['api_key'] ?? ''),
+        'recaptcha' => !empty($cfg['recaptcha']['secret'] ?? ''),
+        'brilliantdirectory' => !empty($cfg['brilliantdb']['api_key'] ?? '') && !empty($cfg['brilliantdb']['base_url'] ?? '')
+      ];
+      respond(true, ['keys'=>$presence]);
+    }
     respond(false, ['error'=>'Unknown provider'], 400);
 }
 

@@ -29,6 +29,22 @@
       }catch(e){ setStatus('Ошибка загрузки настроек'); }
     }
 
+    async function loadServerKeyBadges(){
+      try{
+        const res = await fetch('/api/test-proxy.php?provider=server_keys', { cache:'no-store' });
+        const j = await res.json();
+        if (!j || !j.ok || !j.keys) return;
+        const map = j.keys;
+        const show = (id, on) => { const el = document.getElementById(id); if (!el) return; el.classList.toggle('hidden', !on); };
+        show('badgeOpenAI', !!map.openai);
+        show('badgeAirtable', !!map.airtable);
+        show('badgeGSheets', !!map.gsheets);
+        show('badgeGMaps', !!map.gmaps);
+        show('badgeRecaptcha', !!map.recaptcha);
+        show('badgeBrilliant', !!map.brilliantdirectory);
+      }catch(_){ /* ignore */ }
+    }
+
     function save(){
       const data = {};
       fields.forEach(id => {
@@ -197,6 +213,7 @@
     document.getElementById('btnTestBrilliant')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); testBrilliant(); });
 
     load();
+    loadServerKeyBadges();
     // Убрали прежний capture-блокировщик кликов внутри .api-actions,
     // чтобы не гасить обработчики кнопок (Test/Save)
     // Global capture guard: блокируем только переходы по ссылкам внутри .api-actions,
