@@ -103,18 +103,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add Japanese animations
     addJapaneseAnimations();
     
-    // Check if already logged in
-    if (isLoggedIn()) {
+    // Only redirect automatically on the login page
+    const isLoginPage = !!document.getElementById('adminLoginForm');
+    if (isLoginPage && isLoggedIn()) {
         redirectToDashboard();
         return;
     }
 
     // Add form submission handler
-    if (loginForm) {
+    if (isLoginPage && loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
     // Also handle explicit click on the submit button (for browsers blocking submit handlers)
-    if (loginBtn) {
+    if (isLoginPage && loginBtn) {
         loginBtn.addEventListener('click', function(e) {
             if (!loginBtn.disabled) {
                 handleLogin(e);
@@ -123,11 +124,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add enter key handler
-    document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && loginBtn && !loginBtn.disabled) {
-            handleLogin(e);
-        }
-    });
+    if (isLoginPage) {
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && loginBtn && !loginBtn.disabled) {
+                handleLogin(e);
+            }
+        });
+    }
 });
 
 // Handle login form submission
