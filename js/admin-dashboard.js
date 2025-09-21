@@ -58,17 +58,19 @@ function addDashboardAnimations() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Убираем активный класс со всех
-            menuItems.forEach(mi => mi.classList.remove('active'));
-            
-            // Добавляем активный класс текущему
-            this.classList.add('active');
-            
-            // Загружаем соответствующий раздел
-            const section = this.getAttribute('href').substring(1);
-            loadSection(section);
+            const href = this.getAttribute('href') || '';
+            // Обрабатываем только ссылки-якоря вида #section
+            if (href.startsWith('#')) {
+                e.preventDefault();
+                // Убираем активный класс со всех
+                menuItems.forEach(mi => mi.classList.remove('active'));
+                // Добавляем активный класс текущему
+                this.classList.add('active');
+                // Загружаем соответствующий раздел
+                const section = href.substring(1);
+                loadSection(section);
+            }
+            // иначе переходим по ссылке (api-catalog.html и др.)
         });
     });
 }
