@@ -246,6 +246,9 @@ function getCurrentSession() {
 
 // Redirect to dashboard
 function redirectToDashboard() {
+    // Navigate to dashboard only when invoked from login page
+    const isLoginPage = !!document.getElementById('adminLoginForm');
+    if (!isLoginPage) return;
     window.location.href = 'dashboard.html';
 }
 
