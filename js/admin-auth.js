@@ -20,6 +20,10 @@ const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 function addJapaneseAnimations() {
     // Добавляем плавную анимацию при загрузке
     const form = document.querySelector('.login-container');
+    if (!form) {
+        // Не страница логина — выходим без анимации контейнера
+        return;
+    }
     form.style.opacity = '0';
     form.style.transform = 'translateY(20px)';
     
