@@ -44,6 +44,15 @@
       setStatus('Очищено');
     }
 
+    function eraseProvider(prefix){
+      const ids = fields.filter(id => id.startsWith(prefix + '_'));
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const data = raw ? (JSON.parse(raw)||{}) : {};
+      ids.forEach(id => { delete data[id]; const el = document.getElementById(id); if (el) el.value=''; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setStatus(prefix.toUpperCase()+': очищено');
+    }
+
     function setStatus(msg){ if(statusText){ statusText.textContent = msg; setTimeout(()=>statusText.textContent='', 3000);} }
 
     function cardStatus(id, state, text){
@@ -58,14 +67,12 @@
       if (label) label.textContent = text || '';
     }
 
-    document.getElementById('btnSaveAll')?.addEventListener('click', save);
     document.getElementById('btnSaveAirtable')?.addEventListener('click', save);
     document.getElementById('btnSaveOpenAI')?.addEventListener('click', save);
     document.getElementById('btnSaveGSheets')?.addEventListener('click', save);
     document.getElementById('btnSaveGMaps')?.addEventListener('click', save);
     document.getElementById('btnSaveRecaptcha')?.addEventListener('click', save);
     document.getElementById('btnSaveBrilliant')?.addEventListener('click', save);
-    document.getElementById('btnClear')?.addEventListener('click', clearAll);
     document.getElementById('btnTestAll')?.addEventListener('click', function(){
       // simple local validation
       const missing = fields.filter(id => {
@@ -177,17 +184,22 @@
       e.preventDefault(); e.stopPropagation();
       if (el.id === 'btnTestOpenAI') { testOpenAI(); }
       if (el.id === 'btnSaveOpenAI') { e.preventDefault(); save(); }
+      if (el.id === 'btnEraseOpenAI') { eraseProvider('openai'); }
       if (el.id === 'btnTestAirtable') { e.preventDefault(); document.getElementById('statusAirtable') && cardStatus('statusAirtable','loading','Проверка...'); /* оставим текущий обработчик ниже */ }
       if (el.id === 'btnSaveAirtable') { e.preventDefault(); save(); }
+      if (el.id === 'btnEraseAirtable') { eraseProvider('airtable'); }
       if (el.id === 'btnTestGSheets') { e.preventDefault(); document.getElementById('statusGSheets') && cardStatus('statusGSheets','loading','Проверка...'); }
       if (el.id === 'btnSaveGSheets') { e.preventDefault(); save(); }
+      if (el.id === 'btnEraseGSheets') { eraseProvider('gsheets'); }
       if (el.id === 'btnTestGMaps') { e.preventDefault(); document.getElementById('statusGMaps') && cardStatus('statusGMaps','loading','Проверка...'); }
       if (el.id === 'btnSaveGMaps') { e.preventDefault(); save(); }
+      if (el.id === 'btnEraseGMaps') { eraseProvider('gmaps'); }
       if (el.id === 'btnTestRecaptcha') { e.preventDefault(); document.getElementById('statusRecaptcha') && cardStatus('statusRecaptcha','loading','Проверка...'); }
       if (el.id === 'btnSaveRecaptcha') { e.preventDefault(); save(); }
+      if (el.id === 'btnEraseRecaptcha') { eraseProvider('recaptcha'); }
       if (el.id === 'btnTestBrilliant') { e.preventDefault(); document.getElementById('statusBrilliant') && cardStatus('statusBrilliant','loading','Проверка...'); }
       if (el.id === 'btnSaveBrilliant') { e.preventDefault(); save(); }
-      if (el.id === 'btnSaveAll') { e.preventDefault(); save(); }
+      if (el.id === 'btnEraseBrilliant') { eraseProvider('brilliantdb'); }
     });
   }
 

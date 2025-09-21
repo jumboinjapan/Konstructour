@@ -50,10 +50,7 @@
                         <h2 class="text-3xl font-light text-gray-800 mb-1">API настройки</h2>
                         <p class="text-gray-600">Секреты хранятся только в браузере (localStorage)</p>
                     </div>
-                    <div class="flex items-center space-x-3">
-                        <button id="btnSaveAll" class="btn-japanese accent"><i class="fas fa-save mr-2"></i>Сохранить все</button>
-                        <button id="btnClear" class="btn-japanese"><i class="fas fa-eraser mr-2"></i>Очистить</button>
-                    </div>
+                
                 </div>
             </header>
 
@@ -64,6 +61,7 @@
                         <h3 class="text-lg font-light text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnEraseAirtable" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestAirtable" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
                             <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
@@ -91,6 +89,7 @@
                         <h3 class="text-lg font-light text-gray-800"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveOpenAI" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnEraseOpenAI" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestOpenAI" type="button" class="btn-japanese" data-no-redirect="true"><i class="fas fa-vial mr-2"></i>Test</button>
                             <span id="statusOpenAI" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
@@ -113,6 +112,7 @@
                         <h3 class="text-lg font-light text-gray-800"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveGSheets" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnEraseGSheets" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestGSheets" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
                             <span id="statusGSheets" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
@@ -135,6 +135,7 @@
                         <h3 class="text-lg font-light text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveGMaps" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnEraseGMaps" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestGMaps" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
                             <span id="statusGMaps" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
@@ -158,6 +159,7 @@
                         <h3 class="text-lg font-light text-gray-800"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveRecaptcha" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnEraseRecaptcha" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestRecaptcha" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
                             <span id="statusRecaptcha" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
@@ -180,6 +182,7 @@
                         <h3 class="text-lg font-light text-gray-800"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant DB</h3>
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveBrilliant" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnEraseBrilliant" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestBrilliant" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
                             <span id="statusBrilliant" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
@@ -208,7 +211,7 @@
         </main>
     </div>
 
-    <script src="../js/api-settings.js?v=20250921-15"></script>
+    <script src="../js/api-settings.js?v=20250921-16"></script>
 </body>
 </html>
 
