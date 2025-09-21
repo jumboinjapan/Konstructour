@@ -44,7 +44,30 @@ switch ($provider) {
     $key = $payload['api_key'] ?? ($cfg['airtable']['api_key'] ?? '');
     $base = $payload['base_id'] ?? ($cfg['airtable']['base_id'] ?? '');
     $table = $payload['table'] ?? ($cfg['airtable']['table'] ?? '');
-    if (!$key || !$base || !$table) respond(false, ['error'=>'Missing params'], 400);
+    if (!$key) respond(false, ['error'=>'Missing api_key'], 400);
+    // Если нет base/table — проверяем валидность ключа через meta/whoami
+    if (!$base || !$table) {
+      $url = 'https://api.airtable.com/v0/meta/whoami';
+      $ch = curl_init($url);
+      curl_setopt_array($ch, [
+        CURLOPT_HTTPHEADER => ["Authorization: Bearer {$key}"],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 15,
+      ]);
+      $resp = curl_exec($ch);
+      $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      $err = curl_error($ch);
+      curl_close($ch);
+      if ($err) respond(false, ['error'=>$err], 502);
+      $decoded = json_decode($resp,true);
+      if ($status>=200 && $status<300) {
+        respond(true, ['status'=>$status, 'body'=>$decoded]);
+      } else {
+        $msg = isset($decoded['error']['message']) ? $decoded['error']['message'] : 'Upstream error';
+        respond(false, ['status'=>$status, 'error'=>$msg, 'body'=>$decoded], $status ?: 502);
+      }
+    }
+    // Если base и table заданы — пробуем запрос к таблице
     $url = "https://api.airtable.com/v0/{$base}/".rawurlencode($table)."?maxRecords=1";
     $ch = curl_init($url);
     curl_setopt_array($ch, [
