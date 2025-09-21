@@ -36,13 +36,30 @@
         if (!j || !j.ok || !j.keys) return;
         const map = j.keys;
         const show = (id, on) => { const el = document.getElementById(id); if (!el) return; el.classList.toggle('hidden', !on); };
+        const collapse = (sectionId, on) => { const sec = document.getElementById(sectionId); if (!sec) return; sec.style.display = 'none'; };
         show('badgeOpenAI', !!map.openai);
         show('badgeAirtable', !!map.airtable);
         show('badgeGSheets', !!map.gsheets);
         show('badgeGMaps', !!map.gmaps);
         show('badgeRecaptcha', !!map.recaptcha);
         show('badgeBrilliant', !!map.brilliantdirectory);
+        // collapse sections by default
+        ['sectionOpenAI','sectionAirtable','sectionGSheets','sectionGMaps','sectionRecaptcha','sectionBrilliant']
+          .forEach(id => collapse(id, true));
       }catch(_){ /* ignore */ }
+    }
+
+    // Expand on Add and auto-collapse after 15s inactivity
+    function setupAddFlow(prefix){
+      const section = document.getElementById('section'+prefix);
+      const addBtn = document.getElementById('btnSave'+prefix);
+      if (!section || !addBtn) return;
+      let timer = null;
+      const restart = ()=>{ clearTimeout(timer); timer = setTimeout(()=>{ section.style.display='none'; }, 15000); };
+      section.style.display = 'none';
+      addBtn.addEventListener('click', ()=>{ section.style.display=''; restart(); });
+      section.addEventListener('input', restart, true);
+      section.addEventListener('focusin', restart);
     }
 
     function save(){
@@ -214,6 +231,7 @@
 
     load();
     loadServerKeyBadges();
+    ['OpenAI','Airtable','GSheets','GMaps','Recaptcha','Brilliant'].forEach(setupAddFlow);
     // Убрали прежний capture-блокировщик кликов внутри .api-actions,
     // чтобы не гасить обработчики кнопок (Test/Save)
     // Global capture guard: блокируем только переходы по ссылкам внутри .api-actions,
