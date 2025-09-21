@@ -8,7 +8,8 @@
       'openai_api_key','openai_model',
       'gsheets_api_key','gsheets_spreadsheet_id',
       'gmaps_api_key','gmaps_region',
-      'recaptcha_site_key','recaptcha_secret'
+      'recaptcha_site_key','recaptcha_secret',
+      'brilliantdb_api_key','brilliantdb_base_url','brilliantdb_collection'
     ];
 
     const STORAGE_KEY = 'konstructour_api_settings';

@@ -25,7 +25,7 @@
                 <nav class="space-y-2">
                     <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор</a>
                     <a href="api-catalog.html" class="menu-item active sidebar-link"><i class="fas fa-list mr-3 text-gray-600"></i>Каталог API</a>
-                    <a href="api-settings.html" class="sidebar-link"><i class="fas fa-key mr-3 text-gray-600"></i>API настройки</a>
+                    <a href="#" id="openSettings" class="sidebar-link"><i class="fas fa-key mr-3 text-gray-600"></i>API настройки</a>
                 </nav>
             </div>
         </aside>
@@ -47,6 +47,10 @@
                         <li>Быстрый CRUD по Base/Table</li>
                         <li>ideal для прототипов и справочников</li>
                     </ul>
+                    <div class="mt-4 flex items-center space-x-3">
+                        <a href="api-settings.html#airtable" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
+                        <button data-test="airtable" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                    </div>
                 </div>
 
                 <!-- OpenAI -->
@@ -60,6 +64,10 @@
                         <li>Чаты, резюмирование, классификация</li>
                         <li>Embeddings для поиска и рекомендаций</li>
                     </ul>
+                    <div class="mt-4 flex items-center space-x-3">
+                        <a href="api-settings.html#openai" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
+                        <button data-test="openai" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                    </div>
                 </div>
 
                 <!-- Google Sheets -->
@@ -73,6 +81,10 @@
                         <li>Публичное чтение по API Key</li>
                         <li>Запись через сервисный аккаунт</li>
                     </ul>
+                    <div class="mt-4 flex items-center space-x-3">
+                        <a href="api-settings.html#gsheets" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
+                        <button data-test="gsheets" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                    </div>
                 </div>
 
                 <!-- Google Maps -->
@@ -86,6 +98,10 @@
                         <li>Ограничение ключа по доменам</li>
                         <li>Сенситивные вызовы через прокси</li>
                     </ul>
+                    <div class="mt-4 flex items-center space-x-3">
+                        <a href="api-settings.html#gmaps" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
+                        <button data-test="gmaps" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                    </div>
                 </div>
 
                 <!-- Google reCAPTCHA -->
@@ -99,6 +115,10 @@
                         <li>Site key на клиенте</li>
                         <li>Secret — на сервере для валидации</li>
                     </ul>
+                    <div class="mt-4 flex items-center space-x-3">
+                        <a href="api-settings.html#recaptcha" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
+                        <button data-test="recaptcha" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                    </div>
                 </div>
 
                 <!-- Brilliant DB -->
@@ -113,12 +133,30 @@
                         <li>Авторизация по ключу/токену</li>
                         <li>Кэширование на стороне клиента</li>
                     </ul>
+                    <div class="mt-4 flex items-center space-x-3">
+                        <a href="api-settings.html#brilliantdb" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
+                        <button data-test="brilliantdb" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
     <script src="../js/admin-auth.js"></script>
+    <script>
+        // кнопка в сайдбаре открывает страницу настроек
+        document.getElementById('openSettings')?.addEventListener('click', function(e){
+            e.preventDefault();
+            window.location.href = 'api-settings.html';
+        });
+        // заглушки для локальных тестов
+        document.querySelectorAll('[data-test]')?.forEach(btn=>{
+            btn.addEventListener('click', function(){
+                const provider = this.getAttribute('data-test');
+                alert('Тест '+provider+': проверка будет реализована после подключения бэкенда.');
+            });
+        });
+    </script>
 </body>
 </html>
 

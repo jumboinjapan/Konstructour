@@ -53,7 +53,7 @@
                 </div>
             </header>
 
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="airtable">
                 <!-- Airtable -->
                 <div class="glass-panel p-6 rounded-lg">
                     <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
@@ -75,7 +75,7 @@
                 </div>
 
                 <!-- OpenAI -->
-                <div class="glass-panel p-6 rounded-lg">
+                <div class="glass-panel p-6 rounded-lg" id="openai">
                     <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
                     <div class="form-grid">
                         <div>
@@ -90,7 +90,7 @@
                 </div>
 
                 <!-- Google Sheets -->
-                <div class="glass-panel p-6 rounded-lg">
+                <div class="glass-panel p-6 rounded-lg" id="gsheets">
                     <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
                     <div class="form-grid">
                         <div>
@@ -105,7 +105,7 @@
                 </div>
 
                 <!-- Google Maps -->
-                <div class="glass-panel p-6 rounded-lg">
+                <div class="glass-panel p-6 rounded-lg" id="gmaps">
                     <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
                     <div class="form-grid">
                         <div>
@@ -121,7 +121,7 @@
                 </div>
 
                 <!-- Google reCAPTCHA -->
-                <div class="glass-panel p-6 rounded-lg">
+                <div class="glass-panel p-6 rounded-lg" id="recaptcha">
                     <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
                     <div class="form-grid">
                         <div>
@@ -131,6 +131,25 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
                             <input id="recaptcha_secret" type="password" class="input-japanese" placeholder="...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brilliant DB -->
+                <div class="glass-panel p-6 rounded-lg" id="brilliantdb">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant DB</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="brilliantdb_api_key" type="password" class="input-japanese" placeholder="...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Endpoint Base</label>
+                            <input id="brilliantdb_base_url" type="text" class="input-japanese" placeholder="https://api.brilliantdb.com/v1/">
+                        </div>
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Collection</label>
+                            <input id="brilliantdb_collection" type="text" class="input-japanese" placeholder="tours">
                         </div>
                     </div>
                 </div>
