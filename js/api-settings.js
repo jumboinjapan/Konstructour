@@ -36,7 +36,13 @@
         if (!j || !j.ok || !j.keys) return;
         const map = j.keys;
         const show = (id, on) => { const el = document.getElementById(id); if (!el) return; el.classList.toggle('hidden', !on); };
-        const collapse = (sectionId, on) => { const sec = document.getElementById(sectionId); if (!sec) return; sec.style.display = 'none'; };
+        const collapse = (sectionId) => {
+          const sec = document.getElementById(sectionId);
+          if (!sec) return;
+          // Не сворачиваем, если пользователь уже раскрыл вручную
+          if (sec.dataset.userOpen === '1') return;
+          sec.style.display = 'none';
+        };
         show('badgeOpenAI', !!map.openai);
         show('badgeAirtable', !!map.airtable);
         show('badgeGSheets', !!map.gsheets);
@@ -45,7 +51,7 @@
         show('badgeBrilliant', !!map.brilliantdirectory);
         // collapse sections by default
         ['sectionOpenAI','sectionAirtable','sectionGSheets','sectionGMaps','sectionRecaptcha','sectionBrilliant']
-          .forEach(id => collapse(id, true));
+          .forEach(id => collapse(id));
       }catch(_){ /* ignore */ }
     }
 
@@ -55,9 +61,9 @@
       const addBtn = document.getElementById('btnSave'+prefix);
       if (!section || !addBtn) return;
       let timer = null;
-      const restart = ()=>{ clearTimeout(timer); timer = setTimeout(()=>{ section.style.display='none'; }, 15000); };
+      const restart = ()=>{ clearTimeout(timer); timer = setTimeout(()=>{ section.style.display='none'; delete section.dataset.userOpen; }, 15000); };
       section.style.display = 'none';
-      addBtn.addEventListener('click', ()=>{ section.style.display=''; restart(); });
+      addBtn.addEventListener('click', ()=>{ section.style.display=''; section.dataset.userOpen='1'; restart(); });
       section.addEventListener('input', restart, true);
       section.addEventListener('focusin', restart);
     }
