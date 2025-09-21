@@ -37,6 +37,9 @@ function initializeDashboard() {
 
     // Render API statuses from localStorage
     try { renderApiStatuses(); } catch(_) {}
+
+    // Trigger immediate health poll so sorting/labels update without delay
+    try { pollHealth(); } catch(_) {}
 }
 
 // Add Japanese animations

@@ -58,13 +58,15 @@
                 <!-- Airtable -->
                 <div class="glass-panel p-6 rounded-lg api-card">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-light text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
+                            <span id="badgeAirtable" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
+                            <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span></span></span>
+                        </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseAirtable" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestAirtable" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
-                            <span id="badgeAirtable" class="text-xs text-gray-500 hidden order-last"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionAirtable">
@@ -87,13 +89,15 @@
                 <!-- OpenAI -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="openai">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-light text-gray-800"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
+                            <span id="badgeOpenAI" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
+                            <span id="statusOpenAI" class="api-status"><span class="api-dot"></span><span></span></span>
+                        </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveOpenAI" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseOpenAI" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestOpenAI" type="button" class="btn-japanese" data-no-redirect="true"><i class="fas fa-vial mr-2"></i>Test</button>
-                            <span id="badgeOpenAI" class="text-xs text-gray-500 hidden order-last"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusOpenAI" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionOpenAI">
@@ -111,13 +115,15 @@
                 <!-- Google Sheets -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="gsheets">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-light text-gray-800"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
+                            <span id="badgeGSheets" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
+                            <span id="statusGSheets" class="api-status"><span class="api-dot"></span><span></span></span>
+                        </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveGSheets" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseGSheets" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestGSheets" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
-                            <span id="badgeGSheets" class="text-xs text-gray-500 hidden order-last"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusGSheets" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionGSheets">
@@ -135,13 +141,15 @@
                 <!-- Google Maps -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="gmaps">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-light text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
+                            <span id="badgeGMaps" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
+                            <span id="statusGMaps" class="api-status"><span class="api-dot"></span><span></span></span>
+                        </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveGMaps" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseGMaps" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestGMaps" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
-                            <span id="badgeGMaps" class="text-xs text-gray-500 hidden order-last"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusGMaps" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionGMaps">
@@ -160,13 +168,15 @@
                 <!-- Google reCAPTCHA -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="recaptcha">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-light text-gray-800"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
+                            <span id="badgeRecaptcha" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
+                            <span id="statusRecaptcha" class="api-status"><span class="api-dot"></span><span></span></span>
+                        </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveRecaptcha" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseRecaptcha" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestRecaptcha" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
-                            <span id="badgeRecaptcha" class="text-xs text-gray-500 hidden order-last"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusRecaptcha" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionRecaptcha">
@@ -184,13 +194,15 @@
                 <!-- Brilliant Directory -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="brilliantdb">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant Directory</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-light text-gray-800"><i class="fas fa-database mr-2 text-purple-600"></i>BD</h3>
+                            <span id="badgeBrilliant" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
+                            <span id="statusBrilliant" class="api-status"><span class="api-dot"></span><span></span></span>
+                        </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveBrilliant" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseBrilliant" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestBrilliant" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
-                            <span id="badgeBrilliant" class="text-xs text-gray-500 hidden order-last"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusBrilliant" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionBrilliant">
