@@ -158,7 +158,23 @@
       try{
         const res = await fetch('/api/health.php?force=1', { cache:'no-store' });
         const j = await res.json();
-        if (j && j.results) applyHealthMap(j.results);
+        if (j && j.results) {
+          applyHealthMap(j.results);
+          // Fallback: если сервер говорит Ожидание, но в UI есть значения — запустим тест автоматически
+          const waitAndTrigger = (prov, cond, btnId) => {
+            const r = j.results[prov];
+            if (r && r.ok === null && cond()) {
+              const btn = document.getElementById(btnId);
+              if (btn) setTimeout(()=>btn.click(), 200); // дать DOM привязать обработчики
+            }
+          };
+          waitAndTrigger('openai', ()=> (document.getElementById('openai_api_key')?.value.trim()||'') !== '', 'btnTestOpenAI');
+          waitAndTrigger('airtable', ()=> (document.getElementById('airtable_api_key')?.value.trim()||'') !== '', 'btnTestAirtable');
+          waitAndTrigger('gsheets', ()=> (document.getElementById('gsheets_api_key')?.value.trim()!=='' && document.getElementById('gsheets_spreadsheet_id')?.value.trim()!==''), 'btnTestGSheets');
+          waitAndTrigger('gmaps', ()=> (document.getElementById('gmaps_api_key')?.value.trim()||'') !== '', 'btnTestGMaps');
+          waitAndTrigger('recaptcha', ()=> (document.getElementById('recaptcha_site_key')?.value.trim()!=='' && document.getElementById('recaptcha_secret')?.value.trim()!==''), 'btnTestRecaptcha');
+          waitAndTrigger('brilliantdirectory', ()=> (document.getElementById('brilliantdb_api_key')?.value.trim()!=='' && document.getElementById('brilliantdb_base_url')?.value.trim()!==''), 'btnTestBrilliant');
+        }
       }catch(_){ /* ignore */ }
     }
 
