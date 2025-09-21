@@ -159,6 +159,10 @@
         if (e.target.closest('button')) { e.preventDefault(); e.stopPropagation(); }
       }, true);
     });
+    // Global capture guard against accidental nav from API action buttons (Chrome/Safari quirks)
+    const guard = function(e){ if (e.target && e.target.closest && e.target.closest('.api-actions')) { e.preventDefault(); e.stopImmediatePropagation(); return false; } };
+    document.addEventListener('click', guard, true);
+    document.addEventListener('mousedown', guard, true);
   }
 
   if (document.readyState === 'loading') {
