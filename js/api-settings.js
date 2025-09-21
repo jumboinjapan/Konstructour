@@ -155,12 +155,8 @@
     });
 
     load();
-    // Safety: prevent bubbling from header action buttons from triggering navigation
-    document.querySelectorAll('.api-actions').forEach(el => {
-      el.addEventListener('click', function(e){
-        if (e.target.closest('button')) { e.preventDefault(); e.stopPropagation(); }
-      }, true);
-    });
+    // Убрали прежний capture-блокировщик кликов внутри .api-actions,
+    // чтобы не гасить обработчики кнопок (Test/Save)
     // Global capture guard: блокируем только переходы по ссылкам внутри .api-actions,
     // не останавливаем другие клики (чтобы не мешать нашим обработчикам кнопок)
     document.addEventListener('click', function(e){
@@ -172,7 +168,9 @@
     document.addEventListener('click', function(e){
       const el = e.target.closest ? e.target.closest('button') : null;
       if (!el) return;
-      if (el.id === 'btnTestOpenAI') { e.preventDefault(); testOpenAI(); }
+      // Только после того как убедились, что это кнопка, гасим навигацию и всплытие
+      e.preventDefault(); e.stopPropagation();
+      if (el.id === 'btnTestOpenAI') { testOpenAI(); }
       if (el.id === 'btnSaveOpenAI') { e.preventDefault(); save(); }
       if (el.id === 'btnTestAirtable') { e.preventDefault(); document.getElementById('statusAirtable') && cardStatus('statusAirtable','loading','Проверка...'); /* оставим текущий обработчик ниже */ }
       if (el.id === 'btnSaveAirtable') { e.preventDefault(); save(); }
