@@ -157,7 +157,7 @@
       }).catch(()=>{ cardStatus('statusRecaptcha','err','Network error'); setStatus('reCAPTCHA: сеть/сервер недоступны'); });
     });
 
-    document.getElementById('btnTestBrilliant')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation();
+    const testBrilliant = function(){
       const key = document.getElementById('brilliantdb_api_key')?.value.trim();
       const base = document.getElementById('brilliantdb_base_url')?.value.trim();
       const collection = document.getElementById('brilliantdb_collection')?.value.trim();
@@ -173,7 +173,8 @@
         cardStatus('statusBrilliant', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       })
       .catch(()=>{ cardStatus('statusBrilliant','err','Network error'); setStatus('Brilliant Directory: сеть/сервер недоступны'); });
-    });
+    };
+    document.getElementById('btnTestBrilliant')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); testBrilliant(); });
 
     load();
     // Убрали прежний capture-блокировщик кликов внутри .api-actions,
@@ -206,7 +207,7 @@
       if (el.id === 'btnTestRecaptcha') { e.preventDefault(); document.getElementById('statusRecaptcha') && cardStatus('statusRecaptcha','loading','Проверка...'); }
       if (el.id === 'btnSaveRecaptcha') { e.preventDefault(); save(); }
       if (el.id === 'btnEraseRecaptcha') { eraseProvider('recaptcha'); }
-      if (el.id === 'btnTestBrilliant') { e.preventDefault(); document.getElementById('statusBrilliant') && cardStatus('statusBrilliant','loading','Проверка...'); }
+      if (el.id === 'btnTestBrilliant') { testBrilliant(); }
       if (el.id === 'btnSaveBrilliant') { e.preventDefault(); save(); }
       if (el.id === 'btnEraseBrilliant') { eraseProvider('brilliantdb'); }
     });
