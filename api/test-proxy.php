@@ -21,11 +21,8 @@ function respond($ok, $data = [], $code = 200) {
   exit;
 }
 
-if ($method !== 'POST') {
-  respond(false, ['error'=>'Use POST'], 405);
-}
-
-$payload = body_json();
+// Accept POST (JSON) and GET (query params) to bypass mod_security filters on some hosts
+$payload = $method === 'POST' ? body_json() : $_GET;
 
 switch ($provider) {
   case 'airtable':
