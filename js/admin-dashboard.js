@@ -59,18 +59,18 @@ function addDashboardAnimations() {
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
             const href = this.getAttribute('href') || '';
-            // Обрабатываем только ссылки-якоря вида #section
             if (href.startsWith('#')) {
+                // Внутренняя секция
                 e.preventDefault();
-                // Убираем активный класс со всех
                 menuItems.forEach(mi => mi.classList.remove('active'));
-                // Добавляем активный класс текущему
                 this.classList.add('active');
-                // Загружаем соответствующий раздел
                 const section = href.substring(1);
                 loadSection(section);
+            } else if (href) {
+                // Внешняя страница — принудительный переход (fallback против перехватов)
+                e.preventDefault();
+                window.location.href = href;
             }
-            // иначе переходим по ссылке (api-catalog.html и др.)
         });
     });
 }
