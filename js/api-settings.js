@@ -1,7 +1,8 @@
 // API Settings page logic (client-side storage)
 (function(){
   function init(){
-    if (!window.adminAuth || !window.adminAuth.validateSession()) return;
+    // Check session without triggering redirects on non-login pages
+    if (!window.adminAuth || !window.adminAuth.isLoggedIn || !window.adminAuth.isLoggedIn()) return;
 
     const fields = [
       'airtable_api_key','airtable_base_id','airtable_table',
@@ -80,7 +81,7 @@
     });
 
     // Provider-specific test buttons (client-side heuristics only)
-    document.getElementById('btnTestAirtable')?.addEventListener('click', function(){
+    document.getElementById('btnTestAirtable')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation();
       const key = document.getElementById('airtable_api_key')?.value.trim();
       const base = document.getElementById('airtable_base_id')?.value.trim();
       const table = document.getElementById('airtable_table')?.value.trim();
@@ -103,12 +104,12 @@
         cardStatus('statusOpenAI', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>{ cardStatus('statusOpenAI','err','Network error'); setStatus('OpenAI: сеть/сервер недоступны'); });
     };
-    document.getElementById('btnTestOpenAI')?.addEventListener('click', testOpenAI);
+    document.getElementById('btnTestOpenAI')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); testOpenAI(); });
     // Enter key on fields triggers Test
     document.getElementById('openai_api_key')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); testOpenAI(); }});
     document.getElementById('openai_model')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); testOpenAI(); }});
 
-    document.getElementById('btnTestGSheets')?.addEventListener('click', function(){
+    document.getElementById('btnTestGSheets')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation();
       const key = document.getElementById('gsheets_api_key')?.value.trim();
       const sheet = document.getElementById('gsheets_spreadsheet_id')?.value.trim();
       if (!key || !sheet) return setStatus('Google Sheets: заполните API Key и Spreadsheet ID');
@@ -119,7 +120,7 @@
       }).catch(()=>{ cardStatus('statusGSheets','err','Network error'); setStatus('Sheets: сеть/сервер недоступны'); });
     });
 
-    document.getElementById('btnTestGMaps')?.addEventListener('click', function(){
+    document.getElementById('btnTestGMaps')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation();
       const key = document.getElementById('gmaps_api_key')?.value.trim();
       if (!key) return setStatus('Google Maps: заполните API Key');
       cardStatus('statusGMaps','loading','Проверка...');
@@ -129,7 +130,7 @@
       }).catch(()=>{ cardStatus('statusGMaps','err','Network error'); setStatus('Maps: сеть/сервер недоступны'); });
     });
 
-    document.getElementById('btnTestRecaptcha')?.addEventListener('click', function(){
+    document.getElementById('btnTestRecaptcha')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation();
       const siteKey = document.getElementById('recaptcha_site_key')?.value.trim();
       const secret = document.getElementById('recaptcha_secret')?.value.trim();
       if (!siteKey || !secret) return setStatus('reCAPTCHA: заполните Site Key и Secret');
@@ -140,7 +141,7 @@
       }).catch(()=>{ cardStatus('statusRecaptcha','err','Network error'); setStatus('reCAPTCHA: сеть/сервер недоступны'); });
     });
 
-    document.getElementById('btnTestBrilliant')?.addEventListener('click', function(){
+    document.getElementById('btnTestBrilliant')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation();
       const key = document.getElementById('brilliantdb_api_key')?.value.trim();
       const base = document.getElementById('brilliantdb_base_url')?.value.trim();
       if (!key || !base) return setStatus('Brilliant DB: заполните API Key и Endpoint Base');
