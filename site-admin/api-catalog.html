@@ -12,6 +12,12 @@
       .api-card{ transition:transform .2s ease, box-shadow .2s ease; }
       .api-card:hover{ transform: translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,.08); }
       .api-actions .btn-japanese{ padding:8px 14px; font-size:12px; }
+      .api-status{ display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#6b7280; }
+      .api-dot{ width:10px; height:10px; border-radius:50%; background:#d1d5db; display:inline-block; }
+      .api-dot.loading{ border:2px solid #a78bfa; border-top-color:transparent; width:12px; height:12px; border-radius:50%; animation: spin .9s linear infinite; background:transparent; }
+      .api-dot.ok{ background:#10b981; }
+      .api-dot.err{ background:#ef4444; }
+      @keyframes spin{ 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
     </style>
 </head>
 <body>
@@ -56,6 +62,7 @@
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveAirtable" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
                             <button id="btnTestAirtable" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid">
@@ -82,6 +89,7 @@
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveOpenAI" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
                             <button id="btnTestOpenAI" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <span id="statusOpenAI" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid">
@@ -103,6 +111,7 @@
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveGSheets" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
                             <button id="btnTestGSheets" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <span id="statusGSheets" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid">
@@ -124,6 +133,7 @@
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveGMaps" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
                             <button id="btnTestGMaps" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <span id="statusGMaps" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid">
@@ -146,6 +156,7 @@
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveRecaptcha" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
                             <button id="btnTestRecaptcha" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <span id="statusRecaptcha" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid">
@@ -167,6 +178,7 @@
                         <div class="api-actions flex items-center gap-2">
                             <button id="btnSaveBrilliant" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
                             <button id="btnTestBrilliant" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <span id="statusBrilliant" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                     </div>
                     <div class="form-grid">

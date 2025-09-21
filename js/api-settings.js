@@ -46,6 +46,18 @@
 
     function setStatus(msg){ if(statusText){ statusText.textContent = msg; setTimeout(()=>statusText.textContent='', 3000);} }
 
+    function cardStatus(id, state, text){
+      const wrap = document.getElementById(id);
+      if (!wrap) return;
+      const dot = wrap.querySelector('.api-dot');
+      const label = wrap.querySelector('span:last-child');
+      dot.classList.remove('loading','ok','err');
+      if (state==='loading') dot.classList.add('loading');
+      if (state==='ok') dot.classList.add('ok');
+      if (state==='err') dot.classList.add('err');
+      if (label) label.textContent = text || '';
+    }
+
     document.getElementById('btnSaveAll')?.addEventListener('click', save);
     document.getElementById('btnSaveAirtable')?.addEventListener('click', save);
     document.getElementById('btnSaveOpenAI')?.addEventListener('click', save);
@@ -73,11 +85,12 @@
       const base = document.getElementById('airtable_base_id')?.value.trim();
       const table = document.getElementById('airtable_table')?.value.trim();
       if (!key || !base || !table) return setStatus('Airtable: заполните API Key, Base ID и Table');
+      cardStatus('statusAirtable','loading','Проверка...');
       fetch('api/test-proxy.php?provider=airtable',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, base_id:base, table})
       }).then(r=>r.json()).then(j=>{
-        setStatus(j.ok? 'Airtable OK ('+j.status+')' : 'Airtable ERROR: '+(j.error||j.status));
+        cardStatus('statusAirtable', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>setStatus('Airtable: сеть/сервер недоступны'));
     });
 
@@ -85,11 +98,12 @@
       const key = document.getElementById('openai_api_key')?.value.trim();
       const model = document.getElementById('openai_model')?.value.trim();
       if (!key || !model) return setStatus('OpenAI: заполните API Key и модель');
+      cardStatus('statusOpenAI','loading','Проверка...');
       fetch('api/test-proxy.php?provider=openai',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, model})
       }).then(r=>r.json()).then(j=>{
-        setStatus(j.ok? 'OpenAI OK ('+j.status+')' : 'OpenAI ERROR: '+(j.error||j.status));
+        cardStatus('statusOpenAI', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>setStatus('OpenAI: сеть/сервер недоступны'));
     });
 
@@ -97,22 +111,24 @@
       const key = document.getElementById('gsheets_api_key')?.value.trim();
       const sheet = document.getElementById('gsheets_spreadsheet_id')?.value.trim();
       if (!key || !sheet) return setStatus('Google Sheets: заполните API Key и Spreadsheet ID');
+      cardStatus('statusGSheets','loading','Проверка...');
       fetch('api/test-proxy.php?provider=gsheets',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, spreadsheet_id:sheet})
       }).then(r=>r.json()).then(j=>{
-        setStatus(j.ok? 'Sheets OK ('+j.status+')' : 'Sheets ERROR: '+(j.error||j.status));
+        cardStatus('statusGSheets', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>setStatus('Sheets: сеть/сервер недоступны'));
     });
 
     document.getElementById('btnTestGMaps')?.addEventListener('click', function(){
       const key = document.getElementById('gmaps_api_key')?.value.trim();
       if (!key) return setStatus('Google Maps: заполните API Key');
+      cardStatus('statusGMaps','loading','Проверка...');
       fetch('api/test-proxy.php?provider=gmaps',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key})
       }).then(r=>r.json()).then(j=>{
-        setStatus(j.ok? 'Maps OK ('+j.status+')' : 'Maps ERROR: '+(j.error||j.status));
+        cardStatus('statusGMaps', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>setStatus('Maps: сеть/сервер недоступны'));
     });
 
@@ -120,11 +136,12 @@
       const siteKey = document.getElementById('recaptcha_site_key')?.value.trim();
       const secret = document.getElementById('recaptcha_secret')?.value.trim();
       if (!siteKey || !secret) return setStatus('reCAPTCHA: заполните Site Key и Secret');
+      cardStatus('statusRecaptcha','loading','Проверка...');
       fetch('api/test-proxy.php?provider=recaptcha',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({site_key:siteKey, secret})
       }).then(r=>r.json()).then(j=>{
-        setStatus(j.ok? 'reCAPTCHA OK' : 'reCAPTCHA ERROR: '+(j.error||j.status));
+        cardStatus('statusRecaptcha', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>setStatus('reCAPTCHA: сеть/сервер недоступны'));
     });
 
@@ -132,11 +149,12 @@
       const key = document.getElementById('brilliantdb_api_key')?.value.trim();
       const base = document.getElementById('brilliantdb_base_url')?.value.trim();
       if (!key || !base) return setStatus('Brilliant DB: заполните API Key и Endpoint Base');
+      cardStatus('statusBrilliant','loading','Проверка...');
       fetch('api/test-proxy.php?provider=brilliantdb',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, base_url:base, collection})
       }).then(r=>r.json()).then(j=>{
-        setStatus(j.ok? 'Brilliant DB OK ('+j.status+')' : 'Brilliant DB ERROR: '+(j.error||j.status));
+        cardStatus('statusBrilliant', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
       }).catch(()=>setStatus('Brilliant DB: сеть/сервер недоступны'));
     });
 
