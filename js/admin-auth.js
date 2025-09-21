@@ -122,9 +122,12 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleLogin(event) {
     event.preventDefault();
     
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const rememberMe = document.getElementById('remember-me').checked;
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const rememberInput = document.getElementById('remember') || document.getElementById('remember-me');
+    const username = usernameInput ? usernameInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
+    const rememberMe = !!(rememberInput && rememberInput.checked);
     
     // Validate input
     if (!username || !password) {
