@@ -109,6 +109,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
+    // Also handle explicit click on the submit button (for browsers blocking submit handlers)
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function(e) {
+            if (!loginBtn.disabled) {
+                handleLogin(e);
+            }
+        });
+    }
     
     // Add enter key handler
     document.addEventListener('keypress', function(e) {
