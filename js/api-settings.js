@@ -92,10 +92,12 @@
       const base = document.getElementById('airtable_base_id')?.value.trim();
       const table = document.getElementById('airtable_table')?.value.trim();
       cardStatus('statusAirtable','loading','Проверка...');
-      // Если поля пустые — используем серверную конфигурацию (api/config.php)
-      const url = (key && base && table)
-        ? `/api/test-proxy.php?provider=airtable&api_key=${encodeURIComponent(key)}&base_id=${encodeURIComponent(base)}&table=${encodeURIComponent(table)}`
-        : `/api/test-proxy.php?provider=airtable`;
+      // Собираем параметры из доступных полей. Если есть только key — отработает whoami на сервере.
+      const params = new URLSearchParams({ provider:'airtable' });
+      if (key) params.append('api_key', key);
+      if (base) params.append('base_id', base);
+      if (table) params.append('table', table);
+      const url = `/api/test-proxy.php?${params.toString()}`;
       fetch(url, { method:'GET', mode:'cors', credentials:'same-origin', headers:{ 'Accept':'application/json' }})
       .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; })
       .then(j=>{
