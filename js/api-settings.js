@@ -153,6 +153,12 @@
     });
 
     load();
+    // Safety: prevent bubbling from header action buttons from triggering navigation
+    document.querySelectorAll('.api-actions').forEach(el => {
+      el.addEventListener('click', function(e){
+        if (e.target.closest('button')) { e.preventDefault(); e.stopPropagation(); }
+      }, true);
+    });
   }
 
   if (document.readyState === 'loading') {

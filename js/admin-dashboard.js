@@ -58,20 +58,20 @@ function addDashboardAnimations() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
+            // Игнорируем клики, пришедшие из кнопок внутри карточек (API actions)
+            if (e.target.closest('.api-actions')) { return; }
             const href = this.getAttribute('href') || '';
             if (href.startsWith('#')) {
-                // Внутренняя секция
                 e.preventDefault();
                 menuItems.forEach(mi => mi.classList.remove('active'));
                 this.classList.add('active');
                 const section = href.substring(1);
                 loadSection(section);
             } else if (href) {
-                // Внешняя страница — принудительный переход (fallback против перехватов)
                 e.preventDefault();
-                window.location.href = href;
+                window.location.assign(href);
             }
-        });
+        }, true);
     });
 }
 
