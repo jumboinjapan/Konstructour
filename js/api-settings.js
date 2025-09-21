@@ -47,6 +47,12 @@
     function setStatus(msg){ if(statusText){ statusText.textContent = msg; setTimeout(()=>statusText.textContent='', 3000);} }
 
     document.getElementById('btnSaveAll')?.addEventListener('click', save);
+    document.getElementById('btnSaveAirtable')?.addEventListener('click', save);
+    document.getElementById('btnSaveOpenAI')?.addEventListener('click', save);
+    document.getElementById('btnSaveGSheets')?.addEventListener('click', save);
+    document.getElementById('btnSaveGMaps')?.addEventListener('click', save);
+    document.getElementById('btnSaveRecaptcha')?.addEventListener('click', save);
+    document.getElementById('btnSaveBrilliant')?.addEventListener('click', save);
     document.getElementById('btnClear')?.addEventListener('click', clearAll);
     document.getElementById('btnTestAll')?.addEventListener('click', function(){
       // simple local validation

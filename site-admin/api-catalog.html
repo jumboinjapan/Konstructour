@@ -7,7 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="../styles/admin-japanese.css" rel="stylesheet">
-    <style> body{ background: rgb(var(--color-washi)); min-height:100vh; } .api-card{ position:relative; padding-bottom:64px; transition:transform .2s ease, box-shadow .2s ease; } .api-card:hover{ transform: translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,.08);} .api-test{ position:absolute; bottom:16px; left:16px; }</style>
+    <style>
+      body{ background: rgb(var(--color-washi)); min-height:100vh; }
+      .api-card{ transition:transform .2s ease, box-shadow .2s ease; }
+      .api-card:hover{ transform: translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,.08); }
+      .api-actions .btn-japanese{ padding:8px 14px; font-size:12px; }
+    </style>
 </head>
 <body>
     <div class="dashboard-grid">
@@ -46,7 +51,13 @@
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="airtable">
                 <!-- Airtable -->
                 <div class="glass-panel p-6 rounded-lg api-card">
-                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
+                        <div class="api-actions flex items-center gap-2">
+                            <button id="btnSaveAirtable" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnTestAirtable" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                        </div>
+                    </div>
                     <div class="form-grid">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
@@ -62,12 +73,17 @@
                             <input id="airtable_table" type="text" class="input-japanese" placeholder="Tours">
                         </div>
                     </div>
-                    <div class="api-test"><button id="btnTestAirtable" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test Airtable</button></div>
                 </div>
 
                 <!-- OpenAI -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="openai">
-                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
+                        <div class="api-actions flex items-center gap-2">
+                            <button id="btnSaveOpenAI" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnTestOpenAI" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                        </div>
+                    </div>
                     <div class="form-grid">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
@@ -78,12 +94,17 @@
                             <input id="openai_model" type="text" class="input-japanese" placeholder="gpt-4o-mini">
                         </div>
                     </div>
-                    <div class="api-test"><button id="btnTestOpenAI" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test OpenAI</button></div>
                 </div>
 
                 <!-- Google Sheets -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="gsheets">
-                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
+                        <div class="api-actions flex items-center gap-2">
+                            <button id="btnSaveGSheets" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnTestGSheets" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                        </div>
+                    </div>
                     <div class="form-grid">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
@@ -94,12 +115,17 @@
                             <input id="gsheets_spreadsheet_id" type="text" class="input-japanese" placeholder="1AbC...">
                         </div>
                     </div>
-                    <div class="api-test"><button id="btnTestGSheets" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test Google Sheets</button></div>
                 </div>
 
                 <!-- Google Maps -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="gmaps">
-                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
+                        <div class="api-actions flex items-center gap-2">
+                            <button id="btnSaveGMaps" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnTestGMaps" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                        </div>
+                    </div>
                     <div class="form-grid">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Maps API Key</label>
@@ -111,12 +137,17 @@
                             <input id="gmaps_region" type="text" class="input-japanese" placeholder="JP">
                         </div>
                     </div>
-                    <div class="api-test"><button id="btnTestGMaps" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test Google Maps</button></div>
                 </div>
 
                 <!-- Google reCAPTCHA -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="recaptcha">
-                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
+                        <div class="api-actions flex items-center gap-2">
+                            <button id="btnSaveRecaptcha" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnTestRecaptcha" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                        </div>
+                    </div>
                     <div class="form-grid">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Site Key</label>
@@ -127,12 +158,17 @@
                             <input id="recaptcha_secret" type="password" class="input-japanese" placeholder="...">
                         </div>
                     </div>
-                    <div class="api-test"><button id="btnTestRecaptcha" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test reCAPTCHA</button></div>
                 </div>
 
                 <!-- Brilliant DB -->
                 <div class="glass-panel p-6 rounded-lg api-card" id="brilliantdb">
-                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant DB</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-light text-gray-800"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant DB</h3>
+                        <div class="api-actions flex items-center gap-2">
+                            <button id="btnSaveBrilliant" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save</button>
+                            <button id="btnTestBrilliant" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                        </div>
+                    </div>
                     <div class="form-grid">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
@@ -147,7 +183,6 @@
                             <input id="brilliantdb_collection" type="text" class="input-japanese" placeholder="tours">
                         </div>
                     </div>
-                    <div class="api-test"><button id="btnTestBrilliant" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test Brilliant DB</button></div>
                 </div>
             </section>
 
