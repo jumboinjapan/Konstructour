@@ -265,6 +265,24 @@ function renderApiStatuses(){
     });
 }
 
+// Poll aggregated server health and mirror to UI
+async function pollHealth(){
+    try {
+        const res = await fetch('/api/health.php', { cache:'no-store' });
+        const data = await res.json();
+        if (!data || !data.results) return;
+        const map = {};
+        Object.keys(data.results).forEach(p => {
+            const r = data.results[p];
+            map[p] = { state: r.ok ? 'ok' : 'err', text: r.text || (r.ok ? 'OK' : 'Ошибка'), ts: (r.checked_at||0) * 1000 };
+        });
+        try { localStorage.setItem('konstructour_api_status', JSON.stringify(map)); } catch(_) {}
+        renderApiStatuses();
+    } catch (e) {
+        // ignore
+    }
+}
+
 // Toggle theme
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -487,9 +505,9 @@ function showError(message) {
 // Start realtime updates
 function startRealtimeUpdates() {
     // Обновляем статистику каждые 30 секунд
-    setInterval(() => {
-        updateRealtimeStats();
-    }, 30000);
+    setInterval(() => { updateRealtimeStats(); }, 30000);
+    // Периодический опрос серверного health (каждые 20с)
+    setInterval(() => { try { pollHealth(); } catch(_) {} }, 20000);
 }
 
 // Update realtime stats
