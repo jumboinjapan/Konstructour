@@ -8,8 +8,9 @@ $CACHE_FILE = __DIR__.'/.health_cache.json';
 
 function respond($data){ echo json_encode($data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); exit; }
 
-// Serve fresh cache if valid
-if (is_file($CACHE_FILE)){
+// Serve fresh cache if valid (unless forced)
+$force = isset($_GET['force']) || isset($_GET['nocache']);
+if (!$force && is_file($CACHE_FILE)){
   $raw = file_get_contents($CACHE_FILE);
   if ($raw){
     $cache = json_decode($raw, true);

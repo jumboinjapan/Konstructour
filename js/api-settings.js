@@ -156,7 +156,7 @@
 
     async function loadHealth(){
       try{
-        const res = await fetch('/api/health.php', { cache:'no-store' });
+        const res = await fetch('/api/health.php?force=1', { cache:'no-store' });
         const j = await res.json();
         if (j && j.results) applyHealthMap(j.results);
       }catch(_){ /* ignore */ }
