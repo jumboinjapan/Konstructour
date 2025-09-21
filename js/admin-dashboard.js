@@ -58,7 +58,8 @@ function addDashboardAnimations() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
-            if (e.target && e.target.closest && e.target.closest('.api-actions')) { e.preventDefault(); return; }
+            // Не блокируем клики по кнопкам в .api-actions; ограничиваем только ссылки внутри .api-actions
+            if (e.target && e.target.closest && e.target.closest('.api-actions') && e.target.closest('a')) { e.preventDefault(); return; }
             const href = this.getAttribute('href') || '';
             if (href.startsWith('#')) {
                 e.preventDefault();

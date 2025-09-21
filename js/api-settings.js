@@ -95,13 +95,16 @@
     const testOpenAI = function(){
       const key = document.getElementById('openai_api_key')?.value.trim();
       const model = document.getElementById('openai_model')?.value.trim();
-      if (!key || !model) return setStatus('OpenAI: заполните API Key и модель');
       cardStatus('statusOpenAI','loading','Проверка...');
-      // Fallback to GET to avoid mod_security blocking POST on some hosts
-      fetch(`/api/test-proxy.php?provider=openai&api_key=${encodeURIComponent(key)}&model=${encodeURIComponent(model)}`)
-      .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
+      const url = key
+        ? `/api/test-proxy.php?provider=openai&api_key=${encodeURIComponent(key)}&model=${encodeURIComponent(model||'gpt-4o-mini')}`
+        : `/api/test-proxy.php?provider=openai`;
+      fetch(url, { method:'GET', mode:'cors', credentials:'same-origin', headers:{ 'Accept':'application/json' }})
+      .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; })
+      .then(j=>{
         cardStatus('statusOpenAI', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>{ cardStatus('statusOpenAI','err','Network error'); setStatus('OpenAI: сеть/сервер недоступны'); });
+      })
+      .catch((err)=>{ console.error('OpenAI test error:', err); cardStatus('statusOpenAI','err','Network error'); setStatus('OpenAI: сеть/сервер недоступны'); });
     };
     document.getElementById('btnTestOpenAI')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); testOpenAI(); });
     // Enter key on fields triggers Test
@@ -158,10 +161,31 @@
         if (e.target.closest('button')) { e.preventDefault(); e.stopPropagation(); }
       }, true);
     });
-    // Global capture guard against accidental nav from API action buttons (Chrome/Safari quirks)
-    const guard = function(e){ if (e.target && e.target.closest && e.target.closest('.api-actions')) { e.preventDefault(); e.stopImmediatePropagation(); return false; } };
-    document.addEventListener('click', guard, true);
-    document.addEventListener('mousedown', guard, true);
+    // Global capture guard: блокируем только переходы по ссылкам внутри .api-actions,
+    // не останавливаем другие клики (чтобы не мешать нашим обработчикам кнопок)
+    document.addEventListener('click', function(e){
+      const anchor = e.target && e.target.closest && e.target.closest('.api-actions a[href]');
+      if (anchor) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+
+    // Robust delegated handlers (если кнопки перерисуются)
+    document.addEventListener('click', function(e){
+      const el = e.target.closest ? e.target.closest('button') : null;
+      if (!el) return;
+      if (el.id === 'btnTestOpenAI') { e.preventDefault(); testOpenAI(); }
+      if (el.id === 'btnSaveOpenAI') { e.preventDefault(); save(); }
+      if (el.id === 'btnTestAirtable') { e.preventDefault(); document.getElementById('statusAirtable') && cardStatus('statusAirtable','loading','Проверка...'); /* оставим текущий обработчик ниже */ }
+      if (el.id === 'btnSaveAirtable') { e.preventDefault(); save(); }
+      if (el.id === 'btnTestGSheets') { e.preventDefault(); document.getElementById('statusGSheets') && cardStatus('statusGSheets','loading','Проверка...'); }
+      if (el.id === 'btnSaveGSheets') { e.preventDefault(); save(); }
+      if (el.id === 'btnTestGMaps') { e.preventDefault(); document.getElementById('statusGMaps') && cardStatus('statusGMaps','loading','Проверка...'); }
+      if (el.id === 'btnSaveGMaps') { e.preventDefault(); save(); }
+      if (el.id === 'btnTestRecaptcha') { e.preventDefault(); document.getElementById('statusRecaptcha') && cardStatus('statusRecaptcha','loading','Проверка...'); }
+      if (el.id === 'btnSaveRecaptcha') { e.preventDefault(); save(); }
+      if (el.id === 'btnTestBrilliant') { e.preventDefault(); document.getElementById('statusBrilliant') && cardStatus('statusBrilliant','loading','Проверка...'); }
+      if (el.id === 'btnSaveBrilliant') { e.preventDefault(); save(); }
+      if (el.id === 'btnSaveAll') { e.preventDefault(); save(); }
+    });
   }
 
   if (document.readyState === 'loading') {
