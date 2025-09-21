@@ -162,7 +162,9 @@
       const base = document.getElementById('brilliantdb_base_url')?.value.trim();
       const collection = document.getElementById('brilliantdb_collection')?.value.trim();
       cardStatus('statusBrilliant','loading','Проверка...');
-      const params = new URLSearchParams({ provider:'brilliantdb' });
+      // Use Brilliant Directories spec if base seems like /api/v2/
+      const useBD = base && /\/api\/v2\/?$/.test(base);
+      const params = new URLSearchParams({ provider: useBD ? 'brilliantdirectory' : 'brilliantdb' });
       if (key) params.append('api_key', key);
       if (base) params.append('base_url', base);
       if (collection) params.append('collection', collection);

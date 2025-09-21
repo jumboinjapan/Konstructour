@@ -178,6 +178,35 @@ switch ($provider) {
     if ($err) respond(false, ['error'=>$err], 502);
     respond($status>=200 && $status<300, ['status'=>$status, 'body'=>json_decode($resp,true)]);
 
+  case 'brilliantdirectory':
+    // Brilliant Directories API v2 uses X-Api-Key header and site domain base
+    $key = $payload['api_key'] ?? ($cfg['brilliantdb']['api_key'] ?? '');
+    $base = rtrim($payload['base_url'] ?? ($cfg['brilliantdb']['base_url'] ?? ''), '/');
+    if (!$key || !$base) respond(false, ['error'=>'Missing params'], 400);
+    // Call the base /api/v2 endpoint; many installs return website/key info on 200
+    $url = $base; // expected like https://www.example.com/api/v2/
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+      CURLOPT_HTTPHEADER => [
+        'Accept: application/json',
+        'X-Api-Key: '.$key,
+      ],
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_TIMEOUT => 20,
+    ]);
+    $resp = curl_exec($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_error($ch);
+    curl_close($ch);
+    if ($err) respond(false, ['error'=>$err], 502);
+    $decoded = json_decode($resp,true);
+    if ($status>=200 && $status<300) {
+      respond(true, ['status'=>$status, 'body'=>$decoded]);
+    } else {
+      $msg = isset($decoded['message']) ? $decoded['message'] : 'Upstream error';
+      respond(false, ['status'=>$status, 'error'=>$msg, 'body'=>$decoded], $status ?: 502);
+    }
+
   default:
     respond(false, ['error'=>'Unknown provider'], 400);
 }
