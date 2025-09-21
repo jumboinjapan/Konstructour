@@ -18,16 +18,17 @@ RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://www.konstructour.com/$1 [L,R=301]
 
 # Normalize duplicate slashes in path (avoid Location: //)
-RewriteCond %{REQUEST_URI} ^//+
-RewriteRule ^(.*)$ https://www.konstructour.com/%1 [R=301,L]
+RewriteCond %{REQUEST_URI} ^//+(.*)
+RewriteRule ^ https://www.konstructour.com/%1 [R=301,L]
 
 # Remove trailing slash from URLs (except for directories)
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{THE_REQUEST} \s/+([^?\s]*?)/+(\?[^\s]*)?\s
 RewriteRule ^ /%1%2 [R=301,L]
 
-# Add trailing slash to directories
+# Add trailing slash to directories (but not for root "/")
 RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_URI} !^/$
 RewriteCond %{THE_REQUEST} \s/+([^?\s]*?)(\?[^\s]*)?\s
 RewriteCond %1 !/$
 RewriteRule ^ /%1/ [R=301,L]
