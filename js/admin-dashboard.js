@@ -249,20 +249,32 @@ function renderApiStatuses(){
     if (!list) return;
     let map = {};
     try { map = JSON.parse(localStorage.getItem('konstructour_api_status')||'{}') || {}; } catch(_) {}
-    list.querySelectorAll('[data-provider]').forEach(row => {
+    const rows = Array.from(list.querySelectorAll('[data-provider]'));
+    rows.forEach(row => {
         const provider = row.getAttribute('data-provider');
         const dot = row.querySelector('[data-dot]');
         const text = row.querySelector('[data-text]');
         const entry = map[provider];
         const state = entry && entry.state ? entry.state : 'none';
-        const label = entry && entry.text ? entry.text : '—';
+        let label = entry && entry.text ? entry.text : 'Ожидание';
         let color = 'bg-gray-300';
         if (state === 'ok') color = 'bg-green-500';
         else if (state === 'err') color = 'bg-red-500';
         else if (state === 'loading') color = 'bg-purple-500';
         dot.className = 'w-2 h-2 rounded-full mr-2 ' + color;
+        if (state === 'ok') label = 'Подключено';
+        if (state === 'none') label = 'Ожидание';
         text.textContent = label;
     });
+    // Move green (ok) rows to the top
+    const weight = s => (s==='ok'?0:(s==='loading'?1:(s==='err'?2:3)));
+    rows
+      .sort((a,b)=>{
+        const sa = (map[a.getAttribute('data-provider')]||{}).state || 'none';
+        const sb = (map[b.getAttribute('data-provider')]||{}).state || 'none';
+        return weight(sa) - weight(sb);
+      })
+      .forEach(row => list.appendChild(row));
 }
 
 // Poll aggregated server health and mirror to UI
