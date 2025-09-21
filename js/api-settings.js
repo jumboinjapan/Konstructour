@@ -62,14 +62,22 @@
       section.addEventListener('focusin', restart);
     }
 
-    function save(){
-      const data = {};
-      fields.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) data[id] = el.value;
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      setStatus('Настройки сохранены');
+    async function save(){
+      // collect current visible fields and submit to server config-store
+      const payload = {};
+      const put = (prov, map)=>{ payload[prov] = map; };
+      put('openai', { api_key: document.getElementById('openai_api_key')?.value.trim(), model: document.getElementById('openai_model')?.value.trim() });
+      put('airtable', { api_key: document.getElementById('airtable_api_key')?.value.trim(), base_id: document.getElementById('airtable_base_id')?.value.trim(), table: document.getElementById('airtable_table')?.value.trim() });
+      put('gsheets', { api_key: document.getElementById('gsheets_api_key')?.value.trim(), spreadsheet_id: document.getElementById('gsheets_spreadsheet_id')?.value.trim() });
+      put('gmaps', { api_key: document.getElementById('gmaps_api_key')?.value.trim() });
+      put('recaptcha', { site_key: document.getElementById('recaptcha_site_key')?.value.trim(), secret: document.getElementById('recaptcha_secret')?.value.trim() });
+      put('brilliantdb', { api_key: document.getElementById('brilliantdb_api_key')?.value.trim(), base_url: document.getElementById('brilliantdb_base_url')?.value.trim(), collection: document.getElementById('brilliantdb_collection')?.value.trim() });
+      try{
+        const res = await fetch('/api/config-store.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload), credentials:'same-origin' });
+        const j = await res.json();
+        if (j && j.ok){ setStatus('Серверный ключ сохранён'); loadServerKeyBadges(); }
+        else { setStatus('Ошибка сохранения: '+(j?.error||'')); }
+      }catch(e){ setStatus('Сеть недоступна при сохранении'); }
     }
 
     function clearAll(){
