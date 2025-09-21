@@ -25,7 +25,7 @@
                 <nav class="space-y-2">
                     <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор</a>
                     <a href="api-catalog.html" class="menu-item active sidebar-link"><i class="fas fa-list mr-3 text-gray-600"></i>Каталог API</a>
-                    <a href="#" id="openSettings" class="sidebar-link"><i class="fas fa-key mr-3 text-gray-600"></i>API настройки</a>
+                    
                 </nav>
             </div>
         </aside>
@@ -153,20 +153,7 @@
     </div>
 
     <script src="../js/admin-auth.js"></script>
-    <script>
-        // кнопка в сайдбаре открывает страницу настроек
-        document.getElementById('openSettings')?.addEventListener('click', function(e){
-            e.preventDefault();
-            window.location.href = 'api-settings.html';
-        });
-        // заглушки для локальных тестов
-        document.querySelectorAll('[data-test]')?.forEach(btn=>{
-            btn.addEventListener('click', function(){
-                const provider = this.getAttribute('data-test');
-                alert('Тест '+provider+': проверка будет реализована после подключения бэкенда.');
-            });
-        });
-    </script>
+    <script src="../js/api-settings.js"></script>
 </body>
 </html>
 
