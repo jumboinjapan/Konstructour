@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konstructour — API настройки</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../styles/admin-japanese.css" rel="stylesheet">
+    <style>
+        body { background: rgb(var(--color-washi)); min-height: 100vh; }
+        .form-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; }
+        @media(min-width: 768px){ .form-grid { grid-template-columns: 1fr 1fr; } }
+        .hint { font-size: 12px; color: #6b7280; }
+    </style>
+    <script>
+        (function(){ const saved = localStorage.getItem('theme'); if(saved){ document.documentElement.setAttribute('data-theme', saved); }})();
+    </script>
+</head>
+<body>
+    <div class="dashboard-grid">
+        <!-- Sidebar -->
+        <aside class="sidebar texture-wood">
+            <div class="p-6">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mr-3">
+                        <svg class="w-8 h-8 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-light text-gray-800">Konstructour</h1>
+                        <p class="text-xs text-gray-600">Site Admin</p>
+                    </div>
+                </div>
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор</a>
+                    <a href="api-settings.html" class="menu-item active sidebar-link"><i class="fas fa-key mr-3 text-gray-600"></i>API настройки</a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="p-8">
+            <header class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-3xl font-light text-gray-800 mb-1">API настройки</h2>
+                        <p class="text-gray-600">Секреты хранятся только в браузере (localStorage)</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button id="btnSaveAll" class="btn-japanese accent"><i class="fas fa-save mr-2"></i>Сохранить все</button>
+                        <button id="btnClear" class="btn-japanese"><i class="fas fa-eraser mr-2"></i>Очистить</button>
+                    </div>
+                </div>
+            </header>
+
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Airtable -->
+                <div class="glass-panel p-6 rounded-lg">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="airtable_api_key" type="password" class="input-japanese" placeholder="pat...">
+                            <p class="hint">Личный токен (PAT). Рекомендуется доступ read/write только к нужным базам.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Base ID</label>
+                            <input id="airtable_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX">
+                        </div>
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Table</label>
+                            <input id="airtable_table" type="text" class="input-japanese" placeholder="Tours">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OpenAI -->
+                <div class="glass-panel p-6 rounded-lg">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="openai_api_key" type="password" class="input-japanese" placeholder="sk-...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Модель</label>
+                            <input id="openai_model" type="text" class="input-japanese" placeholder="gpt-4o-mini">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Sheets -->
+                <div class="glass-panel p-6 rounded-lg">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="gsheets_api_key" type="password" class="input-japanese" placeholder="AIza...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Spreadsheet ID</label>
+                            <input id="gsheets_spreadsheet_id" type="text" class="input-japanese" placeholder="1AbC...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Maps -->
+                <div class="glass-panel p-6 rounded-lg">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Maps API Key</label>
+                            <input id="gmaps_api_key" type="password" class="input-japanese" placeholder="AIza...">
+                            <p class="hint">Ограничьте домены: konstructour.com, *.konstructour.com</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Регион</label>
+                            <input id="gmaps_region" type="text" class="input-japanese" placeholder="JP">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google reCAPTCHA -->
+                <div class="glass-panel p-6 rounded-lg">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Site Key</label>
+                            <input id="recaptcha_site_key" type="text" class="input-japanese" placeholder="...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+                            <input id="recaptcha_secret" type="password" class="input-japanese" placeholder="...">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="mt-8 flex items-center space-x-3">
+                <button id="btnTestAll" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Проверить конфиг (локально)</button>
+                <span id="statusText" class="text-sm text-gray-600"></span>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/admin-auth.js"></script>
+    <script src="../js/api-settings.js"></script>
+</body>
+</html>
+
+
