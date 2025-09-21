@@ -61,6 +61,49 @@
       }
     });
 
+    // Provider-specific test buttons (client-side heuristics only)
+    document.getElementById('btnTestAirtable')?.addEventListener('click', function(){
+      const key = document.getElementById('airtable_api_key')?.value.trim();
+      const base = document.getElementById('airtable_base_id')?.value.trim();
+      const table = document.getElementById('airtable_table')?.value.trim();
+      if (!key || !base || !table) return setStatus('Airtable: заполните API Key, Base ID и Table');
+      setStatus('Airtable: ключи сохранены локально. Для реальной проверки нужен серверный прокси.');
+    });
+
+    document.getElementById('btnTestOpenAI')?.addEventListener('click', function(){
+      const key = document.getElementById('openai_api_key')?.value.trim();
+      const model = document.getElementById('openai_model')?.value.trim();
+      if (!key || !model) return setStatus('OpenAI: заполните API Key и модель');
+      setStatus('OpenAI: ключ сохранён локально. Рекомендуется серверный вызов через прокси.');
+    });
+
+    document.getElementById('btnTestGSheets')?.addEventListener('click', function(){
+      const key = document.getElementById('gsheets_api_key')?.value.trim();
+      const sheet = document.getElementById('gsheets_spreadsheet_id')?.value.trim();
+      if (!key || !sheet) return setStatus('Google Sheets: заполните API Key и Spreadsheet ID');
+      setStatus('Google Sheets: базовая проверка пройдена локально. Для записи нужен сервисный аккаунт.');
+    });
+
+    document.getElementById('btnTestGMaps')?.addEventListener('click', function(){
+      const key = document.getElementById('gmaps_api_key')?.value.trim();
+      if (!key) return setStatus('Google Maps: заполните API Key');
+      setStatus('Google Maps: ключ сохранён. Ограничьте ключ по доменам.');
+    });
+
+    document.getElementById('btnTestRecaptcha')?.addEventListener('click', function(){
+      const siteKey = document.getElementById('recaptcha_site_key')?.value.trim();
+      const secret = document.getElementById('recaptcha_secret')?.value.trim();
+      if (!siteKey || !secret) return setStatus('reCAPTCHA: заполните Site Key и Secret');
+      setStatus('reCAPTCHA: ключи сохранены. Сервер должен валидировать токен.');
+    });
+
+    document.getElementById('btnTestBrilliant')?.addEventListener('click', function(){
+      const key = document.getElementById('brilliantdb_api_key')?.value.trim();
+      const base = document.getElementById('brilliantdb_base_url')?.value.trim();
+      if (!key || !base) return setStatus('Brilliant DB: заполните API Key и Endpoint Base');
+      setStatus('Brilliant DB: ключи сохранены локально. Для реального теста добавим серверный эндпоинт.');
+    });
+
     load();
   });
 })();
