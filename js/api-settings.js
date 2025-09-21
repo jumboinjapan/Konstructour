@@ -160,12 +160,19 @@
     document.getElementById('btnTestBrilliant')?.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation();
       const key = document.getElementById('brilliantdb_api_key')?.value.trim();
       const base = document.getElementById('brilliantdb_base_url')?.value.trim();
-      if (!key || !base) return setStatus('Brilliant DB: заполните API Key и Endpoint Base');
+      const collection = document.getElementById('brilliantdb_collection')?.value.trim();
       cardStatus('statusBrilliant','loading','Проверка...');
-      fetch(`/api/test-proxy.php?provider=brilliantdb&api_key=${encodeURIComponent(key)}&base_url=${encodeURIComponent(base)}&collection=${encodeURIComponent(collection)}`)
-      .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
+      const params = new URLSearchParams({ provider:'brilliantdb' });
+      if (key) params.append('api_key', key);
+      if (base) params.append('base_url', base);
+      if (collection) params.append('collection', collection);
+      const url = `/api/test-proxy.php?${params.toString()}`;
+      fetch(url, { method:'GET', mode:'cors', credentials:'same-origin', headers:{ 'Accept':'application/json' }})
+      .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; })
+      .then(j=>{
         cardStatus('statusBrilliant', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>{ cardStatus('statusBrilliant','err','Network error'); setStatus('Brilliant DB: сеть/сервер недоступны'); });
+      })
+      .catch(()=>{ cardStatus('statusBrilliant','err','Network error'); setStatus('Brilliant Directory: сеть/сервер недоступны'); });
     });
 
     load();
