@@ -86,12 +86,12 @@
       const table = document.getElementById('airtable_table')?.value.trim();
       if (!key || !base || !table) return setStatus('Airtable: заполните API Key, Base ID и Table');
       cardStatus('statusAirtable','loading','Проверка...');
-      fetch('api/test-proxy.php?provider=airtable',{
+      fetch('/api/test-proxy.php?provider=airtable',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, base_id:base, table})
-      }).then(r=>r.json()).then(j=>{
+      }).then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
         cardStatus('statusAirtable', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>setStatus('Airtable: сеть/сервер недоступны'));
+      }).catch(()=>{ cardStatus('statusAirtable','err','Network error'); setStatus('Airtable: сеть/сервер недоступны'); });
     });
 
     document.getElementById('btnTestOpenAI')?.addEventListener('click', function(){
@@ -99,12 +99,12 @@
       const model = document.getElementById('openai_model')?.value.trim();
       if (!key || !model) return setStatus('OpenAI: заполните API Key и модель');
       cardStatus('statusOpenAI','loading','Проверка...');
-      fetch('api/test-proxy.php?provider=openai',{
+      fetch('/api/test-proxy.php?provider=openai',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, model})
-      }).then(r=>r.json()).then(j=>{
+      }).then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
         cardStatus('statusOpenAI', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>setStatus('OpenAI: сеть/сервер недоступны'));
+      }).catch(()=>{ cardStatus('statusOpenAI','err','Network error'); setStatus('OpenAI: сеть/сервер недоступны'); });
     });
 
     document.getElementById('btnTestGSheets')?.addEventListener('click', function(){
@@ -112,24 +112,24 @@
       const sheet = document.getElementById('gsheets_spreadsheet_id')?.value.trim();
       if (!key || !sheet) return setStatus('Google Sheets: заполните API Key и Spreadsheet ID');
       cardStatus('statusGSheets','loading','Проверка...');
-      fetch('api/test-proxy.php?provider=gsheets',{
+      fetch('/api/test-proxy.php?provider=gsheets',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, spreadsheet_id:sheet})
-      }).then(r=>r.json()).then(j=>{
+      }).then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
         cardStatus('statusGSheets', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>setStatus('Sheets: сеть/сервер недоступны'));
+      }).catch(()=>{ cardStatus('statusGSheets','err','Network error'); setStatus('Sheets: сеть/сервер недоступны'); });
     });
 
     document.getElementById('btnTestGMaps')?.addEventListener('click', function(){
       const key = document.getElementById('gmaps_api_key')?.value.trim();
       if (!key) return setStatus('Google Maps: заполните API Key');
       cardStatus('statusGMaps','loading','Проверка...');
-      fetch('api/test-proxy.php?provider=gmaps',{
+      fetch('/api/test-proxy.php?provider=gmaps',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key})
-      }).then(r=>r.json()).then(j=>{
+      }).then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
         cardStatus('statusGMaps', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>setStatus('Maps: сеть/сервер недоступны'));
+      }).catch(()=>{ cardStatus('statusGMaps','err','Network error'); setStatus('Maps: сеть/сервер недоступны'); });
     });
 
     document.getElementById('btnTestRecaptcha')?.addEventListener('click', function(){
@@ -137,12 +137,12 @@
       const secret = document.getElementById('recaptcha_secret')?.value.trim();
       if (!siteKey || !secret) return setStatus('reCAPTCHA: заполните Site Key и Secret');
       cardStatus('statusRecaptcha','loading','Проверка...');
-      fetch('api/test-proxy.php?provider=recaptcha',{
+      fetch('/api/test-proxy.php?provider=recaptcha',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({site_key:siteKey, secret})
-      }).then(r=>r.json()).then(j=>{
+      }).then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
         cardStatus('statusRecaptcha', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>setStatus('reCAPTCHA: сеть/сервер недоступны'));
+      }).catch(()=>{ cardStatus('statusRecaptcha','err','Network error'); setStatus('reCAPTCHA: сеть/сервер недоступны'); });
     });
 
     document.getElementById('btnTestBrilliant')?.addEventListener('click', function(){
@@ -150,12 +150,12 @@
       const base = document.getElementById('brilliantdb_base_url')?.value.trim();
       if (!key || !base) return setStatus('Brilliant DB: заполните API Key и Endpoint Base');
       cardStatus('statusBrilliant','loading','Проверка...');
-      fetch('api/test-proxy.php?provider=brilliantdb',{
+      fetch('/api/test-proxy.php?provider=brilliantdb',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({api_key:key, base_url:base, collection})
-      }).then(r=>r.json()).then(j=>{
+      }).then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
         cardStatus('statusBrilliant', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>setStatus('Brilliant DB: сеть/сервер недоступны'));
+      }).catch(()=>{ cardStatus('statusBrilliant','err','Network error'); setStatus('Brilliant DB: сеть/сервер недоступны'); });
     });
 
     load();
