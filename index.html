@@ -50,22 +50,8 @@
             position: relative;
             overflow-x: hidden;
         }
-        /* Sakura particles */
-        .sakura-particle { position: fixed; width: 10px; height: 10px; background: radial-gradient(circle, rgba(var(--color-hatsune) / 0.8), rgba(var(--color-hatsune) / 0.4)); border-radius: 50% 0; animation: sakura-fall 10s linear infinite; pointer-events: none; z-index: 1; }
-        @keyframes sakura-fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
-        /* Wave ornament */
-        .wave-pattern { position: absolute; bottom: 0; left: 0; right: 0; height: 120px; background:
-            repeating-radial-gradient(circle at 0% 100%, transparent 0, rgba(var(--color-aizome) / 0.08) 40px, transparent 80px),
-            repeating-radial-gradient(circle at 100% 100%, transparent 0, rgba(var(--color-hatsune) / 0.08) 40px, transparent 80px); z-index: 1; }
     </style>
     <div class="relative py-20">
-        <!-- Sakura particles -->
-        <div class="sakura-particle" style="left: 12%; animation-delay: 0s;"></div>
-        <div class="sakura-particle" style="left: 32%; animation-delay: 3s;"></div>
-        <div class="sakura-particle" style="left: 52%; animation-delay: 6s;"></div>
-        <div class="sakura-particle" style="left: 72%; animation-delay: 2s;"></div>
-        <div class="sakura-particle" style="left: 88%; animation-delay: 5s;"></div>
-
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-center">
                 <div class="login-container glass-panel texture-washi rounded-lg p-10 w-full max-w-xl">
@@ -94,8 +80,6 @@
             </div>
         </div>
 
-        <!-- Wave ornament bottom -->
-        <div class="wave-pattern"></div>
     </div>
 
     <!-- Features Section -->
