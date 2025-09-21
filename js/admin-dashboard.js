@@ -147,6 +147,15 @@ function setupEventListeners() {
             deleteTour(e.target.closest('tr').dataset.tourId);
         }
     });
+
+    // Явный обработчик для ссылки Каталог API (надёжный fallback)
+    const apiCatalogLink = document.getElementById('linkApiCatalog');
+    if (apiCatalogLink) {
+        apiCatalogLink.addEventListener('click', function(e){
+            e.preventDefault();
+            window.location.assign(this.getAttribute('href'));
+        });
+    }
 }
 
 // Load dashboard data
