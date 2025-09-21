@@ -19,10 +19,28 @@ if (is_file($CACHE_FILE)){
   }
 }
 
+// Optional server-side secrets presence
+$cfg = [];
+if (file_exists(__DIR__.'/config.php')) {
+  $cfg = require __DIR__.'/config.php';
+}
+$presence = [
+  'openai' => !empty($cfg['openai']['api_key'] ?? ''),
+  'airtable' => !empty($cfg['airtable']['api_key'] ?? ''),
+  'gsheets' => !empty($cfg['gsheets']['api_key'] ?? ''),
+  'gmaps' => !empty($cfg['gmaps']['api_key'] ?? ''),
+  'recaptcha' => !empty($cfg['recaptcha']['secret'] ?? ''),
+  'brilliantdirectory' => !empty($cfg['brilliantdb']['api_key'] ?? '') && !empty($cfg['brilliantdb']['base_url'] ?? ''),
+];
+
 // Build probes (use existing test-proxy for consistency)
 $providers = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdirectory'];
 $results = [];
 foreach ($providers as $p){
+  if (empty($presence[$p])) { // not configured -> waiting state
+    $results[$p] = [ 'ok' => null, 'text' => 'Ожидание', 'checked_at' => time() ];
+    continue;
+  }
   $url = '/api/test-proxy.php?provider='.$p;
   $full = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $url;
   $ch = curl_init($full);

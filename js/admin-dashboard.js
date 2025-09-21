@@ -286,7 +286,10 @@ async function pollHealth(){
         const map = {};
         Object.keys(data.results).forEach(p => {
             const r = data.results[p];
-            map[p] = { state: r.ok ? 'ok' : 'err', text: r.text || (r.ok ? 'OK' : 'Ошибка'), ts: (r.checked_at||0) * 1000 };
+            let state = 'err';
+            if (r.ok === true) state = 'ok';
+            else if (r.ok === null) state = 'none';
+            map[p] = { state, text: r.text || (state==='ok' ? 'Подключено' : state==='none' ? 'Ожидание' : 'Ошибка'), ts: (r.checked_at||0) * 1000 };
         });
         try { localStorage.setItem('konstructour_api_status', JSON.stringify(map)); } catch(_) {}
         renderApiStatuses();
