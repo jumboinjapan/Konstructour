@@ -42,8 +42,8 @@ if (file_exists(__DIR__.'/config.php')) {
 switch ($provider) {
   case 'airtable':
     $key = $payload['api_key'] ?? ($cfg['airtable']['api_key'] ?? '');
-    $base = $payload['base_id'] ?? '';
-    $table = $payload['table'] ?? '';
+    $base = $payload['base_id'] ?? ($cfg['airtable']['base_id'] ?? '');
+    $table = $payload['table'] ?? ($cfg['airtable']['table'] ?? '');
     if (!$key || !$base || !$table) respond(false, ['error'=>'Missing params'], 400);
     $url = "https://api.airtable.com/v0/{$base}/".rawurlencode($table)."?maxRecords=1";
     $ch = curl_init($url);

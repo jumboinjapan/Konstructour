@@ -84,12 +84,17 @@
       const key = document.getElementById('airtable_api_key')?.value.trim();
       const base = document.getElementById('airtable_base_id')?.value.trim();
       const table = document.getElementById('airtable_table')?.value.trim();
-      if (!key || !base || !table) return setStatus('Airtable: заполните API Key, Base ID и Table');
       cardStatus('statusAirtable','loading','Проверка...');
-      fetch(`/api/test-proxy.php?provider=airtable&api_key=${encodeURIComponent(key)}&base_id=${encodeURIComponent(base)}&table=${encodeURIComponent(table)}`)
-      .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; }).then(j=>{
+      // Если поля пустые — используем серверную конфигурацию (api/config.php)
+      const url = (key && base && table)
+        ? `/api/test-proxy.php?provider=airtable&api_key=${encodeURIComponent(key)}&base_id=${encodeURIComponent(base)}&table=${encodeURIComponent(table)}`
+        : `/api/test-proxy.php?provider=airtable`;
+      fetch(url, { method:'GET', mode:'cors', credentials:'same-origin', headers:{ 'Accept':'application/json' }})
+      .then(async r=>{ let j; try{ j=await r.json(); }catch(e){ j={ok:false,status:r.status,error:'Invalid JSON'} } return j; })
+      .then(j=>{
         cardStatus('statusAirtable', j.ok?'ok':'err', j.ok? 'OK' : (j.error||('HTTP '+j.status)) );
-      }).catch(()=>{ cardStatus('statusAirtable','err','Network error'); setStatus('Airtable: сеть/сервер недоступны'); });
+      })
+      .catch((err)=>{ console.error('Airtable test error:', err); cardStatus('statusAirtable','err','Network error'); setStatus('Airtable: сеть/сервер недоступны'); });
     });
 
     const testOpenAI = function(){
