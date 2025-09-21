@@ -44,19 +44,19 @@
     <style>
         body {
             background:
-                linear-gradient(135deg, rgba(179, 38, 30, 0.12) 0%, rgba(38, 67, 120, 0.12) 100%),
-                rgba(254, 251, 243, 1);
+                linear-gradient(135deg, rgba(var(--color-hatsune) / 0.12) 0%, rgba(var(--color-aizome) / 0.12) 100%),
+                rgb(var(--color-washi));
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
         }
         /* Sakura particles */
-        .sakura-particle { position: fixed; width: 10px; height: 10px; background: radial-gradient(circle, rgba(179,38,30,0.8), rgba(179,38,30,0.4)); border-radius: 50% 0; animation: sakura-fall 10s linear infinite; pointer-events: none; z-index: 1; }
+        .sakura-particle { position: fixed; width: 10px; height: 10px; background: radial-gradient(circle, rgba(var(--color-hatsune) / 0.8), rgba(var(--color-hatsune) / 0.4)); border-radius: 50% 0; animation: sakura-fall 10s linear infinite; pointer-events: none; z-index: 1; }
         @keyframes sakura-fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
         /* Wave ornament */
         .wave-pattern { position: absolute; bottom: 0; left: 0; right: 0; height: 120px; background:
-            repeating-radial-gradient(circle at 0% 100%, transparent 0, rgba(38, 67, 120, 0.08) 40px, transparent 80px),
-            repeating-radial-gradient(circle at 100% 100%, transparent 0, rgba(179, 38, 30, 0.08) 40px, transparent 80px); z-index: 1; }
+            repeating-radial-gradient(circle at 0% 100%, transparent 0, rgba(var(--color-aizome) / 0.08) 40px, transparent 80px),
+            repeating-radial-gradient(circle at 100% 100%, transparent 0, rgba(var(--color-hatsune) / 0.08) 40px, transparent 80px); z-index: 1; }
     </style>
     <div class="relative py-20">
         <!-- Sakura particles -->
@@ -71,9 +71,9 @@
                 <div class="login-container glass-panel texture-washi rounded-lg p-10 w-full max-w-xl">
                     <div class="text-center mb-8">
                         <div class="inline-flex items-center justify-center w-20 h-20 mb-6 relative">
-                            <div class="absolute inset-0 rounded-full bg-gradient-to-br from-red-400 to-indigo-500 opacity-20 blur-xl"></div>
+                            <div class="absolute inset-0 rounded-full opacity-20 blur-xl" style="background: linear-gradient(135deg, rgba(var(--color-hatsune) / 0.8), rgba(var(--color-aizome) / 0.8));"></div>
                             <div class="relative w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center">
-                                <svg class="w-10 h-10 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <svg class="w-10 h-10" style="color: rgb(var(--color-aizome));" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7v5l3 3"/>
                                 </svg>
