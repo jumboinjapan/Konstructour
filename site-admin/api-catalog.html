@@ -31,113 +31,123 @@
         </aside>
         <main class="p-8">
             <header class="mb-8">
-                <h2 class="text-3xl font-light text-gray-800 mb-1">Каталог доступных API</h2>
-                <p class="text-gray-600">Справочная информация и ссылки на документацию</p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-3xl font-light text-gray-800 mb-1">API настройки</h2>
+                        <p class="text-gray-600">Секреты хранятся только в браузере (localStorage)</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button id="btnSaveAll" class="btn-japanese accent"><i class="fas fa-save mr-2"></i>Сохранить все</button>
+                        <button id="btnClear" class="btn-japanese"><i class="fas fa-eraser mr-2"></i>Очистить</button>
+                    </div>
+                </div>
             </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="airtable">
                 <!-- Airtable -->
-                <div class="api-card glass-panel p-6 rounded-lg">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
-                        <a href="https://airtable.com/developers" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">Хранилище табличных данных с удобной схемой API для CRUD операций.</p>
-                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
-                        <li>Быстрый CRUD по Base/Table</li>
-                        <li>ideal для прототипов и справочников</li>
-                    </ul>
-                    <div class="mt-4 flex items-center space-x-3">
-                        <a href="api-settings.html#airtable" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
-                        <button data-test="airtable" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                <div class="glass-panel p-6 rounded-lg">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="airtable_api_key" type="password" class="input-japanese" placeholder="pat...">
+                            <p class="hint">Личный токен (PAT). Рекомендуется доступ read/write только к нужным базам.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Base ID</label>
+                            <input id="airtable_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX">
+                        </div>
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Table</label>
+                            <input id="airtable_table" type="text" class="input-japanese" placeholder="Tours">
+                        </div>
                     </div>
                 </div>
 
                 <!-- OpenAI -->
-                <div class="api-card glass-panel p-6 rounded-lg">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
-                        <a href="https://platform.openai.com/docs" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">Модели генерации текста и анализа данных (Chat Completions, Embeddings).</p>
-                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
-                        <li>Чаты, резюмирование, классификация</li>
-                        <li>Embeddings для поиска и рекомендаций</li>
-                    </ul>
-                    <div class="mt-4 flex items-center space-x-3">
-                        <a href="api-settings.html#openai" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
-                        <button data-test="openai" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                <div class="glass-panel p-6 rounded-lg" id="openai">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="openai_api_key" type="password" class="input-japanese" placeholder="sk-...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Модель</label>
+                            <input id="openai_model" type="text" class="input-japanese" placeholder="gpt-4o-mini">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Google Sheets -->
-                <div class="api-card glass-panel p-6 rounded-lg">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
-                        <a href="https://developers.google.com/sheets/api" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">Чтение/запись табличных данных в Google таблицах.</p>
-                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
-                        <li>Публичное чтение по API Key</li>
-                        <li>Запись через сервисный аккаунт</li>
-                    </ul>
-                    <div class="mt-4 flex items-center space-x-3">
-                        <a href="api-settings.html#gsheets" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
-                        <button data-test="gsheets" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                <div class="glass-panel p-6 rounded-lg" id="gsheets">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="gsheets_api_key" type="password" class="input-japanese" placeholder="AIza...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Spreadsheet ID</label>
+                            <input id="gsheets_spreadsheet_id" type="text" class="input-japanese" placeholder="1AbC...">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Google Maps -->
-                <div class="api-card glass-panel p-6 rounded-lg">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
-                        <a href="https://developers.google.com/maps/documentation" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">Картографические сервисы, геокодинг, маршруты.</p>
-                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
-                        <li>Ограничение ключа по доменам</li>
-                        <li>Сенситивные вызовы через прокси</li>
-                    </ul>
-                    <div class="mt-4 flex items-center space-x-3">
-                        <a href="api-settings.html#gmaps" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
-                        <button data-test="gmaps" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                <div class="glass-panel p-6 rounded-lg" id="gmaps">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Maps API Key</label>
+                            <input id="gmaps_api_key" type="password" class="input-japanese" placeholder="AIza...">
+                            <p class="hint">Ограничьте домены: konstructour.com, *.konstructour.com</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Регион</label>
+                            <input id="gmaps_region" type="text" class="input-japanese" placeholder="JP">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Google reCAPTCHA -->
-                <div class="api-card glass-panel p-6 rounded-lg">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
-                        <a href="https://developers.google.com/recaptcha" target="_blank" class="text-sm text-indigo-600 hover:underline">Документация</a>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">Защита форм от ботов (v2/v3/Enterprise).</p>
-                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
-                        <li>Site key на клиенте</li>
-                        <li>Secret — на сервере для валидации</li>
-                    </ul>
-                    <div class="mt-4 flex items-center space-x-3">
-                        <a href="api-settings.html#recaptcha" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
-                        <button data-test="recaptcha" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                <div class="glass-panel p-6 rounded-lg" id="recaptcha">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Site Key</label>
+                            <input id="recaptcha_site_key" type="text" class="input-japanese" placeholder="...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+                            <input id="recaptcha_secret" type="password" class="input-japanese" placeholder="...">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Brilliant DB -->
-                <div class="api-card glass-panel p-6 rounded-lg">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-medium text-gray-800"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant DB</h3>
-                        <a href="https://brilliantdatabase.com/" target="_blank" class="text-sm text-indigo-600 hover:underline">Сайт/Docs</a>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">Облачная БД/конструктор с REST API (название по ТЗ). Планируется хранение каталогов/справочников.</p>
-                    <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
-                        <li>CRUD коллекций (REST)</li>
-                        <li>Авторизация по ключу/токену</li>
-                        <li>Кэширование на стороне клиента</li>
-                    </ul>
-                    <div class="mt-4 flex items-center space-x-3">
-                        <a href="api-settings.html#brilliantdb" class="btn-japanese text-sm"><i class="fas fa-key mr-2"></i>Настройки</a>
-                        <button data-test="brilliantdb" class="btn-japanese text-sm"><i class="fas fa-vial mr-2"></i>Тест</button>
+                <div class="glass-panel p-6 rounded-lg" id="brilliantdb">
+                    <h3 class="text-lg font-light text-gray-800 mb-4"><i class="fas fa-database mr-2 text-purple-600"></i>Brilliant DB</h3>
+                    <div class="form-grid">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                            <input id="brilliantdb_api_key" type="password" class="input-japanese" placeholder="...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Endpoint Base</label>
+                            <input id="brilliantdb_base_url" type="text" class="input-japanese" placeholder="https://api.brilliantdb.com/v1/">
+                        </div>
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Collection</label>
+                            <input id="brilliantdb_collection" type="text" class="input-japanese" placeholder="tours">
+                        </div>
                     </div>
                 </div>
+            </section>
+
+            <div class="mt-8 flex items-center space-x-3">
+                <button id="btnTestAll" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Проверить конфиг (локально)</button>
+                <span id="statusText" class="text-sm text-gray-600"></span>
             </div>
         </main>
     </div>
