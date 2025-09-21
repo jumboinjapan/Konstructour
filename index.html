@@ -6,7 +6,7 @@
     <title>Konstructour - Система управления проектами</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="styles/main.css" rel="stylesheet">
+    <link href="styles/admin-japanese.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Navigation -->
@@ -40,27 +40,62 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Hero Section (Japanese style) -->
+    <style>
+        body {
+            background:
+                linear-gradient(135deg, rgba(179, 38, 30, 0.12) 0%, rgba(38, 67, 120, 0.12) 100%),
+                rgba(254, 251, 243, 1);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* Sakura particles */
+        .sakura-particle { position: fixed; width: 10px; height: 10px; background: radial-gradient(circle, rgba(179,38,30,0.8), rgba(179,38,30,0.4)); border-radius: 50% 0; animation: sakura-fall 10s linear infinite; pointer-events: none; z-index: 1; }
+        @keyframes sakura-fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+        /* Wave ornament */
+        .wave-pattern { position: absolute; bottom: 0; left: 0; right: 0; height: 120px; background:
+            repeating-radial-gradient(circle at 0% 100%, transparent 0, rgba(38, 67, 120, 0.08) 40px, transparent 80px),
+            repeating-radial-gradient(circle at 100% 100%, transparent 0, rgba(179, 38, 30, 0.08) 40px, transparent 80px); z-index: 1; }
+    </style>
     <div class="relative py-20">
+        <!-- Sakura particles -->
+        <div class="sakura-particle" style="left: 12%; animation-delay: 0s;"></div>
+        <div class="sakura-particle" style="left: 32%; animation-delay: 3s;"></div>
+        <div class="sakura-particle" style="left: 52%; animation-delay: 6s;"></div>
+        <div class="sakura-particle" style="left: 72%; animation-delay: 2s;"></div>
+        <div class="sakura-particle" style="left: 88%; animation-delay: 5s;"></div>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-                    Добро пожаловать в
-                    <span class="text-blue-600">Konstructour</span>
-                </h1>
-                <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                    Современная система управления строительными проектами с искусственным интеллектом
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="user-admin/" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out transform hover:scale-105">
-                        <i class="fas fa-user mr-2"></i>Войти в User Admin
-                    </a>
-                    <a href="site-admin/" class="bg-white hover:bg-gray-50 text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out transform hover:scale-105">
-                        <i class="fas fa-tools mr-2"></i>Войти в Site Admin
-                    </a>
+            <div class="flex items-center justify-center">
+                <div class="login-container glass-panel texture-washi rounded-lg p-10 w-full max-w-xl">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-20 h-20 mb-6 relative">
+                            <div class="absolute inset-0 rounded-full bg-gradient-to-br from-red-400 to-indigo-500 opacity-20 blur-xl"></div>
+                            <div class="relative w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center">
+                                <svg class="w-10 h-10 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7v5l3 3"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <h1 class="text-3xl font-light text-gray-800 mb-2">Konstructour</h1>
+                        <p class="text-gray-600">Выберите панель для входа</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <a href="user-admin/" class="btn-japanese accent w-full flex items-center justify-center">
+                            <i class="fas fa-user mr-2"></i> User Admin
+                        </a>
+                        <a href="site-admin/" class="btn-japanese w-full flex items-center justify-center">
+                            <i class="fas fa-tools mr-2"></i> Site Admin
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Wave ornament bottom -->
+        <div class="wave-pattern"></div>
     </div>
 
     <!-- Features Section -->
