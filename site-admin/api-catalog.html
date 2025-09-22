@@ -309,7 +309,49 @@
         const debounce = (fn, ms)=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(fn, ms); }; };
         ['airtable_base_id','am_country_table','am_country_view','am_region_table','am_region_view','am_city_table','am_city_view','am_poi_table','am_poi_view']
           .forEach(id=>{ const el = document.getElementById(id); if (el){ el.addEventListener('input', debounce(autoTestMapping, 600)); el.addEventListener('change', autoTestMapping); } });
-        autoTestMapping();
+
+        // Load saved registry from server and populate fields
+        async function loadRegistry(){
+          try{
+            const headers = {};
+            if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
+            const r = await fetch('../api/config-read.php', { headers });
+            const j = await r.json();
+            const reg = j && j.airtable_registry;
+            if (!reg) { autoTestMapping(); return; }
+            const baseId = reg.baseId || reg.base_id || '';
+            const t = reg.tables || {};
+            const setv = (id,val)=>{ const el=document.getElementById(id); if (el && val!==undefined) el.value=val; };
+            setv('airtable_base_id', baseId);
+            setv('am_country_table', t.country?.tableId||''); setv('am_country_view', t.country?.viewId||'');
+            setv('am_region_table',  t.region?.tableId||'');  setv('am_region_view',  t.region?.viewId||'');
+            setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
+            setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
+            autoTestMapping();
+          }catch(_){ /* ignore */ }
+        }
+
+        // Save registry to server (called together с обычным Save Airtable)
+        async function saveRegistry(){
+          try{
+            const reg = {
+              baseId: document.getElementById('airtable_base_id')?.value || '',
+              tables: {
+                country: { tableId: document.getElementById('am_country_table')?.value || '', viewId: document.getElementById('am_country_view')?.value || '' },
+                region:  { tableId: document.getElementById('am_region_table')?.value  || '', viewId: document.getElementById('am_region_view')?.value  || '' },
+                city:    { tableId: document.getElementById('am_city_table')?.value    || '', viewId: document.getElementById('am_city_view')?.value    || '' },
+                poi:     { tableId: document.getElementById('am_poi_table')?.value     || '', viewId: document.getElementById('am_poi_view')?.value     || '' }
+              }
+            };
+            const headers = { 'Content-Type':'application/json' };
+            if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
+            await fetch('../api/config-store.php', { method:'POST', headers, body: JSON.stringify({ airtable_registry: reg }) });
+          }catch(_){ /* ignore */ }
+        }
+
+        document.getElementById('btnSaveAirtable')?.addEventListener('click', function(){ saveRegistry(); });
+
+        loadRegistry();
       })();
     </script>
 </body>
