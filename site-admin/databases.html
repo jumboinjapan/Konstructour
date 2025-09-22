@@ -56,6 +56,7 @@
 
         <div class="glass-panel p-8 rounded-lg mb-6">
           <div class="flex items-center gap-3">
+            <button class="tab" data-tab="airtable-mapping"><i class="fas fa-database mr-2 text-indigo-600"></i>Airtable</button>
             <button class="tab active" data-tab="regions"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</button>
             <button class="tab" data-tab="tours"><i class="fas fa-route mr-2 text-green-600"></i>Туры</button>
             <button class="tab" data-tab="templates"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</button>
@@ -85,6 +86,9 @@
             <div class="mb-4 -mt-1">
               <div id="db_breadcrumbs" class="flex items-center flex-wrap text-base text-gray-600"></div>
             </div>
+
+            <!-- Mapping header for Regions (Base/Table IDs) -->
+            <div id="regions_mapping_header" class="mb-4 text-xs text-gray-600"></div>
 
             <!-- Контейнер карточек уровня (с начальными карточками для оффлайн/локального просмотра) -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -412,6 +416,13 @@
             setv('am_region_label',  t.region?.label||'');  setv('am_region_table',  t.region?.tableId||'');  setv('am_region_view',  t.region?.viewId||'');
             setv('am_city_label',    t.city?.label||'');    setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
             setv('am_poi_label',     t.poi?.label||'');     setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
+            // Render mapping header for Regions
+            const hdr = document.getElementById('regions_mapping_header');
+            if (hdr){
+              const tbl = t.region?.tableId || '';
+              hdr.innerHTML = '<span class="px-2 py-1 bg-blue-50 border border-blue-100 rounded">Base: '+(baseId||'—')+'</span>'+
+                              '<span class="ml-2 px-2 py-1 bg-purple-50 border border-purple-100 rounded">Region Table: '+(tbl||'—')+'</span>';
+            }
           }
         }catch(e){ console.warn('loadDbConfig failed', e); }
       }
