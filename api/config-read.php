@@ -33,6 +33,22 @@ if (!empty($cfg['databases']) && is_array($cfg['databases'])){
     if (!is_array($data)) continue;
     $out['databases'][$scope] = array_intersect_key($data, array_flip(['provider','base_id','table_id']));
   }
+  // Fallback: построить минимальный airtable_registry из databases, если реестр не сохранён
+  if (empty($cfg['airtable_registry'])){
+    $reg = [ 'baseId' => '', 'tables' => [ 'country'=>[], 'region'=>[], 'city'=>[], 'poi'=>[] ] ];
+    if (!empty($cfg['databases']['regions']['base_id'])) $reg['baseId'] = $cfg['databases']['regions']['base_id'];
+    if (!empty($cfg['databases']['regions']['table_id'])) $reg['tables']['region']['tableId'] = $cfg['databases']['regions']['table_id'];
+    // опционально: если в databases есть другие сущности
+    foreach (['country','city','poi'] as $k){
+      if (!empty($cfg['databases'][$k]['table_id'])) $reg['tables'][$k]['tableId'] = $cfg['databases'][$k]['table_id'];
+    }
+    $out['airtable_registry'] = $reg;
+  } else {
+    $out['airtable_registry'] = $cfg['airtable_registry'];
+  }
+} else {
+  // если databases отсутствует, но есть сохранённый реестр, отдадим его
+  if (!empty($cfg['airtable_registry'])) $out['airtable_registry'] = $cfg['airtable_registry'];
 }
 
 respond(true, $out);
