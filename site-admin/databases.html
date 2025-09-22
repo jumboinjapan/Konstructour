@@ -361,13 +361,15 @@
               <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
               <button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>\
             </div>';
-          const inner = '<div class="grid items-center" style="grid-template-columns:auto 1fr auto;">\
+          const inner = '<div class="flex items-center justify-between">\
               <div class="flex items-center gap-2">\
                 <i class="fas fa-map-marker-alt text-indigo-600"></i>\
                 <div class="text-lg text-gray-800">'+r.name+'</div>\
               </div>\
-              <div class="text-sm text-gray-500 justify-self-center">'+count+' городов</div>\
               '+inlineActions+'\
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
+                <div class="text-sm text-gray-500">'+count+' городов</div>\
+              </div>\
             </div>';
           return '<div class="cursor-pointer" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</div>';
         }).join('');
