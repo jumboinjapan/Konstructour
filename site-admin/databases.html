@@ -652,7 +652,7 @@
           fetch('../api/db-sync.php',{
             method:'POST',
             headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim() } } })
+            body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim(), 'Region ID': id } } })
           }).catch(()=>{});
         } else if (level==='cities'){
           const name = prompt('Название (город/локация):'); if(!name) return;
