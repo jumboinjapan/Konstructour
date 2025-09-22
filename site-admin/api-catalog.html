@@ -272,7 +272,7 @@
         const mappingRoot = document.getElementById('sectionAirtable');
         if (toggle && mappingRoot){
           const icon = toggle.querySelector('i');
-          let collapsed = (mappingRoot.style.display === 'none');
+          let collapsed = (window.getComputedStyle(mappingRoot).display === 'none');
           const renderIcon = ()=>{ if (!icon) return; icon.classList.remove('fa-chevron-up','fa-chevron-down'); icon.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); };
           renderIcon();
           toggle.addEventListener('click', function(){
@@ -280,6 +280,9 @@
             mappingRoot.style.display = collapsed ? 'none' : '';
             renderIcon();
           });
+          // Синхронизируем иконку при раскрытии через кнопку Add
+          const addBtn = document.getElementById('btnSaveAirtable');
+          if (addBtn){ addBtn.addEventListener('click', function(){ collapsed = false; renderIcon(); }); }
         }
         async function testTable(entity){
           const baseId = document.getElementById('airtable_base_id')?.value || '';
