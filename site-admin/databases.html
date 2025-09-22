@@ -78,8 +78,42 @@
               <div id="db_breadcrumbs" class="flex items-center flex-wrap text-sm text-gray-600"></div>
             </div>
 
-            <!-- Контейнер карточек уровня -->
-            <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <!-- Контейнер карточек уровня (с начальными карточками для оффлайн/локального просмотра) -->
+            <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-indigo-600"></i>
+                    <div class="text-lg text-gray-800">Хоккайдо</div>
+                  </div>
+                  <div class="text-sm text-gray-500 mx-auto">0 городов</div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-indigo-600"></i>
+                    <div class="text-lg text-gray-800">Тохоку</div>
+                  </div>
+                  <div class="text-sm text-gray-500 mx-auto">0 городов</div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center">
+                  <div class="flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-indigo-600"></i>
+                    <div class="text-lg text-gray-800">Канто</div>
+                  </div>
+                  <div class="text-sm text-gray-500 mx-auto">0 городов</div>
+                </div>
+              </div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="flex items-center"><div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-600"></i><div class="text-lg text-gray-800">Тюбу</div></div><div class="text-sm text-gray-500 mx-auto">0 городов</div></div></div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="flex items-center"><div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-600"></i><div class="text-lg text-gray-800">Кансай</div></div><div class="text-sm text-gray-500 mx-auto">0 городов</div></div></div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="flex items-center"><div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-600"></i><div class="text-lg text-gray-800">Тюгоку</div></div><div class="text-sm text-gray-500 mx-auto">0 городов</div></div></div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="flex items-center"><div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-600"></i><div class="text-lg text-gray-800">Сикоку</div></div><div class="text-sm text-gray-500 mx-auto">0 городов</div></div></div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="flex items-center"><div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-600"></i><div class="text-lg text-gray-800">Кюсю</div></div><div class="text-sm text-gray-500 mx-auto">0 городов</div></div></div>
+              <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="flex items-center"><div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-600"></i><div class="text-lg text-gray-800">Окинава</div></div><div class="text-sm text-gray-500 mx-auto">0 городов</div></div></div>
+            </div>
 
             <!-- Кнопка добавления под сеткой -->
             <div class="mt-6 flex justify-center">
@@ -177,7 +211,7 @@
       }
 
       // Example: start/stop spinning when navigating (as a placeholder)
-      cards.addEventListener('click', function(){ setSyncing('regions', true); setTimeout(()=>setSyncing('regions', false), 800); }, { capture:false });
+      cards.addEventListener('click', function(){ setSyncing('regions', true); setTimeout(function(){ setSyncing('regions', false); }, 800); });
 
       // Base label auto-switch for API type
       function bindApiLabel(selectId, labelId, inputId){
@@ -208,7 +242,7 @@
       const cards = document.getElementById('db_cards');
       const fab = document.getElementById('db_fab_add');
 
-      if (!crumbs || !cards || !fab) return;
+      if (!crumbs || !cards) return;
 
       const regionColors = {
         'Хоккайдо':'bg-blue-100 text-blue-800',
@@ -375,17 +409,17 @@
         const to = go.getAttribute('data-go');
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
-          push('cities', { regionId: selectedRegion?.id });
+          push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
           renderCities();
         } else if (to==='pois'){
           const list = citiesByRegion[selectedRegion.id] || [];
           selectedCity = list.find(c=>c.id===id) || null;
-          push('pois', { regionId: selectedRegion?.id, cityId: selectedCity?.id });
+          push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
           renderPois();
         } else if (to==='tickets'){
           const list = poisByCity[selectedCity.id] || [];
           selectedPoi = list.find(p=>p.id===id) || null;
-          push('tickets', { regionId: selectedRegion?.id, cityId: selectedCity?.id, poiId: selectedPoi?.id });
+          push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
           renderTickets();
         }
       });
@@ -397,8 +431,8 @@
         e.preventDefault();
         const lv = a.getAttribute('data-level');
         if (lv==='regions'){ push('regions'); return renderRegions(); }
-        if (lv==='cities'){ push('cities', { regionId: selectedRegion?.id }); return renderCities(); }
-        if (lv==='pois'){ push('pois', { regionId: selectedRegion?.id, cityId: selectedCity?.id }); return renderPois(); }
+        if (lv==='cities'){ push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) }); return renderCities(); }
+        if (lv==='pois'){ push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) }); return renderPois(); }
       });
 
       // Back button
@@ -436,7 +470,7 @@
 
       // Floating add button
       function genId(prefix, n){ return prefix+'-'+String(n).padStart(3,'0'); }
-      fab.addEventListener('click', function(){
+      if (fab) fab.addEventListener('click', function(){
         if (level==='regions'){
           const name = prompt('Название региона:'); if(!name) return;
           const id = genId('REG', regions.length+1);
