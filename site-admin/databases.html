@@ -630,22 +630,8 @@
           if (!picked) return; // отмена
           let type = picked; // 'city' | 'location'
           const list = citiesByRegion[selectedRegion.id] || (citiesByRegion[selectedRegion.id]=[]);
-          let parentCityId = '';
-          if (type==='location'){
-            const cityOptions = list.filter(x=> (x.type||'city')==='city');
-            if (cityOptions.length===0){
-              alert('Сначала добавьте хотя бы один Город. Запись будет создана как Город.');
-              type = 'city';
-            } else {
-              const names = cityOptions.map(x=>x.name).join(', ');
-              const picked = prompt('Родительский город ('+names+'):')||'';
-              const found = cityOptions.find(x=>x.name===picked.trim());
-              parentCityId = found ? found.id : cityOptions[0].id;
-            }
-          }
           const id = genId('CL', list.length+1);
           const obj = { id, name:name.trim(), type };
-          if (type==='location') obj.parentCityId = parentCityId;
           list.push(obj);
           renderCities();
         } else if (level==='pois'){
