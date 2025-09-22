@@ -224,24 +224,28 @@
       }
 
       function card(actionsHtml, innerHtml){
-        return '<div class="relative bg-white rounded-lg border border-gray-200 p-4 hover:shadow transition">\
-          <div class="absolute top-2 right-2 flex items-center gap-2 opacity-70">'+actionsHtml+'</div>'+innerHtml+'</div>';
+        const actionsBlock = actionsHtml && actionsHtml.trim() ? '<div class="absolute top-2 right-2 flex items-center gap-2 opacity-70">'+actionsHtml+'</div>' : '';
+        return '<div class="relative bg-white rounded-lg border border-gray-200 p-4 hover:shadow transition">'+actionsBlock+innerHtml+'</div>';
       }
 
       function renderRegions(){
         level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs();
         document.getElementById('db_back')?.classList.add('hidden');
         cards.innerHTML = regions.map(r=>{
-          const actions = '<button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-                          '<button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
-          const inner = '<div class="flex flex-col items-center">\
+          const count = (citiesByRegion[r.id]||[]).length;
+          const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
+              <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
+              <button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>\
+            </div>';
+          const inner = '<div class="flex items-center">\
               <div class="flex items-center gap-2">\
                 <i class="fas fa-map-marker-alt text-indigo-600"></i>\
                 <div class="text-lg text-gray-800">'+r.name+'</div>\
               </div>\
-              <div class="text-sm text-gray-500 mt-2">'+((citiesByRegion[r.id]||[]).length)+' городов</div>\
+              <div class="text-sm text-gray-500 mx-auto">'+count+' городов</div>\
+              '+inlineActions+'\
             </div>';
-          return '<div class="cursor-pointer" data-go="cities" data-id="'+r.id+'">'+card(actions, inner)+'</div>';
+          return '<div class="cursor-pointer" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</div>';
         }).join('');
       }
 
