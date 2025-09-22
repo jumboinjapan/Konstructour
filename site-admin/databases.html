@@ -56,7 +56,6 @@
 
         <div class="glass-panel p-8 rounded-lg mb-6">
           <div class="flex items-center gap-3">
-            <button class="tab" data-tab="airtable-mapping"><i class="fas fa-database mr-2 text-indigo-600"></i>Airtable</button>
             <button class="tab active" data-tab="regions"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</button>
             <button class="tab" data-tab="tours"><i class="fas fa-route mr-2 text-green-600"></i>Туры</button>
             <button class="tab" data-tab="templates"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</button>
@@ -177,110 +176,6 @@
           </div>
         </section>
 
-        <!-- Airtable Mapping -->
-        <section id="tab-airtable-mapping" class="tab-content">
-          <div class="glass-panel p-6 rounded-lg">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-database mr-2 text-indigo-600"></i>Airtable Mapping</h3>
-              <div class="flex items-center gap-2">
-                <button id="am_test_base" class="btn-japanese text-sm">Test Base</button>
-                <button id="am_save" class="btn-japanese text-sm">Save</button>
-              </div>
-            </div>
-
-            <div class="mb-4 flex items-center gap-3 flex-wrap">
-              <div class="text-xs text-gray-600 api-base-label">Base ID:</div>
-              <input id="am_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
-              <span id="am_base_status" class="text-xs text-gray-500"></span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-              <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm font-medium mb-2">Country</div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Label:</div>
-                  <input id="am_country_label" class="input-japanese api-table-input" placeholder="Country" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
-                  <input id="am_country_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
-                  <input id="am_country_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
-                </div>
-                <div class="mt-2">
-                  <button data-entity="country" class="am_test_table btn-japanese text-xs">Test Table</button>
-                  <span id="am_country_status" class="text-xs text-gray-500 ml-2"></span>
-                </div>
-              </div>
-
-              <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm font-medium mb-2">Region</div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Label:</div>
-                  <input id="am_region_label" class="input-japanese api-table-input" placeholder="Region" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
-                  <input id="am_region_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
-                  <input id="am_region_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
-                </div>
-                <div class="mt-2">
-                  <button data-entity="region" class="am_test_table btn-japanese text-xs">Test Table</button>
-                  <span id="am_region_status" class="text-xs text-gray-500 ml-2"></span>
-                </div>
-              </div>
-
-              <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm font-medium mb-2">City</div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Label:</div>
-                  <input id="am_city_label" class="input-japanese api-table-input" placeholder="City" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
-                  <input id="am_city_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
-                  <input id="am_city_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
-                </div>
-                <div class="mt-2">
-                  <button data-entity="city" class="am_test_table btn-japanese text-xs">Test Table</button>
-                  <span id="am_city_status" class="text-xs text-gray-500 ml-2"></span>
-                </div>
-              </div>
-
-              <div class="bg-white rounded-lg border border-gray-200 p-4">
-                <div class="text-sm font-medium mb-2">POI</div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Label:</div>
-                  <input id="am_poi_label" class="input-japanese api-table-input" placeholder="POI" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
-                  <input id="am_poi_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
-                  <input id="am_poi_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
-                </div>
-                <div class="mt-2">
-                  <button data-entity="poi" class="am_test_table btn-japanese text-xs">Test Table</button>
-                  <span id="am_poi_status" class="text-xs text-gray-500 ml-2"></span>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-4 text-xs text-gray-600">
-              Иерархия: Country → Region → City → POI. Используются Base ID + Table ID (+ View ID).
-            </div>
-          </div>
-        </section>
         <!-- Шаблоны -->
         <section id="tab-templates" class="tab-content">
           <div class="glass-panel p-6 rounded-lg">

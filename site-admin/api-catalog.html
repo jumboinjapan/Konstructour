@@ -73,15 +73,39 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
                             <input id="airtable_api_key" type="password" class="input-japanese" placeholder="pat...">
-                            <p class="hint">Личный токен (PAT). Рекомендуется доступ read/write только к нужным базам.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Base ID</label>
                             <input id="airtable_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX">
                         </div>
                         <div class="lg:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Table</label>
-                            <input id="airtable_table" type="text" class="input-japanese" placeholder="Tours">
+                            <div class="text-sm font-medium mb-2">Mapping (Country / Region / City / POI)</div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div>
+                                <label class="block text-xs text-gray-600 mb-1">Country Table ID</label>
+                                <input id="am_country_table" class="input-japanese" placeholder="tbl...">
+                                <label class="block text-xs text-gray-600 mt-2 mb-1">Country View ID (опц.)</label>
+                                <input id="am_country_view" class="input-japanese" placeholder="viw...">
+                              </div>
+                              <div>
+                                <label class="block text-xs text-gray-600 mb-1">Region Table ID</label>
+                                <input id="am_region_table" class="input-japanese" placeholder="tbl...">
+                                <label class="block text-xs text-gray-600 mt-2 mb-1">Region View ID (опц.)</label>
+                                <input id="am_region_view" class="input-japanese" placeholder="viw...">
+                              </div>
+                              <div>
+                                <label class="block text-xs text-gray-600 mb-1">City Table ID</label>
+                                <input id="am_city_table" class="input-japanese" placeholder="tbl...">
+                                <label class="block text-xs text-gray-600 mt-2 mb-1">City View ID (опц.)</label>
+                                <input id="am_city_view" class="input-japanese" placeholder="viw...">
+                              </div>
+                              <div>
+                                <label class="block text-xs text-gray-600 mb-1">POI Table ID</label>
+                                <input id="am_poi_table" class="input-japanese" placeholder="tbl...">
+                                <label class="block text-xs text-gray-600 mt-2 mb-1">POI View ID (опц.)</label>
+                                <input id="am_poi_view" class="input-japanese" placeholder="viw...">
+                              </div>
+                            </div>
                         </div>
                     </div>
                 </div>
