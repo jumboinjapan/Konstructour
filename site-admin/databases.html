@@ -77,7 +77,7 @@
                 <input id="regions_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
                 <div id="regions_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Регионы):</div>
                 <input id="regions_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
-                <i id="regions_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
+                <i id="regions_sync_icon" class="fas fa-sync text-gray-400 ml-2 cursor-pointer" title="Синхронизировать и сохранить"></i>
               </div>
             </div>
 
@@ -159,7 +159,7 @@
                 <input id="tours_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
                 <div id="tours_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Туры):</div>
                 <input id="tours_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
-                <i id="tours_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
+                <i id="tours_sync_icon" class="fas fa-sync text-gray-400 ml-2 cursor-pointer" title="Синхронизировать и сохранить"></i>
               </div>
             </div>
             <div id="tours_schema" class="text-sm text-gray-600">
@@ -189,7 +189,7 @@
                 <input id="templates_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
                 <div id="templates_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Шаблоны):</div>
                 <input id="templates_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
-                <i id="templates_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
+                <i id="templates_sync_icon" class="fas fa-sync text-gray-400 ml-2 cursor-pointer" title="Синхронизировать и сохранить"></i>
               </div>
             </div>
             <div id="templates_schema" class="text-sm text-gray-600">
@@ -289,10 +289,20 @@
           const tableId  = document.getElementById(scope+'_table_id')?.value || '';
           const payload = { databases: {} };
           payload.databases[scope] = { provider, base_id: baseId, table_id: tableId };
+          const icon = document.getElementById(scope+'_sync_icon');
+          if (icon) icon.classList.add('animate-spin');
           await fetch('../api/config-store.php',{
             method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
             body: JSON.stringify(payload)
+          }).then(r=>{
+            if (!r.ok) throw new Error('HTTP '+r.status);
+            if (icon) icon.classList.remove('animate-spin');
+            if (window.osNotify){ window.osNotify('Сохранено','Конфигурация обновлена'); }
+          }).catch(e=>{
+            if (icon) icon.classList.remove('animate-spin');
+            console.warn('saveDbConfig failed', e);
+            if (window.osNotify){ window.osNotify('Ошибка','Не удалось сохранить'); }
           });
         }catch(e){ console.warn('saveDbConfig failed', e); }
       }
