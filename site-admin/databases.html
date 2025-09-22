@@ -16,6 +16,10 @@
       .tab.active{ background:#fff; border:1px solid rgba(139,90,43,.15); }
       .tab-content{ display:none; }
       .tab-content.active{ display:block; }
+      /* Fixed sizes to keep API action row stable */
+      .api-select{ width: 180px; }
+      .api-base-label{ display:inline-block; width: 120px; }
+      .api-base-input{ width: 280px; }
     </style>
   </head>
   <body data-no-redirect="true">
@@ -63,12 +67,12 @@
               <h3 class="text-lg font-light text-gray-800"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</h3>
               <div class="api-actions flex items-center gap-2 flex-wrap">
                 <div class="text-xs text-gray-600">Тип API:</div>
-                <select id="regions_api_type" class="input-japanese" style="padding:6px 10px;">
+                <select id="regions_api_type" class="input-japanese api-select" style="padding:6px 10px;">
                   <option value="airtable">Airtable</option>
                   <option value="gsheets">Google Sheets</option>
                 </select>
-                <div id="regions_base_label" class="text-xs text-gray-600 ml-3">Base ID:</div>
-                <input id="regions_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX" style="width:220px; padding:6px 10px;">
+                <div id="regions_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
+                <input id="regions_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
                 <i id="regions_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
@@ -143,12 +147,12 @@
               <h3 class="text-lg font-light text-gray-800"><i class="fas fa-route mr-2 text-green-600"></i>Туры</h3>
               <div class="api-actions flex items-center gap-2 flex-wrap">
                 <div class="text-xs text-gray-600">Тип API:</div>
-                <select id="tours_api_type" class="input-japanese" style="padding:6px 10px;">
+                <select id="tours_api_type" class="input-japanese api-select" style="padding:6px 10px;">
                   <option value="airtable">Airtable</option>
                   <option value="gsheets">Google Sheets</option>
                 </select>
-                <div id="tours_base_label" class="text-xs text-gray-600 ml-3">Base ID:</div>
-                <input id="tours_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX" style="width:220px; padding:6px 10px;">
+                <div id="tours_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
+                <input id="tours_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
                 <i id="tours_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
@@ -171,12 +175,12 @@
               <h3 class="text-lg font-light text-gray-800"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</h3>
               <div class="api-actions flex items-center gap-2 flex-wrap">
                 <div class="text-xs text-gray-600">Тип API:</div>
-                <select id="templates_api_type" class="input-japanese" style="padding:6px 10px;">
+                <select id="templates_api_type" class="input-japanese api-select" style="padding:6px 10px;">
                   <option value="airtable">Airtable</option>
                   <option value="gsheets">Google Sheets</option>
                 </select>
-                <div id="templates_base_label" class="text-xs text-gray-600 ml-3">Base ID:</div>
-                <input id="templates_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX" style="width:220px; padding:6px 10px;">
+                <div id="templates_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
+                <input id="templates_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
                 <i id="templates_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
