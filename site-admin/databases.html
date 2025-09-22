@@ -67,19 +67,6 @@
           <div class="glass-panel p-6 rounded-lg relative">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-lg font-light text-gray-800"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</h3>
-              <div class="api-actions flex items-center gap-2 flex-wrap">
-                <div class="text-xs text-gray-600">Тип API:</div>
-                <select id="regions_api_type" class="input-japanese api-select" style="padding:6px 10px;">
-                  <option value="airtable">Airtable</option>
-                  <option value="gsheets">Google Sheets</option>
-                </select>
-                <div id="regions_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
-                <input id="regions_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
-                <div id="regions_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Регионы):</div>
-                <input id="regions_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
-                <i id="regions_sync_icon" class="fas fa-sync text-gray-400 ml-2 cursor-pointer" title="Синхронизировать и сохранить"></i>
-                <div id="mapping_header" class="ml-3 text-xs text-gray-600"></div>
-              </div>
             </div>
 
             <!-- Хлебные крошки -->
@@ -150,18 +137,6 @@
           <div class="glass-panel p-6 rounded-lg">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-light text-gray-800"><i class="fas fa-route mr-2 text-green-600"></i>Туры</h3>
-              <div class="api-actions flex items-center gap-2 flex-wrap">
-                <div class="text-xs text-gray-600">Тип API:</div>
-                <select id="tours_api_type" class="input-japanese api-select" style="padding:6px 10px;">
-                  <option value="airtable">Airtable</option>
-                  <option value="gsheets">Google Sheets</option>
-                </select>
-                <div id="tours_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
-                <input id="tours_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
-                <div id="tours_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Туры):</div>
-                <input id="tours_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
-                <i id="tours_sync_icon" class="fas fa-sync text-gray-400 ml-2 cursor-pointer" title="Синхронизировать и сохранить"></i>
-              </div>
             </div>
             <div id="tours_schema" class="text-sm text-gray-600">
               Структура берётся из Project Description.md. Настройка схемы будет подключена.
@@ -180,18 +155,6 @@
           <div class="glass-panel p-6 rounded-lg">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-light text-gray-800"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</h3>
-              <div class="api-actions flex items-center gap-2 flex-wrap">
-                <div class="text-xs text-gray-600">Тип API:</div>
-                <select id="templates_api_type" class="input-japanese api-select" style="padding:6px 10px;">
-                  <option value="airtable">Airtable</option>
-                  <option value="gsheets">Google Sheets</option>
-                </select>
-                <div id="templates_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
-                <input id="templates_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
-                <div id="templates_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Шаблоны):</div>
-                <input id="templates_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
-                <i id="templates_sync_icon" class="fas fa-sync text-gray-400 ml-2 cursor-pointer" title="Синхронизировать и сохранить"></i>
-              </div>
             </div>
             <div id="templates_schema" class="text-sm text-gray-600">
               Структура настраивается индивидуально.
@@ -239,39 +202,7 @@
       // Remove placeholder spinner handler to avoid side-effects on clicks
 
       // Base label auto-switch for API type
-      function bindApiLabel(selectId, labelId, inputId, tableLabelId, tableInputId){
-        const sel = document.getElementById(selectId);
-        const label = document.getElementById(labelId);
-        const input = document.getElementById(inputId);
-        const tLabel = tableLabelId ? document.getElementById(tableLabelId) : null;
-        const tInput = tableInputId ? document.getElementById(tableInputId) : null;
-        if (!sel || !label || !input) return;
-        function update(){
-          if (sel.value === 'gsheets'){
-            label.textContent = 'Spreadsheet ID:';
-            input.placeholder = '1AbC...';
-            if (tLabel){ tLabel.textContent = (tLabel.textContent.replace(/Table ID.*/,'Sheet (лист):')); }
-            if (tInput){ tInput.placeholder = 'Имя листа (Sheet Name)'; }
-          } else { // airtable default
-            label.textContent = 'Base ID:';
-            input.placeholder = 'appXXXXXXXXXXXXXX';
-            if (tLabel){
-              const base = tLabel.getAttribute('data-title') || 'Table ID';
-              tLabel.textContent = base + ':';
-            }
-            if (tInput){ tInput.placeholder = 'tblXXXXXXXXXXXXXX / Имя таблицы'; }
-          }
-        }
-        sel.addEventListener('change', update);
-        update();
-      }
-      // Проставим data-title для заголовков таблиц
-      document.getElementById('regions_table_label')?.setAttribute('data-title','Table ID (Регионы)');
-      document.getElementById('tours_table_label')?.setAttribute('data-title','Table ID (Туры)');
-      document.getElementById('templates_table_label')?.setAttribute('data-title','Table ID (Шаблоны)');
-      bindApiLabel('regions_api_type','regions_base_label','regions_base_id','regions_table_label','regions_table_id');
-      bindApiLabel('tours_api_type','tours_base_label','tours_base_id','tours_table_label','tours_table_id');
-      bindApiLabel('templates_api_type','templates_base_label','templates_base_id','templates_table_label','templates_table_id');
+      function bindApiLabel(){ /* удалено вместе с UI */ }
 
       // Load saved config from server and populate fields
       let airtableReg = null; // cache for mapping header
@@ -283,15 +214,7 @@
           const db = (data && data.databases) || {};
           const reg = (data && data.airtable_registry) || null;
           airtableReg = reg;
-          function fill(scope, obj){
-            if (!obj) return;
-            const sel = document.getElementById(scope+'_api_type');
-            const base = document.getElementById(scope+'_base_id');
-            const table = document.getElementById(scope+'_table_id');
-            if (sel && obj.provider){ sel.value = obj.provider; sel.dispatchEvent(new Event('change')); }
-            if (base && obj.base_id){ base.value = obj.base_id; }
-            if (table && obj.table_id){ table.value = obj.table_id; }
-          }
+          function fill(){ /* UI удалён */ }
           fill('regions', db.regions);
           fill('tours', db.tours);
           fill('templates', db.templates);
@@ -312,22 +235,7 @@
       }
       loadDbConfig();
 
-      function setMappingHeader(kind){
-        const hdr = document.getElementById('mapping_header');
-        if (!hdr){ return; }
-        if (!airtableReg){ hdr.innerHTML=''; return; }
-        const baseId = airtableReg.baseId || airtableReg.base_id || '';
-        const t = airtableReg.tables || {};
-        const map = {
-          region: { color:'purple', title:'Region', tbl: t.region?.tableId||'' },
-          city:   { color:'green',  title:'City',   tbl: t.city?.tableId||'' },
-          poi:    { color:'yellow', title:'POI',    tbl: t.poi?.tableId||'' }
-        };
-        const cur = map[kind] || map.region;
-        const badgeBase = '<span class="px-2 py-1 bg-blue-50 border border-blue-100 rounded">Base: '+(baseId||'—')+'</span>';
-        const badgeTbl  = '<span class="ml-2 px-2 py-1 border rounded bg-'+(cur.color)+'-50 border-'+(cur.color)+'-100">'+cur.title+' Table: '+(cur.tbl||'—')+'</span>';
-        hdr.innerHTML = badgeBase + badgeTbl;
-      }
+      function setMappingHeader(){ /* бейдж перенесён — здесь ничего не рендерим */ }
       // Сделаем доступной для других модулей на странице
       window.setMappingHeader = setMappingHeader;
 
@@ -380,23 +288,15 @@
       // helper: save to server as server key
       async function saveDbConfig(scope){
         try{
-          const provider = document.getElementById(scope+'_api_type')?.value || '';
-          const baseId   = document.getElementById(scope+'_base_id')?.value || '';
-          const tableId  = document.getElementById(scope+'_table_id')?.value || '';
-          const payload = { databases: {} };
-          payload.databases[scope] = { provider, base_id: baseId, table_id: tableId };
-          const icon = document.getElementById(scope+'_sync_icon');
-          if (icon) icon.classList.add('animate-spin');
+          // UI полей удалён — функция оставлена на будущее, сейчас no-op
           await fetch('../api/config-store.php',{
             method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({})
           }).then(r=>{
             if (!r.ok) throw new Error('HTTP '+r.status);
-            if (icon) icon.classList.remove('animate-spin');
             if (window.osNotify){ window.osNotify('Сохранено','Конфигурация обновлена'); }
           }).catch(e=>{
-            if (icon) icon.classList.remove('animate-spin');
             console.warn('saveDbConfig failed', e);
             if (window.osNotify){ window.osNotify('Ошибка','Не удалось сохранить'); }
           });
@@ -725,15 +625,7 @@
         }
       });
 
-      // Bind save on blur and on sync-icon click
-      ['regions','tours','templates'].forEach(function(scope){
-        ['_base_id','_table_id'].forEach(function(suffix){
-          const el = document.getElementById(scope+suffix);
-          if (el){ el.addEventListener('blur', function(){ saveDbConfig(scope); }); }
-        });
-        const ic = document.getElementById(scope+'_sync_icon');
-        if (ic){ ic.addEventListener('click', function(){ saveDbConfig(scope); }); }
-      });
+      // Поля ввода и иконки синхронизации удалены, бинды не требуются
 
       // History: handle back/forward
       window.addEventListener('popstate', function(ev){ renderFromState(ev.state); });
