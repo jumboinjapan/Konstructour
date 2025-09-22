@@ -20,6 +20,8 @@
       .api-select{ width: 180px; }
       .api-base-label{ display:inline-block; width: 120px; }
       .api-base-input{ width: 280px; }
+      .api-table-label{ display:inline-block; width: 140px; }
+      .api-table-input{ width: 220px; }
     </style>
   </head>
   <body data-no-redirect="true">
@@ -73,6 +75,8 @@
                 </select>
                 <div id="regions_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
                 <input id="regions_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
+                <div id="regions_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Регионы):</div>
+                <input id="regions_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
                 <i id="regions_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
@@ -153,6 +157,8 @@
                 </select>
                 <div id="tours_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
                 <input id="tours_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
+                <div id="tours_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Туры):</div>
+                <input id="tours_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
                 <i id="tours_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
@@ -181,6 +187,8 @@
                 </select>
                 <div id="templates_base_label" class="text-xs text-gray-600 ml-3 api-base-label">Base ID:</div>
                 <input id="templates_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
+                <div id="templates_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Шаблоны):</div>
+                <input id="templates_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
                 <i id="templates_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
@@ -236,30 +244,59 @@
       }
 
       // Base label auto-switch for API type
-      function bindApiLabel(selectId, labelId, inputId){
+      function bindApiLabel(selectId, labelId, inputId, tableLabelId, tableInputId){
         const sel = document.getElementById(selectId);
         const label = document.getElementById(labelId);
         const input = document.getElementById(inputId);
+        const tLabel = tableLabelId ? document.getElementById(tableLabelId) : null;
+        const tInput = tableInputId ? document.getElementById(tableInputId) : null;
         if (!sel || !label || !input) return;
         function update(){
           if (sel.value === 'gsheets'){
             label.textContent = 'Spreadsheet ID:';
             input.placeholder = '1AbC...';
+            if (tLabel){ tLabel.textContent = (tLabel.textContent.replace(/Table ID.*/,'Sheet (лист):')); }
+            if (tInput){ tInput.placeholder = 'Имя листа (Sheet Name)'; }
           } else { // airtable default
             label.textContent = 'Base ID:';
             input.placeholder = 'appXXXXXXXXXXXXXX';
+            if (tLabel){
+              const base = tLabel.getAttribute('data-title') || 'Table ID';
+              tLabel.textContent = base + ':';
+            }
+            if (tInput){ tInput.placeholder = 'tblXXXXXXXXXXXXXX / Имя таблицы'; }
           }
         }
         sel.addEventListener('change', update);
         update();
       }
-      bindApiLabel('regions_api_type','regions_base_label','regions_base_id');
-      bindApiLabel('tours_api_type','tours_base_label','tours_base_id');
-      bindApiLabel('templates_api_type','templates_base_label','templates_base_id');
+      // Проставим data-title для заголовков таблиц
+      document.getElementById('regions_table_label')?.setAttribute('data-title','Table ID (Регионы)');
+      document.getElementById('tours_table_label')?.setAttribute('data-title','Table ID (Туры)');
+      document.getElementById('templates_table_label')?.setAttribute('data-title','Table ID (Шаблоны)');
+      bindApiLabel('regions_api_type','regions_base_label','regions_base_id','regions_table_label','regions_table_id');
+      bindApiLabel('tours_api_type','tours_base_label','tours_base_id','tours_table_label','tours_table_id');
+      bindApiLabel('templates_api_type','templates_base_label','templates_base_id','templates_table_label','templates_table_id');
     })();
 
     // Иерархия карточек: регионы → города → POI → билеты (UI, без API)
     (function(){
+      // helper: save to server as server key
+      async function saveDbConfig(scope){
+        try{
+          const provider = document.getElementById(scope+'_api_type')?.value || '';
+          const baseId   = document.getElementById(scope+'_base_id')?.value || '';
+          const tableId  = document.getElementById(scope+'_table_id')?.value || '';
+          const payload = { databases: {} };
+          payload.databases[scope] = { provider, base_id: baseId, table_id: tableId };
+          await fetch('../api/config-store.php',{
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            body: JSON.stringify(payload)
+          });
+        }catch(e){ console.warn('saveDbConfig failed', e); }
+      }
+
       const crumbs = document.getElementById('db_breadcrumbs');
       const cards = document.getElementById('db_cards');
       const fab = document.getElementById('db_fab_add');
@@ -550,6 +587,16 @@
           list.push({ id, category, price, currency:'¥', note });
           renderTickets();
         }
+      });
+
+      // Bind save on blur and on sync-icon click
+      ['regions','tours','templates'].forEach(function(scope){
+        ['_base_id','_table_id'].forEach(function(suffix){
+          const el = document.getElementById(scope+suffix);
+          if (el){ el.addEventListener('blur', function(){ saveDbConfig(scope); }); }
+        });
+        const ic = document.getElementById(scope+'_sync_icon');
+        if (ic){ ic.addEventListener('click', function(){ saveDbConfig(scope); }); }
       });
 
       // History: handle back/forward
