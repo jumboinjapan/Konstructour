@@ -584,7 +584,35 @@
 
       // Floating add button
       function genId(prefix, n){ return prefix+'-'+String(n).padStart(3,'0'); }
-      if (fab) fab.addEventListener('click', function(){
+
+      // Выбор типа (Город/Локация) — модалка с 2 кнопками
+      function chooseCityType(){
+        return new Promise((resolve)=>{
+          const wrap = document.createElement('div');
+          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
+          wrap.innerHTML = '\
+            <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
+            <div class="relative bg-white rounded-lg shadow-xl p-6 w-80">\
+              <div class="text-lg text-gray-800 mb-4">Тип записи</div>\
+              <div class="grid grid-cols-2 gap-3">\
+                <button id="btn_type_city" class="btn-japanese w-full text-center">Город</button>\
+                <button id="btn_type_location" class="btn-japanese w-full text-center">Локация</button>\
+              </div>\
+              <div class="mt-4 text-xs text-gray-500 text-center">Выберите тип записи</div>\
+            </div>';
+          document.body.appendChild(wrap);
+          function done(val){
+            document.body.removeChild(wrap);
+            resolve(val);
+          }
+          wrap.querySelector('#btn_type_city').addEventListener('click', function(){ done('city'); });
+          wrap.querySelector('#btn_type_location').addEventListener('click', function(){ done('location'); });
+          wrap.addEventListener('click', function(e){ if (e.target===wrap.firstChild) { done(null); } });
+          document.addEventListener('keydown', function onEsc(ev){ if (ev.key==='Escape'){ document.removeEventListener('keydown', onEsc); try{ document.body.removeChild(wrap); }catch{} resolve(null); } });
+        });
+      }
+
+      if (fab) fab.addEventListener('click', async function(){
         if (level==='regions'){
           const name = prompt('Название региона:'); if(!name) return;
           const id = genId('REG', regions.length+1);
@@ -598,8 +626,9 @@
           }).catch(()=>{});
         } else if (level==='cities'){
           const name = prompt('Название (город/локация):'); if(!name) return;
-          let typeRaw = (prompt('Тип записи (Город|Локация):','Город')||'Город').trim().toLowerCase();
-          let type = (typeRaw.startsWith('л')) ? 'location' : 'city';
+          const picked = await chooseCityType();
+          if (!picked) return; // отмена
+          let type = picked; // 'city' | 'location'
           const list = citiesByRegion[selectedRegion.id] || (citiesByRegion[selectedRegion.id]=[]);
           let parentCityId = '';
           if (type==='location'){
