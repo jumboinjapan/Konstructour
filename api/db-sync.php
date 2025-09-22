@@ -34,22 +34,41 @@ $cfg = [];
 $cfgFile = __DIR__.'/config.php';
 if (file_exists($cfgFile)) { $cfg = require $cfgFile; if (!is_array($cfg)) $cfg = []; }
 $dbCfg = $cfg['databases'][$scope] ?? null;
-if (!$dbCfg || empty($dbCfg['provider'])) respond(false, ['error'=>'No database config for scope'], 400);
 
-if ($dbCfg['provider'] === 'airtable'){
-  $baseId = $dbCfg['base_id'] ?? '';
-  $table = $dbCfg['table_id'] ?? '';
-  $pat = $cfg['airtable']['api_key'] ?? '';
+// Prefer new Airtable registry if present and scope is hierarchical entity
+$airReg = $cfg['airtable_registry'] ?? null;
+$provider = $dbCfg['provider'] ?? '';
+$baseId = '';
+$table = '';
+$pat = $cfg['airtable']['api_key'] ?? '';
+
+if ($airReg && in_array($scope, ['regions','cities','pois'], true)){
+  $regBase = $airReg['baseId'] ?? ($airReg['base_id'] ?? '');
+  $tables = $airReg['tables'] ?? [];
+  $map = [ 'regions'=>'region', 'cities'=>'city', 'pois'=>'poi' ];
+  $key = $map[$scope];
+  $tbl = $tables[$key] ?? [];
+  $baseId = $regBase;
+  $table = $tbl['tableId'] ?? ($tbl['table_id'] ?? '');
+  $provider = 'airtable';
+}
+
+if ($provider === 'airtable'){
+  // Fallback to old databases config if registry was not used
+  if (!$baseId){ $baseId = $dbCfg['base_id'] ?? ''; }
+  if (!$table){ $table = $dbCfg['table_id'] ?? ''; }
   if (!$baseId || !$table || !$pat) respond(false, ['error'=>'Airtable settings incomplete'], 400);
 
   $baseUrl = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/'.rawurlencode($table);
 
   if ($action === 'create'){
-    // Accept either fields directly or {name: "..."}
+    // Accept either fields directly or shorthand payload
     $fields = $payload['fields'] ?? null;
     if (!$fields){
       $name = $payload['name'] ?? '';
       if ($name){ $fields = ['Name'=>$name]; }
+      // Optional type for City/Location demo
+      if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
     }
     if (!$fields || !is_array($fields)) respond(false, ['error'=>'No fields'], 400);
 
