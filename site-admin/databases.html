@@ -234,12 +234,12 @@
         cards.innerHTML = regions.map(r=>{
           const actions = '<button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
-          const inner = '<div class="flex items-center justify-between">\
+          const inner = '<div class="flex flex-col items-center">\
               <div class="flex items-center gap-2">\
                 <i class="fas fa-map-marker-alt text-indigo-600"></i>\
                 <div class="text-lg text-gray-800">'+r.name+'</div>\
               </div>\
-              <div class="text-sm text-gray-500">'+((citiesByRegion[r.id]||[]).length)+' городов</div>\
+              <div class="text-sm text-gray-500 mt-2">'+((citiesByRegion[r.id]||[]).length)+' городов</div>\
             </div>';
           return '<div class="cursor-pointer" data-go="cities" data-id="'+r.id+'">'+card(actions, inner)+'</div>';
         }).join('');
