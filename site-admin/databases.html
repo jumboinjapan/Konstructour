@@ -76,7 +76,6 @@
             <div class="mb-4">
               <div id="db_breadcrumbs" class="flex items-center flex-wrap text-sm text-gray-600"></div>
             </div>
-            <button id="db_back" class="btn-japanese hidden absolute top-4 left-4"><i class="fas fa-arrow-left mr-2"></i>Назад</button>
 
             <!-- Контейнер карточек уровня -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -208,6 +207,36 @@
       let selectedCity = null;
       let selectedPoi = null;
 
+      // History helpers
+      function renderFromState(state){
+        if (!state || !state.level) { renderRegions(); return; }
+        level = state.level;
+        if (level === 'regions') { renderRegions(); return; }
+        if (level === 'cities') {
+          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          renderCities(); return;
+        }
+        if (level === 'pois') {
+          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
+          selectedCity = list.find(c=>c.id===state.cityId) || null;
+          renderPois(); return;
+        }
+        if (level === 'tickets') {
+          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          const listC = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
+          selectedCity = listC.find(c=>c.id===state.cityId) || null;
+          const listP = selectedCity ? (poisByCity[selectedCity.id]||[]) : [];
+          selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+          renderTickets(); return;
+        }
+        renderRegions();
+      }
+      function push(level, ids){
+        const state = Object.assign({ level }, ids||{});
+        history.pushState(state, '');
+      }
+
       function renderCrumbs(){
         const parts = [];
         parts.push('<a href="#" data-level="regions" class="text-indigo-600 hover:underline">Регионы</a>');
@@ -230,7 +259,6 @@
 
       function renderRegions(){
         level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs();
-        document.getElementById('db_back')?.classList.add('hidden');
         cards.innerHTML = regions.map(r=>{
           const count = (citiesByRegion[r.id]||[]).length;
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
@@ -251,8 +279,6 @@
 
       function renderCities(){
         level='cities'; selectedCity=null; selectedPoi=null; renderCrumbs();
-        // Показать кнопку "Назад" на уровнях глубже регионов
-        document.getElementById('db_back')?.classList.remove('hidden');
         const list = citiesByRegion[selectedRegion.id] || [];
         cards.innerHTML = list.map(c=>{
           const actions = '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -270,7 +296,6 @@
 
       function renderPois(){
         level='pois'; selectedPoi=null; renderCrumbs();
-        document.getElementById('db_back')?.classList.remove('hidden');
         const list = poisByCity[selectedCity.id] || [];
         cards.innerHTML = list.map(p=>{
           const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -293,7 +318,6 @@
 
       function renderTickets(){
         level='tickets'; renderCrumbs();
-        document.getElementById('db_back')?.classList.remove('hidden');
         const list = ticketsByPoi[selectedPoi.id] || [];
         cards.innerHTML = list.map(t=>{
           const actions = '<button data-act="edit-ticket" data-id="'+t.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -314,14 +338,17 @@
         const to = go.getAttribute('data-go');
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
+          push('cities', { regionId: selectedRegion?.id });
           renderCities();
         } else if (to==='pois'){
           const list = citiesByRegion[selectedRegion.id] || [];
           selectedCity = list.find(c=>c.id===id) || null;
+          push('pois', { regionId: selectedRegion?.id, cityId: selectedCity?.id });
           renderPois();
         } else if (to==='tickets'){
           const list = poisByCity[selectedCity.id] || [];
           selectedPoi = list.find(p=>p.id===id) || null;
+          push('tickets', { regionId: selectedRegion?.id, cityId: selectedCity?.id, poiId: selectedPoi?.id });
           renderTickets();
         }
       });
@@ -332,9 +359,9 @@
         if (!a) return;
         e.preventDefault();
         const lv = a.getAttribute('data-level');
-        if (lv==='regions') return renderRegions();
-        if (lv==='cities') return renderCities();
-        if (lv==='pois') return renderPois();
+        if (lv==='regions'){ push('regions'); return renderRegions(); }
+        if (lv==='cities'){ push('cities', { regionId: selectedRegion?.id }); return renderCities(); }
+        if (lv==='pois'){ push('pois', { regionId: selectedRegion?.id, cityId: selectedCity?.id }); return renderPois(); }
       });
 
       // Back button
@@ -402,7 +429,10 @@
         }
       });
 
-      // Initial
+      // History: handle back/forward
+      window.addEventListener('popstate', function(ev){ renderFromState(ev.state); });
+      // Initial state
+      history.replaceState({ level: 'regions' }, '');
       renderRegions();
     })();
     // Каталог регионов — UI-заглушка без обращений к реальным API
