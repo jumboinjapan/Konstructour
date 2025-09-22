@@ -178,15 +178,14 @@
       const sections = {
         regions: document.getElementById('tab-regions'),
         tours: document.getElementById('tab-tours'),
-        templates: document.getElementById('tab-templates'),
-        'airtable-mapping': document.getElementById('tab-airtable-mapping')
+        templates: document.getElementById('tab-templates')
       };
       tabs.forEach(btn=>{
         btn.addEventListener('click', function(e){
           e.preventDefault();
           tabs.forEach(b=>b.classList.remove('active'));
           this.classList.add('active');
-          Object.values(sections).forEach(s=>s.classList.remove('active'));
+          Object.values(sections).forEach(s=> s && s.classList.remove('active'));
           const key = this.getAttribute('data-tab');
           if (sections[key]) sections[key].classList.add('active');
         });
@@ -451,6 +450,32 @@
           if (!data.ok) throw new Error(data.error||'Airtable');
           const items = data.items || [];
           regions = items.map((it, idx)=>({ id: it.id || ('REG-'+String(idx+1).padStart(3,'0')), name: (it.name || ('Регион '+(idx+1))) }));
+          // Если в Airtable пусто или лежат только заглушки "Регион N", выполним авто-сид из 9 регионов
+          const canonical = ['Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава'];
+          const names = new Set(regions.map(r=>r.name));
+          const onlyPlaceholders = regions.length>0 && regions.every(r=>/^Регион\s*\d+$/i.test(r.name));
+          if (regions.length===0 || onlyPlaceholders){
+            for (const name of canonical){
+              if (!names.has(name)){
+                try{
+                  await fetch('../api/db-sync.php',{
+                    method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                    body: JSON.stringify({ scope:'regions', action:'create', data:{ name } })
+                  });
+                }catch{ /* ignore */ }
+              }
+            }
+            // При желании удалим заглушки «Регион N»
+            if (onlyPlaceholders){
+              for (const r of regions){
+                if (/^Регион\s*\d+$/i.test(r.name)){
+                  try{ await fetch('../api/db-sync.php',{ method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') }, body: JSON.stringify({ scope:'regions', action:'delete', data:{ id: r.id } }) }); }catch{}
+                }
+              }
+            }
+            // Перечитаем список после сида
+            return await syncRegionsFromAirtable();
+          }
           // сбросим счетчики; реальныеCounts можно будет подтягивать отдельно
           citiesByRegion = {};
           renderRegions();
