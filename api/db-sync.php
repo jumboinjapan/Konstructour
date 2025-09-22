@@ -84,12 +84,13 @@ if ($provider === 'airtable'){
     if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
     $json = json_decode($resp, true);
     if ($code >= 200 && $code < 300){
-      // Normalize to simple array
+      // Normalize to simple array, tolerant field names
       $items = [];
       foreach (($json['records'] ?? []) as $rec){
         $fields = $rec['fields'] ?? [];
-        $name = $fields['Name'] ?? ($fields['name'] ?? '');
-        $items[] = [ 'id'=>$rec['id'] ?? '', 'name'=>$name, 'fields'=>$fields ];
+        $name = '';
+        foreach (['Name','Название','Наименование','Title','name','title'] as $fn){ if (isset($fields[$fn]) && $fields[$fn] !== '') { $name = $fields[$fn]; break; } }
+        $items[] = [ 'id'=>($rec['id'] ?? ''), 'name'=>$name, 'fields'=>$fields ];
       }
       respond(true, ['items'=>$items]);
     }
@@ -101,7 +102,10 @@ if ($provider === 'airtable'){
     $fields = $payload['fields'] ?? null;
     if (!$fields){
       $name = $payload['name'] ?? '';
-      if ($name){ $fields = ['Name'=>$name]; }
+      if ($name){
+        // Duplicate into common name variants for compatibility
+        $fields = ['Name'=>$name, 'Название'=>$name, 'Title'=>$name];
+      }
       // Optional type for City/Location demo
       if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
     }
