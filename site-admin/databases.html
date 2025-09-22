@@ -60,7 +60,7 @@
         <section id="tab-regions" class="tab-content active">
           <div class="glass-panel p-6 rounded-lg relative">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы → Города → POI → Билеты</h3>
+              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</h3>
               <div class="api-actions flex items-center gap-2 flex-wrap">
                 <div class="text-xs text-gray-600">Тип API:</div>
                 <select id="regions_api_type" class="input-japanese" style="padding:6px 10px;">
@@ -72,11 +72,11 @@
               </div>
             </div>
 
-            <!-- Хлебные крошки + Назад -->
-            <div class="flex items-center justify-between mb-4">
+            <!-- Хлебные крошки -->
+            <div class="mb-4">
               <div id="db_breadcrumbs" class="flex items-center flex-wrap text-sm text-gray-600"></div>
-              <button id="db_back" class="btn-japanese hidden"><i class="fas fa-arrow-left mr-2"></i>Назад</button>
             </div>
+            <button id="db_back" class="btn-japanese hidden absolute top-4 left-4"><i class="fas fa-arrow-left mr-2"></i>Назад</button>
 
             <!-- Контейнер карточек уровня -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -212,10 +212,10 @@
         const parts = [];
         parts.push('<a href="#" data-level="regions" class="text-indigo-600 hover:underline">Регионы</a>');
         if (selectedRegion){
-          parts.push('<span class="mx-2">/</span><a href="#" data-level="cities" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>');
+          parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedRegion.name+'</span>');
         }
         if (selectedCity){
-          parts.push('<span class="mx-2">/</span><a href="#" data-level="pois" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>');
+          parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedCity.name+'</span>');
         }
         if (selectedPoi){
           parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedPoi.name+'</span>');
