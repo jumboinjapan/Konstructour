@@ -4,8 +4,13 @@
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-// CORS: allow all for testing; tighten to your domain on prod
-header('Access-Control-Allow-Origin: *');
+// CORS: mirror origin for browser requests
+if (isset($_SERVER['HTTP_ORIGIN'])){
+  header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+  header('Vary: Origin');
+} else {
+  header('Access-Control-Allow-Origin: *');
+}
 header('Vary: Origin');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
   header('Access-Control-Allow-Methods: GET, POST, OPTIONS');

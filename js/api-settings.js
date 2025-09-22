@@ -184,12 +184,13 @@
       }catch(_){ /* ignore */ }
     }
 
-    document.getElementById('btnSaveAirtable')?.addEventListener('click', save);
-    document.getElementById('btnSaveOpenAI')?.addEventListener('click', save);
-    document.getElementById('btnSaveGSheets')?.addEventListener('click', save);
-    document.getElementById('btnSaveGMaps')?.addEventListener('click', save);
-    document.getElementById('btnSaveRecaptcha')?.addEventListener('click', save);
-    document.getElementById('btnSaveBrilliant')?.addEventListener('click', save);
+    // Явно передаём провайдера, чтобы не отправлять пустой payload (иначе 400: No providers)
+    document.getElementById('btnSaveAirtable')?.addEventListener('click', function(e){ e.preventDefault(); save('airtable'); });
+    document.getElementById('btnSaveOpenAI')?.addEventListener('click', function(e){ e.preventDefault(); save('openai'); });
+    document.getElementById('btnSaveGSheets')?.addEventListener('click', function(e){ e.preventDefault(); save('gsheets'); });
+    document.getElementById('btnSaveGMaps')?.addEventListener('click', function(e){ e.preventDefault(); save('gmaps'); });
+    document.getElementById('btnSaveRecaptcha')?.addEventListener('click', function(e){ e.preventDefault(); save('recaptcha'); });
+    document.getElementById('btnSaveBrilliant')?.addEventListener('click', function(e){ e.preventDefault(); save('brilliantdb'); });
     document.getElementById('btnTestAll')?.addEventListener('click', function(){
       // simple local validation
       const missing = fields.filter(id => {
