@@ -12,7 +12,7 @@
     <link href="../styles/admin-japanese.css" rel="stylesheet">
     <style>
       body{ background: rgb(var(--color-washi)); min-height:100vh; }
-      .tab{ padding:8px 14px; font-size:12px; border-radius:8px; cursor:pointer; }
+      .tab{ padding:14px 20px; font-size:16px; border-radius:10px; cursor:pointer; flex:1 1 0%; text-align:center; }
       .tab.active{ background:#fff; border:1px solid rgba(139,90,43,.15); }
       .tab-content{ display:none; }
       .tab-content.active{ display:block; }
@@ -48,8 +48,8 @@
           </div>
         </header>
 
-        <div class="glass-panel p-4 rounded-lg mb-6">
-          <div class="flex items-center gap-2">
+        <div class="glass-panel p-8 rounded-lg mb-6">
+          <div class="flex items-center gap-3">
             <button class="tab active" data-tab="regions"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</button>
             <button class="tab" data-tab="tours"><i class="fas fa-route mr-2 text-green-600"></i>Туры</button>
             <button class="tab" data-tab="templates"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</button>
