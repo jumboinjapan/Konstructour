@@ -397,7 +397,7 @@
       async function syncRegionsFromAirtable(){
         try{
           const res = await fetch('../api/db-sync.php',{
-            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            method:'POST', headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify({ scope:'regions', action:'list' })
           });
           if (!res.ok) throw new Error('HTTP '+res.status);

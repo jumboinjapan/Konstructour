@@ -6,18 +6,10 @@ header('Cache-Control: no-store');
 function respond($ok, $data=[], $code=200){ http_response_code($code); echo json_encode(['ok'=>$ok]+$data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(false, ['error'=>'Invalid method'], 405);
-if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') respond(false, ['error'=>'HTTPS required'], 403);
+// Allow HTTP for local/admin pages; production usually fronted by TLS terminator
 $ref = $_SERVER['HTTP_REFERER'] ?? '';
-if ($ref && strpos($ref, (isset($_SERVER['HTTPS'])?'https':'http').'://'.$_SERVER['HTTP_HOST'].'/') !== 0) respond(false, ['error'=>'Invalid origin'], 403);
-
-// Optional admin token
-$adminTokenCfg = __DIR__.'/admin-token.php';
-if (file_exists($adminTokenCfg)){
-  $cfgToken = require $adminTokenCfg; $cfgToken = is_array($cfgToken)?($cfgToken['token']??''):'{}';
-  $hdrToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-  if (!$cfgToken || !$hdrToken || !hash_equals($cfgToken, $hdrToken)){
-    respond(false, ['error'=>'Auth token required'], 401);
-  }
+if ($ref && strpos($ref, (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on' ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].'/') !== 0) {
+  respond(false, ['error'=>'Invalid origin'], 403);
 }
 
 $raw = file_get_contents('php://input');
@@ -28,6 +20,16 @@ $scope = $req['scope'] ?? '';
 $action = $req['action'] ?? '';
 $payload = $req['data'] ?? [];
 if (!$scope || !$action) respond(false, ['error'=>'Missing params'], 400);
+
+// Optional admin token: only required for mutating actions
+$adminTokenCfg = __DIR__.'/admin-token.php';
+if (file_exists($adminTokenCfg) && in_array($action, ['create','update','delete'], true)){
+  $cfgToken = require $adminTokenCfg; $cfgToken = is_array($cfgToken)?($cfgToken['token']??''):'{}';
+  $hdrToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
+  if (!$cfgToken || !$hdrToken || !hash_equals($cfgToken, $hdrToken)){
+    respond(false, ['error'=>'Auth token required'], 401);
+  }
+}
 
 // Load config
 $cfg = [];
