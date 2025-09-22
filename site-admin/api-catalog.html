@@ -276,11 +276,15 @@
           const baseId = document.getElementById('airtable_base_id')?.value || '';
           const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
           const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
+          const apiKey = document.getElementById('airtable_api_key')?.value || '';
           const dot = document.getElementById('am_dot_'+entity);
           if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
           try{
-            const url = '../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(tableId)+(viewId?('&view='+encodeURIComponent(viewId)):'');
-            const r = await fetch(url);
+            const r = await fetch('../api/test-proxy.php?provider=airtable',{
+              method:'POST',
+              headers:{ 'Content-Type':'application/json' },
+              body: JSON.stringify({ base_id: baseId, table: tableId, view: viewId, api_key: apiKey || undefined })
+            });
             const t = await r.json();
             if (dot){ dot.classList.remove('loading'); dot.classList.add(t.ok?'ok':'err'); }
           }catch(e){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
@@ -288,6 +292,20 @@
         document.querySelectorAll('.map-test').forEach(btn=>{
           btn.addEventListener('click', function(){ testTable(this.getAttribute('data-entity')); });
         });
+
+        // Auto-test on load if Base + Table present, and re-test after edits
+        function autoTestMapping(){
+          const baseId = document.getElementById('airtable_base_id')?.value || '';
+          if (!baseId) return;
+          ['country','region','city','poi'].forEach(ent=>{
+            const tbl = document.getElementById('am_'+ent+'_table')?.value || '';
+            if (tbl) testTable(ent);
+          });
+        }
+        const debounce = (fn, ms)=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(fn, ms); }; };
+        ['airtable_base_id','am_country_table','am_country_view','am_region_table','am_region_view','am_city_table','am_city_view','am_poi_table','am_poi_view']
+          .forEach(id=>{ const el = document.getElementById(id); if (el){ el.addEventListener('input', debounce(autoTestMapping, 600)); el.addEventListener('change', autoTestMapping); } });
+        autoTestMapping();
       })();
     </script>
 </body>

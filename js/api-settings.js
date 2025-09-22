@@ -151,7 +151,10 @@
         const id = map[p];
         const r = results && results[p];
         if (!r){ cardStatus(id, 'err', 'Нет данных'); return; }
-        if (r.ok === true) cardStatus(id, 'ok', 'Подключено');
+        // Специально: для Airtable не окрашиваем зелёным только по наличию ключа,
+        // пока явно не пройден тест; показываем Ожидание.
+        if (r.ok === true && p !== 'airtable') { cardStatus(id, 'ok', 'Подключено'); return; }
+        if (r.ok === true && p === 'airtable') { cardStatus(id, 'loading', 'Ожидание'); return; }
         else if (r.ok === null) cardStatus(id, 'loading', 'Ожидание');
         else cardStatus(id, 'err', r.text || 'Ошибка');
       });
