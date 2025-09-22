@@ -374,7 +374,7 @@
       }
 
       function renderCities(){
-        level='cities'; selectedCity=null; selectedPoi=null; renderCrumbs();
+        level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs();
         const list = citiesByRegion[selectedRegion.id] || [];
         function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
         cards.innerHTML = list.map(c=>{
@@ -394,7 +394,7 @@
       }
 
       function renderPois(){
-        level='pois'; selectedPoi=null; renderCrumbs();
+        level='pois'; /* keep selectedPoi */ renderCrumbs();
         const list = poisByCity[selectedCity.id] || [];
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
         cards.innerHTML = list.map(p=>{
