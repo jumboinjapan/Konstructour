@@ -480,10 +480,16 @@
         const parts = [];
         parts.push('<a href="#" data-level="regions" class="text-indigo-600 hover:underline">Регионы</a>');
         if (selectedRegion){
-          parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedRegion.name+'</span>');
+          parts.push(
+            '<span class="mx-2">/</span>'+
+            '<a href="#" data-level="cities" data-region-id="'+selectedRegion.id+'" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>'
+          );
         }
         if (selectedCity){
-          parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedCity.name+'</span>');
+          parts.push(
+            '<span class="mx-2">/</span>'+
+            '<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+selectedCity.id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>'
+          );
         }
         if (selectedPoi){
           parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedPoi.name+'</span>');
@@ -608,9 +614,27 @@
         if (!a || !crumbs.contains(a)) return;
         e.preventDefault();
         const lv = a.getAttribute('data-level');
-        if (lv==='regions'){ selectedRegion=null; selectedCity=null; selectedPoi=null; push('regions'); return renderRegions(); }
-        if (lv==='cities' && selectedRegion){ push('cities', { regionId: selectedRegion.id }); return renderCities(); }
-        if (lv==='pois' && selectedRegion && selectedCity){ push('pois', { regionId: selectedRegion.id, cityId: selectedCity.id }); return renderPois(); }
+        if (lv==='regions'){
+          selectedRegion=null; selectedCity=null; selectedPoi=null;
+          push('regions'); return renderRegions();
+        }
+        if (lv==='cities'){
+          const regionId = a.getAttribute('data-region-id');
+          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
+          selectedCity=null; selectedPoi=null;
+          push('cities', { regionId: (selectedRegion?selectedRegion.id:null) });
+          return renderCities();
+        }
+        if (lv==='pois'){
+          const regionId = a.getAttribute('data-region-id');
+          const cityId = a.getAttribute('data-city-id');
+          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
+          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
+          selectedCity = list.find(c=>c.id===cityId) || selectedCity;
+          selectedPoi=null;
+          push('pois', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null) });
+          return renderPois();
+        }
       });
 
       // Back button
