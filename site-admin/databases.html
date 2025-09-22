@@ -86,9 +86,8 @@
             <div class="mb-4 -mt-1">
               <div id="db_breadcrumbs" class="flex items-center flex-wrap text-base text-gray-600"></div>
             </div>
-
-            <!-- Mapping header for Regions (Base/Table IDs) -->
-            <div id="regions_mapping_header" class="mb-4 text-xs text-gray-600"></div>
+            <!-- Mapping header (Base/Table IDs by tab) -->
+            <div id="mapping_header" class="mb-4 text-xs text-gray-600"></div>
 
             <!-- Контейнер карточек уровня (с начальными карточками для оффлайн/локального просмотра) -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -322,7 +321,8 @@
       const sections = {
         regions: document.getElementById('tab-regions'),
         tours: document.getElementById('tab-tours'),
-        templates: document.getElementById('tab-templates')
+        templates: document.getElementById('tab-templates'),
+        'airtable-mapping': document.getElementById('tab-airtable-mapping')
       };
       tabs.forEach(btn=>{
         btn.addEventListener('click', function(e){
@@ -387,6 +387,7 @@
       bindApiLabel('templates_api_type','templates_base_label','templates_base_id','templates_table_label','templates_table_id');
 
       // Load saved config from server and populate fields
+      let airtableReg = null; // cache for mapping header
       async function loadDbConfig(){
         try{
           const res = await fetch('../api/config-read.php', { headers: { 'X-Admin-Token': (window.ADMIN_TOKEN||'') } });
@@ -394,6 +395,7 @@
           const data = await res.json();
           const db = (data && data.databases) || {};
           const reg = (data && data.airtable_registry) || null;
+          airtableReg = reg;
           function fill(scope, obj){
             if (!obj) return;
             const sel = document.getElementById(scope+'_api_type');
@@ -417,16 +419,28 @@
             setv('am_city_label',    t.city?.label||'');    setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
             setv('am_poi_label',     t.poi?.label||'');     setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
             // Render mapping header for Regions
-            const hdr = document.getElementById('regions_mapping_header');
-            if (hdr){
-              const tbl = t.region?.tableId || '';
-              hdr.innerHTML = '<span class="px-2 py-1 bg-blue-50 border border-blue-100 rounded">Base: '+(baseId||'—')+'</span>'+
-                              '<span class="ml-2 px-2 py-1 bg-purple-50 border border-purple-100 rounded">Region Table: '+(tbl||'—')+'</span>';
-            }
+            // initial header will be set by render functions
           }
         }catch(e){ console.warn('loadDbConfig failed', e); }
       }
       loadDbConfig();
+
+      function setMappingHeader(kind){
+        const hdr = document.getElementById('mapping_header');
+        if (!hdr){ return; }
+        if (!airtableReg){ hdr.innerHTML=''; return; }
+        const baseId = airtableReg.baseId || airtableReg.base_id || '';
+        const t = airtableReg.tables || {};
+        const map = {
+          region: { color:'purple', title:'Region', tbl: t.region?.tableId||'' },
+          city:   { color:'green',  title:'City',   tbl: t.city?.tableId||'' },
+          poi:    { color:'yellow', title:'POI',    tbl: t.poi?.tableId||'' }
+        };
+        const cur = map[kind] || map.region;
+        const badgeBase = '<span class="px-2 py-1 bg-blue-50 border border-blue-100 rounded">Base: '+(baseId||'—')+'</span>';
+        const badgeTbl  = '<span class="ml-2 px-2 py-1 border rounded bg-'+(cur.color)+'-50 border-'+(cur.color)+'-100">'+cur.title+' Table: '+(cur.tbl||'—')+'</span>';
+        hdr.innerHTML = badgeBase + badgeTbl;
+      }
 
       // Save Airtable Mapping
       async function saveAirtableRegistry(){
@@ -594,7 +608,7 @@
       }
 
       function renderRegions(){
-        level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs();
+        level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs(); setMappingHeader('region');
         cards.innerHTML = regions.map(r=>{
           const count = (citiesByRegion[r.id]||[]).length;
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
@@ -619,7 +633,7 @@
       }
 
       function renderCities(){
-        level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs();
+        level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
         const list = citiesByRegion[selectedRegion.id] || [];
         function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
         cards.innerHTML = list.map(c=>{
@@ -639,7 +653,7 @@
       }
 
       function renderPois(){
-        level='pois'; /* keep selectedPoi */ renderCrumbs();
+        level='pois'; /* keep selectedPoi */ renderCrumbs(); setMappingHeader('poi');
         const list = poisByCity[selectedCity.id] || [];
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
         cards.innerHTML = list.map(p=>{
