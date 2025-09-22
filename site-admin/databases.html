@@ -329,6 +329,8 @@
         const badgeTbl  = '<span class="ml-2 px-2 py-1 border rounded bg-'+(cur.color)+'-50 border-'+(cur.color)+'-100">'+cur.title+' Table: '+(cur.tbl||'—')+'</span>';
         hdr.innerHTML = badgeBase + badgeTbl;
       }
+      // Сделаем доступной для других модулей на странице
+      window.setMappingHeader = setMappingHeader;
 
       // Save Airtable Mapping
       async function saveAirtableRegistry(){
