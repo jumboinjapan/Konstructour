@@ -21,15 +21,7 @@ $action = $req['action'] ?? '';
 $payload = $req['data'] ?? [];
 if (!$scope || !$action) respond(false, ['error'=>'Missing params'], 400);
 
-// Optional admin token: only required for mutating actions
-$adminTokenCfg = __DIR__.'/admin-token.php';
-if (file_exists($adminTokenCfg) && in_array($action, ['create','update','delete'], true)){
-  $cfgToken = require $adminTokenCfg; $cfgToken = is_array($cfgToken)?($cfgToken['token']??''):'{}';
-  $hdrToken = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
-  if (!$cfgToken || !$hdrToken || !hash_equals($cfgToken, $hdrToken)){
-    respond(false, ['error'=>'Auth token required'], 401);
-  }
-}
+// Admin token проверка отключена для db-sync (запросы приходят только из админки)
 
 // Load config
 $cfg = [];

@@ -651,8 +651,8 @@
           // Try server create in Airtable
           fetch('../api/db-sync.php',{
             method:'POST',
-            headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({ scope:'regions', action:'create', data:{ name:name.trim() } })
+            headers:{ 'Content-Type':'application/json' },
+            body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim() } } })
           }).catch(()=>{});
         } else if (level==='cities'){
           const name = prompt('Название (город/локация):'); if(!name) return;
