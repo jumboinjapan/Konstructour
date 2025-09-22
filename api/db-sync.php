@@ -61,6 +61,41 @@ if ($provider === 'airtable'){
 
   $baseUrl = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/'.rawurlencode($table);
 
+  if ($action === 'list'){
+    // Optional default view from registry
+    $viewId = '';
+    if (!empty($airReg['tables'])){
+      $map = [ 'regions'=>'region', 'cities'=>'city', 'pois'=>'poi' ];
+      $key = $map[$scope] ?? '';
+      $tbl = $airReg['tables'][$key] ?? [];
+      $viewId = $tbl['viewId'] ?? ($tbl['view_id'] ?? '');
+    }
+    $url = $baseUrl.'?pageSize=100';
+    if ($viewId){ $url .= '&view='.rawurlencode($viewId); }
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+      CURLOPT_HTTPHEADER=>[
+        'Authorization: Bearer '.$pat
+      ],
+      CURLOPT_RETURNTRANSFER=>true,
+      CURLOPT_TIMEOUT=>15
+    ]);
+    $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
+    $json = json_decode($resp, true);
+    if ($code >= 200 && $code < 300){
+      // Normalize to simple array
+      $items = [];
+      foreach (($json['records'] ?? []) as $rec){
+        $fields = $rec['fields'] ?? [];
+        $name = $fields['Name'] ?? ($fields['name'] ?? '');
+        $items[] = [ 'id'=>$rec['id'] ?? '', 'name'=>$name, 'fields'=>$fields ];
+      }
+      respond(true, ['items'=>$items]);
+    }
+    respond(false, ['error'=>'Airtable '.$code, 'response'=>$json], $code ?: 500);
+  }
+
   if ($action === 'create'){
     // Accept either fields directly or shorthand payload
     $fields = $payload['fields'] ?? null;
