@@ -25,7 +25,8 @@ $cfg = [];
 if (file_exists($cfgFile)) { $cfg = require $cfgFile; if (!is_array($cfg)) $cfg = []; }
 
 $out = [
-  'databases' => []
+  'databases' => [],
+  'airtable_registry' => null
 ];
 if (!empty($cfg['databases']) && is_array($cfg['databases'])){
   foreach ($cfg['databases'] as $scope=>$data){
