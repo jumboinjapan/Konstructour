@@ -1,0 +1,13 @@
+{
+  "name": "konstructour-admin",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Dev scripts for quick git push/deploy",
+  "scripts": {
+    "push": "bash scripts/push.sh",
+    "deploy": "bash scripts/push.sh",
+    "sync": "bash scripts/sync-and-push.sh"
+  }
+}
+
+
