@@ -79,7 +79,7 @@
                 <div class="text-xs text-gray-500">Каталог регионов</div>
                 <div class="flex items-center gap-2">
                   <button id="regions_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
-                  <button id="regions_add" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Добавить регион</button>
+                  <button id="regions_add" type="button" class="btn-japanese"><i class="fas fa-plus"></i></button>
                 </div>
               </div>
               <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
@@ -103,7 +103,7 @@
                 <div class="text-xs text-gray-500">Каталог городов и локаций</div>
                 <div class="flex items-center gap-2">
                   <button id="cities_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
-                  <button id="cities_add" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Добавить запись</button>
+                  <button id="cities_add" type="button" class="btn-japanese"><i class="fas fa-plus"></i></button>
                 </div>
               </div>
               <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
@@ -130,7 +130,7 @@
                 <div class="text-xs text-gray-500">POIs (объекты)</div>
                 <div class="flex items-center gap-2">
                   <button id="pois_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
-                  <button id="pois_add" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Добавить POI</button>
+                  <button id="pois_add" type="button" class="btn-japanese"><i class="fas fa-plus"></i></button>
                 </div>
               </div>
               <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
@@ -149,32 +149,30 @@
                   <tbody></tbody>
                 </table>
               </div>
-            </div>
 
-            <!-- Ticket Types (билеты) -->
-            <div class="mt-6">
-              <div class="flex items-center justify-between mb-3">
-                <div class="text-xs text-gray-500">Ticket Types (билеты)</div>
-                <div class="flex items-center gap-2">
-                  <button id="tickets_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
-                  <button id="tickets_add" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Добавить билет</button>
+              <!-- Редактор билетов для выбранного POI -->
+              <div class="mt-4" id="poi_tickets_panel">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-xs text-gray-500">Билеты для: <span id="poi_tickets_title" class="font-medium text-gray-700">— не выбран —</span></div>
+                  <div class="flex items-center gap-2">
+                    <button id="tickets_add" type="button" class="btn-japanese"><i class="fas fa-plus"></i></button>
+                  </div>
                 </div>
-              </div>
-              <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
-                <table id="tickets_table" class="min-w-full text-sm">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Ticket ID (PK)</th>
-                      <th class="px-4 py-2 text-left text-gray-600 font-medium">POI</th>
-                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Категория</th>
-                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Цена (¥)</th>
-                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Валюта</th>
-                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Примечание</th>
-                      <th class="px-4 py-2 text-right text-gray-600 font-medium">Действия</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
+                <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+                  <table id="tickets_table" class="min-w-full text-sm">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Ticket ID (PK)</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Категория</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Цена (¥)</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Валюта</th>
+                        <th class="px-4 py-2 text-left text-gray-600 font-medium">Примечание</th>
+                        <th class="px-4 py-2 text-right text-gray-600 font-medium">Действия</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
