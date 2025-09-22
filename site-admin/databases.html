@@ -378,19 +378,31 @@
 
       function renderCrumbs(){
         const parts = [];
-        parts.push('<a href="#" data-level="regions" class="text-indigo-600 hover:underline">Регионы</a>');
+        // Root
+        if (level === 'regions'){
+          parts.push('<span class="text-gray-800">Регионы</span>');
+        } else {
+          parts.push('<a href="#" data-level="regions" class="text-indigo-600 hover:underline">Регионы</a>');
+        }
+        // Region
         if (selectedRegion){
-          parts.push(
-            '<span class="mx-2">/</span>'+
-            '<a href="#" data-level="cities" data-region-id="'+selectedRegion.id+'" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>'
-          );
+          parts.push('<span class="mx-2">/</span>');
+          if (level === 'cities'){
+            parts.push('<span class="text-gray-800">'+selectedRegion.name+'</span>');
+          } else {
+            parts.push('<a href="#" data-level="cities" data-region-id="'+selectedRegion.id+'" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>');
+          }
         }
+        // City
         if (selectedCity){
-          parts.push(
-            '<span class="mx-2">/</span>'+
-            '<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+selectedCity.id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>'
-          );
+          parts.push('<span class="mx-2">/</span>');
+          if (level === 'pois'){
+            parts.push('<span class="text-gray-800">'+selectedCity.name+'</span>');
+          } else {
+            parts.push('<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+selectedCity.id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>');
+          }
         }
+        // POI (always last visible item is plain text)
         if (selectedPoi){
           parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedPoi.name+'</span>');
         }
