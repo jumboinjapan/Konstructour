@@ -96,6 +96,33 @@
                 </table>
               </div>
             </div>
+
+            <!-- Города и локации -->
+            <div class="mt-6">
+              <div class="flex items-center justify между mb-3">
+                <div class="text-xs text-gray-500">Каталог городов и локаций</div>
+                <div class="flex items-center gap-2">
+                  <button id="cities_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
+                  <button id="cities_add" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Добавить запись</button>
+                </div>
+              </div>
+              <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+                <table id="cities_table" class="min-w-full text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">City/Loc ID (PK)</th>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Название</th>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Регион</th>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Тип записи</th>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Координаты</th>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Родительский город</th>
+                      <th class="px-4 py-2 text-right text-gray-600 font-medium">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -252,6 +279,137 @@
             r.name = newName.trim();
             render();
           }
+        }
+      });
+
+      seedBtn && seedBtn.addEventListener('click', seed);
+      addBtn && addBtn.addEventListener('click', addOne);
+
+      render();
+    })();
+
+    // Каталог городов/локаций — UI-заглушка без обращений к реальным API
+    (function(){
+      const table = document.getElementById('cities_table');
+      if (!table) return;
+      const tbody = table.querySelector('tbody');
+      const seedBtn = document.getElementById('cities_seed');
+      const addBtn = document.getElementById('cities_add');
+
+      // Используем регионы из раздела выше как справочник
+      function getRegionList(){
+        const rows = document.querySelectorAll('#regions_table tbody tr');
+        const list = [];
+        rows.forEach(r=>{
+          const id = r.querySelector('td:nth-child(1)')?.textContent?.trim();
+          const name = r.querySelector('td:nth-child(2)')?.textContent?.trim();
+          if (id && name && !id.startsWith('Нет данных')) list.push({id,name});
+        });
+        return list;
+      }
+
+      let items = [];
+
+      function generateId(){
+        const n = items.length + 1;
+        return 'CL-' + String(n).padStart(4, '0');
+      }
+
+      function render(){
+        tbody.innerHTML = '';
+        if (items.length === 0){
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = 7;
+          td.className = 'px-4 py-4 text-gray-500';
+          td.textContent = 'Нет данных. Добавьте запись или используйте предустановленный список.';
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+          return;
+        }
+        items.forEach((it, idx)=>{
+          const tr = document.createElement('tr');
+          tr.className = idx % 2 ? 'bg-gray-50' : '';
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-gray-800">${it.id}</td>
+            <td class="px-4 py-2 text-gray-800">${it.name}</td>
+            <td class="px-4 py-2 text-gray-800">${it.regionName || ''}</td>
+            <td class="px-4 py-2 text-gray-800">${it.type}</td>
+            <td class="px-4 py-2 text-gray-800">${it.coords || ''}</td>
+            <td class="px-4 py-2 text-gray-800">${it.parentCity || ''}</td>
+            <td class="px-4 py-2 text-right">
+              <button data-action="edit" data-id="${it.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
+              <button data-action="delete" data-id="${it.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function seed(){
+        const r = getRegionList();
+        const pick = (name)=>{
+          const ri = r.find(x=>/Канто|Кансай|Хоккайдо|Тохоку|Тюбу|Тюгоку|Сикоку|Кюсю|Окинава/.test(x.name)) || r[0];
+          return ri ? { regionId: ri.id, regionName: ri.name } : { regionId: '', regionName: '' };
+        };
+        items = [
+          { name: 'Токио', type: 'Город' },
+          { name: 'Нара-парк', type: 'Локация', parentCity: 'Нара' },
+          { name: 'Ноборицава', type: 'Локация', parentCity: 'Саппоро' }
+        ].map((it, i)=>{
+          const id = 'CL-' + String(i+1).padStart(4,'0');
+          const rbind = pick(it.name);
+          return { id, name: it.name, type: it.type, coords: '', parentCity: it.parentCity || '', ...rbind };
+        });
+        render();
+      }
+
+      function addOne(){
+        const name = prompt('Название (город/локация):');
+        if (!name) return;
+        const type = prompt('Тип записи (Город|Локация):', 'Город');
+        if (!type) return;
+        let parentCity = '';
+        if (type.trim().toLowerCase() === 'локация'){
+          parentCity = prompt('Родительский город:') || '';
+        }
+        const coords = prompt('Координаты (опционально, например: 35.6895,139.6917):') || '';
+        const r = getRegionList();
+        let regionName = '';
+        if (r.length){
+          const names = r.map(x=>x.name).join(', ');
+          const picked = prompt('Регион ('+names+'):') || '';
+          const found = r.find(x=>x.name===picked.trim());
+          regionName = found ? found.name : (r[0]?.name || '');
+        }
+        items.push({ id: generateId(), name: name.trim(), type: (type||'').trim(), parentCity: parentCity.trim(), coords: coords.trim(), regionName });
+        render();
+      }
+
+      tbody.addEventListener('click', function(e){
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if (action === 'delete'){
+          items = items.filter(r=>r.id !== id);
+          render();
+        } else if (action === 'edit'){
+          const it = items.find(x=>x.id===id);
+          if (!it) return;
+          const newName = prompt('Новое название:', it.name) || it.name;
+          const newType = prompt('Тип записи (Город|Локация):', it.type) || it.type;
+          const newCoords = prompt('Координаты:', it.coords) || it.coords;
+          let newParent = it.parentCity;
+          if ((newType||'').trim().toLowerCase()==='локация'){
+            newParent = prompt('Родительский город:', it.parentCity||'') || it.parentCity || '';
+          } else {
+            newParent = '';
+          }
+          it.name = newName.trim();
+          it.type = newType.trim();
+          it.coords = newCoords.trim();
+          it.parentCity = newParent.trim();
+          render();
         }
       });
 
