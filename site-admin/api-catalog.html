@@ -282,6 +282,7 @@
           const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
           const apiKey = document.getElementById('airtable_api_key')?.value || '';
           const dot = document.getElementById('am_dot_'+entity);
+          const msg = document.getElementById('am_msg_'+entity);
           if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
           try{
             const r = await fetch('../api/test-proxy.php?provider=airtable',{
@@ -291,6 +292,11 @@
             });
             const t = await r.json();
             if (dot){ dot.classList.remove('loading'); dot.classList.add(t.ok?'ok':'err'); }
+            if (msg){ msg.textContent = t.ok ? 'OK' : (t.error || ('HTTP '+(t.status||''))); }
+            if (t.ok){
+              // успешный тест = сохранить текущий mapping на сервере
+              try{ await saveRegistry(); }catch(_){ /* ignore */ }
+            }
           }catch(e){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
         }
         document.querySelectorAll('.map-test').forEach(btn=>{
