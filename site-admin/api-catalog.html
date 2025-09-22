@@ -21,6 +21,9 @@
       .api-dot.ok{ background:#10b981; }
       .api-dot.err{ background:#ef4444; }
       @keyframes spin{ 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+      .map-row{ display:grid; grid-template-columns: 1fr 1fr auto auto; align-items:center; gap:10px; }
+      .map-entity{ display:flex; align-items:center; gap:8px; font-weight:500; }
+      .map-test{ font-size:11px; padding:6px 10px; }
     </style>
 </head>
 <body data-no-redirect="true">
@@ -67,6 +70,7 @@
                             <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseAirtable" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestAirtable" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <button id="am_toggle" type="button" class="btn-japanese" title="Свернуть/Развернуть"><i class="fas fa-chevron-up mr-2"></i>Toggle</button>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionAirtable">
@@ -78,34 +82,34 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Base ID</label>
                             <input id="airtable_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX">
                         </div>
-                        <div class="lg:col-span-2">
-                            <div class="text-sm font-medium mb-2">Mapping (Country / Region / City / POI)</div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div>
-                                <label class="block text-xs text-gray-600 mb-1">Country Table ID</label>
-                                <input id="am_country_table" class="input-japanese" placeholder="tbl...">
-                                <label class="block text-xs text-gray-600 mt-2 mb-1">Country View ID (опц.)</label>
-                                <input id="am_country_view" class="input-japanese" placeholder="viw...">
-                              </div>
-                              <div>
-                                <label class="block text-xs text-gray-600 mb-1">Region Table ID</label>
-                                <input id="am_region_table" class="input-japanese" placeholder="tbl...">
-                                <label class="block text-xs text-gray-600 mt-2 mb-1">Region View ID (опц.)</label>
-                                <input id="am_region_view" class="input-japanese" placeholder="viw...">
-                              </div>
-                              <div>
-                                <label class="block text-xs text-gray-600 mb-1">City Table ID</label>
-                                <input id="am_city_table" class="input-japanese" placeholder="tbl...">
-                                <label class="block text-xs text-gray-600 mt-2 mb-1">City View ID (опц.)</label>
-                                <input id="am_city_view" class="input-japanese" placeholder="viw...">
-                              </div>
-                              <div>
-                                <label class="block text-xs text-gray-600 mb-1">POI Table ID</label>
-                                <input id="am_poi_table" class="input-japanese" placeholder="tbl...">
-                                <label class="block text-xs text-gray-600 mt-2 mb-1">POI View ID (опц.)</label>
-                                <input id="am_poi_view" class="input-japanese" placeholder="viw...">
-                              </div>
+                        <div class="lg:col-span-2" id="am_mapping">
+                          <div class="text-sm font-medium mb-2">Mapping (лево: Table ID, право: View ID)</div>
+                          <div class="space-y-2">
+                            <div class="map-row">
+                              <div class="map-entity"><span class="api-dot" id="am_dot_country"></span><span>🌐 Country</span></div>
+                              <input id="am_country_table" class="input-japanese" placeholder="tbl...">
+                              <input id="am_country_view" class="input-japanese" placeholder="viw...">
+                              <button data-entity="country" class="map-test btn-japanese">Test</button>
                             </div>
+                            <div class="map-row">
+                              <div class="map-entity"><span class="api-dot" id="am_dot_region"></span><span>🧭 Region</span></div>
+                              <input id="am_region_table" class="input-japanese" placeholder="tbl...">
+                              <input id="am_region_view" class="input-japanese" placeholder="viw...">
+                              <button data-entity="region" class="map-test btn-japanese">Test</button>
+                            </div>
+                            <div class="map-row">
+                              <div class="map-entity"><span class="api-dot" id="am_dot_city"></span><span>🏙 City</span></div>
+                              <input id="am_city_table" class="input-japanese" placeholder="tbl...">
+                              <input id="am_city_view" class="input-japanese" placeholder="viw...">
+                              <button data-entity="city" class="map-test btn-japanese">Test</button>
+                            </div>
+                            <div class="map-row">
+                              <div class="map-entity"><span class="api-dot" id="am_dot_poi"></span><span>📍 POI</span></div>
+                              <input id="am_poi_table" class="input-japanese" placeholder="tbl...">
+                              <input id="am_poi_view" class="input-japanese" placeholder="viw...">
+                              <button data-entity="poi" class="map-test btn-japanese">Test</button>
+                            </div>
+                          </div>
                         </div>
                     </div>
                 </div>
@@ -254,6 +258,36 @@
     </div>
 
     <script src="../js/api-settings.js?v=20250921-24"></script>
+    <script>
+      (function(){
+        const toggle = document.getElementById('am_toggle');
+        const mapping = document.getElementById('am_mapping');
+        if (toggle && mapping){
+          let collapsed = false;
+          toggle.addEventListener('click', function(){
+            collapsed = !collapsed;
+            mapping.style.display = collapsed ? 'none' : '';
+            this.innerHTML = '<i class="fas '+(collapsed?'fa-chevron-down':'fa-chevron-up')+' mr-2"></i>Toggle';
+          });
+        }
+        async function testTable(entity){
+          const baseId = document.getElementById('airtable_base_id')?.value || '';
+          const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
+          const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
+          const dot = document.getElementById('am_dot_'+entity);
+          if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
+          try{
+            const url = '../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(tableId)+(viewId?('&view='+encodeURIComponent(viewId)):'');
+            const r = await fetch(url);
+            const t = await r.json();
+            if (dot){ dot.classList.remove('loading'); dot.classList.add(t.ok?'ok':'err'); }
+          }catch(e){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
+        }
+        document.querySelectorAll('.map-test').forEach(btn=>{
+          btn.addEventListener('click', function(){ testTable(this.getAttribute('data-entity')); });
+        });
+      })();
+    </script>
 </body>
 </html>
 
