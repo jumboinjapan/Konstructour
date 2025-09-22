@@ -72,8 +72,11 @@
               </div>
             </div>
 
-            <!-- Хлебные крошки -->
-            <div id="db_breadcrumbs" class="flex items-center flex-wrap text-sm text-gray-600 mb-4"></div>
+            <!-- Хлебные крошки + Назад -->
+            <div class="flex items-center justify-between mb-4">
+              <div id="db_breadcrumbs" class="flex items-center flex-wrap text-sm text-gray-600"></div>
+              <button id="db_back" class="btn-japanese hidden"><i class="fas fa-arrow-left mr-2"></i>Назад</button>
+            </div>
 
             <!-- Контейнер карточек уровня -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -227,11 +230,15 @@
 
       function renderRegions(){
         level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs();
+        document.getElementById('db_back')?.classList.add('hidden');
         cards.innerHTML = regions.map(r=>{
           const actions = '<button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
           const inner = '<div class="flex items-center justify-between">\
-              <div class="text-lg text-gray-800">'+r.name+'</div>\
+              <div class="flex items-center gap-2">\
+                <i class="fas fa-map-marker-alt text-indigo-600"></i>\
+                <div class="text-lg text-gray-800">'+r.name+'</div>\
+              </div>\
               <div class="text-sm text-gray-500">'+((citiesByRegion[r.id]||[]).length)+' городов</div>\
             </div>';
           return '<div class="cursor-pointer" data-go="cities" data-id="'+r.id+'">'+card(actions, inner)+'</div>';
@@ -240,6 +247,8 @@
 
       function renderCities(){
         level='cities'; selectedCity=null; selectedPoi=null; renderCrumbs();
+        // Показать кнопку "Назад" на уровнях глубже регионов
+        document.getElementById('db_back')?.classList.remove('hidden');
         const list = citiesByRegion[selectedRegion.id] || [];
         cards.innerHTML = list.map(c=>{
           const actions = '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -257,6 +266,7 @@
 
       function renderPois(){
         level='pois'; selectedPoi=null; renderCrumbs();
+        document.getElementById('db_back')?.classList.remove('hidden');
         const list = poisByCity[selectedCity.id] || [];
         cards.innerHTML = list.map(p=>{
           const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -279,6 +289,7 @@
 
       function renderTickets(){
         level='tickets'; renderCrumbs();
+        document.getElementById('db_back')?.classList.remove('hidden');
         const list = ticketsByPoi[selectedPoi.id] || [];
         cards.innerHTML = list.map(t=>{
           const actions = '<button data-act="edit-ticket" data-id="'+t.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -320,6 +331,13 @@
         if (lv==='regions') return renderRegions();
         if (lv==='cities') return renderCities();
         if (lv==='pois') return renderPois();
+      });
+
+      // Back button
+      document.getElementById('db_back')?.addEventListener('click', function(){
+        if (level==='cities') return renderRegions();
+        if (level==='pois') return renderCities();
+        if (level==='tickets') return renderPois();
       });
 
       // Card action buttons
