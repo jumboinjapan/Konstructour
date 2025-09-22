@@ -78,6 +78,7 @@
                 <div id="regions_table_label" class="text-xs text-gray-600 ml-3 api-table-label">Table ID (Регионы):</div>
                 <input id="regions_table_id" type="text" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX / Имя листа" style="padding:6px 10px;">
                 <i id="regions_sync_icon" class="fas fa-sync text-gray-400 ml-2 cursor-pointer" title="Синхронизировать и сохранить"></i>
+                <div id="mapping_header" class="ml-3 text-xs text-gray-600"></div>
               </div>
             </div>
 
@@ -85,8 +86,6 @@
             <div class="mb-4 -mt-1">
               <div id="db_breadcrumbs" class="flex items-center flex-wrap text-base text-gray-600"></div>
             </div>
-            <!-- Mapping header (Base/Table IDs by tab) -->
-            <div id="mapping_header" class="mb-4 text-xs text-gray-600"></div>
 
             <!-- Контейнер карточек уровня (с начальными карточками для оффлайн/локального просмотра) -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -604,14 +603,14 @@
       });
 
       // Breadcrumbs
-      crumbs.addEventListener('click', function(e){
-        const a = e.target.closest('a[data-level]');
-        if (!a) return;
+      document.addEventListener('click', function(e){
+        const a = e.target.closest && e.target.closest('a[data-level]');
+        if (!a || !crumbs.contains(a)) return;
         e.preventDefault();
         const lv = a.getAttribute('data-level');
-        if (lv==='regions'){ push('regions'); return renderRegions(); }
-        if (lv==='cities'){ push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) }); return renderCities(); }
-        if (lv==='pois'){ push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) }); return renderPois(); }
+        if (lv==='regions'){ selectedRegion=null; selectedCity=null; selectedPoi=null; push('regions'); return renderRegions(); }
+        if (lv==='cities' && selectedRegion){ push('cities', { regionId: selectedRegion.id }); return renderCities(); }
+        if (lv==='pois' && selectedRegion && selectedCity){ push('pois', { regionId: selectedRegion.id, cityId: selectedCity.id }); return renderPois(); }
       });
 
       // Back button
