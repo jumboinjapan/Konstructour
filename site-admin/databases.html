@@ -439,6 +439,24 @@
         }).join('');
       }
 
+      // Загрузка регионов из Airtable и отрисовка
+      async function syncRegionsFromAirtable(){
+        try{
+          const res = await fetch('../api/db-sync.php',{
+            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            body: JSON.stringify({ scope:'regions', action:'list' })
+          });
+          if (!res.ok) throw new Error('HTTP '+res.status);
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error||'Airtable');
+          const items = data.items || [];
+          regions = items.map((it, idx)=>({ id: 'REG-'+String(idx+1).padStart(3,'0'), name: it.name || ('Регион '+(idx+1)) }));
+          // сбросим счетчики; реальныеCounts можно будет подтягивать отдельно
+          citiesByRegion = {};
+          renderRegions();
+        }catch(e){ console.warn('syncRegionsFromAirtable failed', e); }
+      }
+
       function renderCities(){
         level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
         const list = citiesByRegion[selectedRegion.id] || [];
@@ -664,7 +682,8 @@
       window.addEventListener('popstate', function(ev){ renderFromState(ev.state); });
       // Initial state
       history.replaceState({ level: 'regions' }, '');
-      renderRegions();
+      // Попробуем загрузить из Airtable, если настроено, иначе локальный список
+      syncRegionsFromAirtable().then(()=>{ if (regions.length===0) renderRegions(); }).catch(()=>renderRegions());
 
       // Deploy button placeholder removed per requirements
     })();
