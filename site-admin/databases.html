@@ -281,7 +281,7 @@
       // State (in-memory for UI only)
       let regions = [ 'Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава' ]
         .map((name, i)=>({ id:'REG-'+String(i+1).padStart(3,'0'), name }));
-      let citiesByRegion = {}; // regionId -> [ {id,name} ]
+      let citiesByRegion = {}; // regionId -> [ { id, name, type: 'city'|'location', parentCityId? } ]
       let poisByCity = {};     // cityId -> [ {id,name,type} ]
       let ticketsByPoi = {};   // poiId -> [ {id,category,price,currency,note} ]
 
@@ -289,7 +289,10 @@
       const kansai = regions.find(r=>r.name==='Кансай');
       if (kansai){
         citiesByRegion[kansai.id] = [
-          { id:'CL-001', name:'Киото' }, { id:'CL-002', name:'Осака' }, { id:'CL-003', name:'Нара' }
+          { id:'CL-001', name:'Киото', type:'city' },
+          { id:'CL-002', name:'Осака', type:'city' },
+          { id:'CL-003', name:'Нара', type:'city' }
+          // { id:'CL-004', name:'Асино-ко (Хаконе)', type:'location', parentCityId:'CL-001' },
         ];
         poisByCity['CL-001'] = [ { id:'POI-001', name:'Храм Киёмидзу', type:'культура' }, { id:'POI-002', name:'Золотой павильон', type:'культура' } ];
         ticketsByPoi['POI-001'] = [ { id:'TKT-001', category:'Adult', price:500, currency:'¥', note:'' }, { id:'TKT-002', category:'Child', price:200, currency:'¥', note:'6–11' } ];
@@ -373,13 +376,16 @@
       function renderCities(){
         level='cities'; selectedCity=null; selectedPoi=null; renderCrumbs();
         const list = citiesByRegion[selectedRegion.id] || [];
+        function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
         cards.innerHTML = list.map(c=>{
           const actions = '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-city" data-id="'+c.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
+          const typeLabel = (c.type||'city') === 'location' ? 'Локация' : 'Город';
+          const parentInfo = (c.type==='location' && c.parentCityId) ? ('<div class="text-xs text-gray-500 mt-0.5">Родитель: '+findCityNameById(c.parentCityId)+'</div>') : '';
           const inner = '<div class="flex items-center justify-between">\
               <div>\
-                <div class="text-sm bg-gray-100 text-gray-700 inline-block px-2 py-0.5 rounded">Город</div>\
-                <div class="text-lg text-gray-800 mt-1">'+c.name+'</div>\
+                <div class="text-sm bg-gray-100 text-gray-700 inline-block px-2 py-0.5 rounded">'+typeLabel+'</div>\
+                <div class="text-lg text-gray-800 mt-1">'+c.name+'</div>'+parentInfo+'\
               </div>\
               <div class="text-sm text-gray-500">'+((poisByCity[c.id]||[]).length)+' POI</div>\
             </div>';
@@ -390,6 +396,7 @@
       function renderPois(){
         level='pois'; selectedPoi=null; renderCrumbs();
         const list = poisByCity[selectedCity.id] || [];
+        const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
         cards.innerHTML = list.map(p=>{
           const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
@@ -399,6 +406,7 @@
                 <div class="flex items-center justify-between">\
                   <div class="text-lg text-gray-800">'+p.name+'</div>\
                   <div class="text-xs text-gray-500 flex items-center gap-3">\
+                    <span title=\"Родитель\"><i class=\"fas fa-map-marker-alt mr-1 text-gray-400\"></i>'+parentTypeLabel+'</span>\
                     <span title="Тип"><i class="fas fa-tag mr-1 text-gray-400"></i>'+ (p.type||'—') +'</span>\
                     <span title="Билеты"><i class="fas fa-ticket mr-1 text-gray-400"></i>'+((ticketsByPoi[p.id]||[]).length)+'</span>\
                   </div>\
@@ -499,10 +507,27 @@
           regions.push({ id, name:name.trim() });
           renderRegions();
         } else if (level==='cities'){
-          const name = prompt('Название города:'); if(!name) return;
+          const name = prompt('Название (город/локация):'); if(!name) return;
+          let typeRaw = (prompt('Тип записи (Город|Локация):','Город')||'Город').trim().toLowerCase();
+          let type = (typeRaw.startsWith('л')) ? 'location' : 'city';
           const list = citiesByRegion[selectedRegion.id] || (citiesByRegion[selectedRegion.id]=[]);
+          let parentCityId = '';
+          if (type==='location'){
+            const cityOptions = list.filter(x=> (x.type||'city')==='city');
+            if (cityOptions.length===0){
+              alert('Сначала добавьте хотя бы один Город. Запись будет создана как Город.');
+              type = 'city';
+            } else {
+              const names = cityOptions.map(x=>x.name).join(', ');
+              const picked = prompt('Родительский город ('+names+'):')||'';
+              const found = cityOptions.find(x=>x.name===picked.trim());
+              parentCityId = found ? found.id : cityOptions[0].id;
+            }
+          }
           const id = genId('CL', list.length+1);
-          list.push({ id, name:name.trim() });
+          const obj = { id, name:name.trim(), type };
+          if (type==='location') obj.parentCityId = parentCityId;
+          list.push(obj);
           renderCities();
         } else if (level==='pois'){
           const name = prompt('Название POI:'); if(!name) return;
