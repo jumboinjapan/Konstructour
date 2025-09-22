@@ -295,7 +295,8 @@
             });
             const t = await r.json();
             if (dot){ dot.classList.remove('loading'); dot.classList.add(t.ok?'ok':'err'); }
-            if (msg){ msg.textContent = t.ok ? 'OK' : (t.error || ('HTTP '+(t.status||''))); }
+            // Показываем текст только при ошибке, успех не дублируем (зелёная точка уже есть)
+            if (msg){ msg.textContent = t.ok ? '' : (t.error || ('HTTP '+(t.status||''))); }
             if (t.ok){
               // успешный тест = сохранить текущий mapping на сервере
               try{ await saveRegistry(); }catch(_){ /* ignore */ }
