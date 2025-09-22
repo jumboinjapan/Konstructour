@@ -299,8 +299,8 @@
     load();
     loadServerKeyBadges();
     loadHealth();
-    // Не используем Add как toggle для Airtable; оставим отдельную иконку toggle в карточке
-    ['OpenAI','GSheets','GMaps','Recaptcha','Brilliant'].forEach(setupAddFlow);
+    // Вернули Add для Airtable и других
+    ['OpenAI','Airtable','GSheets','GMaps','Recaptcha','Brilliant'].forEach(setupAddFlow);
     // Убрали прежний capture-блокировщик кликов внутри .api-actions,
     // чтобы не гасить обработчики кнопок (Test/Save)
     // Global capture guard: блокируем только переходы по ссылкам внутри .api-actions,
