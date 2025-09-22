@@ -161,6 +161,52 @@ if ($provider === 'airtable'){
     respond(false, ['error'=>'Airtable '.$code, 'response'=>$json], $code ?: 500);
   }
 
+  if ($action === 'update'){
+    $id = $payload['id'] ?? '';
+    if (!$id) respond(false, ['error'=>'Missing id'], 400);
+    $fields = $payload['fields'] ?? [];
+    if (!$fields){
+      if (!empty($payload['name'])){ $fields['Name'] = $payload['name']; }
+      if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
+    }
+    $ch = curl_init($baseUrl);
+    curl_setopt_array($ch, [
+      CURLOPT_CUSTOMREQUEST=>'PATCH',
+      CURLOPT_HTTPHEADER=>[
+        'Authorization: Bearer '.$pat,
+        'Content-Type: application/json'
+      ],
+      CURLOPT_POSTFIELDS=>json_encode(['records'=>[['id'=>$id,'fields'=>$fields]]], JSON_UNESCAPED_UNICODE),
+      CURLOPT_RETURNTRANSFER=>true,
+      CURLOPT_TIMEOUT=>15
+    ]);
+    $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
+    $json = json_decode($resp, true);
+    if ($code >= 200 && $code < 300){ respond(true, ['result'=>$json]); }
+    respond(false, ['error'=>'Airtable '.$code, 'response'=>$json], $code ?: 500);
+  }
+
+  if ($action === 'delete'){
+    $id = $payload['id'] ?? '';
+    if (!$id) respond(false, ['error'=>'Missing id'], 400);
+    $url = $baseUrl.'?'.http_build_query(['records[]'=>$id]);
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+      CURLOPT_CUSTOMREQUEST=>'DELETE',
+      CURLOPT_HTTPHEADER=>[
+        'Authorization: Bearer '.$pat
+      ],
+      CURLOPT_RETURNTRANSFER=>true,
+      CURLOPT_TIMEOUT=>15
+    ]);
+    $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
+    $json = json_decode($resp, true);
+    if ($code >= 200 && $code < 300){ respond(true, ['result'=>$json]); }
+    respond(false, ['error'=>'Airtable '.$code, 'response'=>$json], $code ?: 500);
+  }
+
   // Not implemented actions yet
   respond(false, ['error'=>'Action not implemented'], 400);
 }
