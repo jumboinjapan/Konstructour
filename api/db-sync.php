@@ -84,9 +84,41 @@ if ($provider === 'airtable'){
     if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
     $json = json_decode($resp, true);
     if ($code >= 200 && $code < 300){
+      // Optional filtering by parent
+      $records = ($json['records'] ?? []);
+      $flt = $payload['filter'] ?? [];
+      if (!empty($flt)){
+        $rid = $flt['regionId'] ?? '';
+        $rname = $flt['regionName'] ?? '';
+        $cid = $flt['cityId'] ?? '';
+        $cname = $flt['cityName'] ?? '';
+        $records = array_values(array_filter($records, function($rec) use ($scope,$rid,$rname,$cid,$cname){
+          $fields = $rec['fields'] ?? [];
+          $candidates = [];
+          if ($scope==='cities'){ $candidates = ['Region','Регион','region','Страна/Регион']; }
+          if ($scope==='pois'){ $candidates = ['City','Город','city','Локация/Город']; }
+          foreach ($candidates as $fn){
+            if (!array_key_exists($fn, $fields)) continue;
+            $val = $fields[$fn];
+            if (is_array($val)){
+              foreach ($val as $v){
+                if (is_string($v) && ($v===$rid || $v===$rname || $v===$cid || $v===$cname)) return true;
+                if (is_array($v)){
+                  if (($rid && isset($v['id']) && $v['id']===$rid) || ($cid && isset($v['id']) && $v['id']===$cid)) return true;
+                  if (($rname && isset($v['name']) && $v['name']===$rname) || ($cname && isset($v['name']) && $v['name']===$cname)) return true;
+                }
+              }
+            } else if (is_string($val)){
+              if ($val===$rid || $val===$rname || $val===$cid || $val===$cname) return true;
+            }
+          }
+          // if no candidate field or no match, keep if no filter provided
+          return ($scope!=='cities' && $scope!=='pois') ? true : false;
+        }));
+      }
       // Normalize to simple array, tolerant field names
       $items = [];
-      foreach (($json['records'] ?? []) as $rec){
+      foreach ($records as $rec){
         $fields = $rec['fields'] ?? [];
         $name = '';
         foreach (['Name','Название','Наименование','Title','name','title'] as $fn){ if (isset($fields[$fn]) && $fields[$fn] !== '') { $name = $fields[$fn]; break; } }

@@ -501,6 +501,31 @@
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
       }
 
+      // Airtable-backed loaders for each level
+      async function loadCitiesForRegion(region){
+        try{
+          const res = await fetch('../api/db-sync.php',{
+            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: region.id, regionName: region.name } } })
+          });
+          const j = await res.json();
+          const items = j.ok ? (j.items||[]) : [];
+          citiesByRegion[region.id] = items.map(it=>({ id: it.id, name: it.name || '—', type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
+        }catch(e){ citiesByRegion[region.id] = []; }
+      }
+
+      async function loadPoisForCity(city){
+        try{
+          const res = await fetch('../api/db-sync.php',{
+            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            body: JSON.stringify({ scope:'pois', action:'list', data:{ filter:{ cityId: city.id, cityName: city.name } } })
+          });
+          const j = await res.json();
+          const items = j.ok ? (j.items||[]) : [];
+          poisByCity[city.id] = items.map(it=>({ id: it.id, name: it.name || '—', type: (it.fields?.Category||'') }));
+        }catch(e){ poisByCity[city.id] = []; }
+      }
+
       function renderTickets(){
         level='tickets'; renderCrumbs();
         const list = ticketsByPoi[selectedPoi.id] || [];
@@ -516,7 +541,7 @@
       }
 
       // Navigation (cards) — делегировано на документ, чтобы исключить проблемы привязки
-      document.addEventListener('click', function(e){
+      document.addEventListener('click', async function(e){
         const go = e.target.closest('[data-go]');
         if (!go || !cards.contains(go)) return;
         const id = go.getAttribute('data-id');
@@ -524,11 +549,13 @@
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
           push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
+          await loadCitiesForRegion(selectedRegion);
           renderCities();
         } else if (to==='pois'){
           const list = citiesByRegion[selectedRegion.id] || [];
           selectedCity = list.find(c=>c.id===id) || null;
           push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
+          await loadPoisForCity(selectedCity);
           renderPois();
         } else if (to==='tickets'){
           const list = poisByCity[selectedCity.id] || [];
@@ -687,85 +714,7 @@
 
       // Deploy button placeholder removed per requirements
     })();
-    // Каталог регионов — UI-заглушка без обращений к реальным API
-    (function(){
-      const table = document.getElementById('regions_table');
-      if (!table) return;
-      const tbody = table.querySelector('tbody');
-      const addBtn = document.getElementById('regions_add');
-
-      let regions = [];
-
-      function generateId(){
-        const n = regions.length + 1;
-        return 'REG-' + String(n).padStart(3, '0');
-      }
-
-      // Предзаполним список регионов сразу
-      regions = [
-        'Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава'
-      ].map((name, i)=>({ id: 'REG-' + String(i+1).padStart(3,'0'), name, citiesCount: 0 }));
-
-      function render(){
-        tbody.innerHTML = '';
-        if (regions.length === 0){
-          const tr = document.createElement('tr');
-          const td = document.createElement('td');
-          td.colSpan = 4;
-          td.className = 'px-4 py-4 text-gray-500';
-          td.textContent = 'Нет данных. Добавьте регион.';
-          tr.appendChild(td);
-          tbody.appendChild(tr);
-          return;
-        }
-        regions.forEach((r, idx)=>{
-          const tr = document.createElement('tr');
-          tr.className = idx % 2 ? 'bg-gray-50' : '';
-          tr.innerHTML = `
-            <td class="px-4 py-2 text-gray-800">${r.id}</td>
-            <td class="px-4 py-2 text-gray-800">${r.name}</td>
-            <td class="px-4 py-2">
-              <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">Перейти к городам</a>
-              <span class="text-xs text-gray-500 ml-2">(${r.citiesCount || 0})</span>
-            </td>
-            <td class="px-4 py-2 text-right">
-              <button data-action="edit" data-id="${r.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
-              <button data-action="delete" data-id="${r.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
-            </td>`;
-          tbody.appendChild(tr);
-        });
-      }
-
-      function addOne(){
-        const name = prompt('Название региона:');
-        if (!name) return;
-        regions.push({ id: generateId(), name: name.trim(), citiesCount: 0 });
-        render();
-      }
-
-      tbody.addEventListener('click', function(e){
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        const id = btn.getAttribute('data-id');
-        const action = btn.getAttribute('data-action');
-        if (action === 'delete'){
-          regions = regions.filter(r=>r.id !== id);
-          render();
-        } else if (action === 'edit'){
-          const r = regions.find(x=>x.id===id);
-          if (!r) return;
-          const newName = prompt('Новое название региона:', r.name);
-          if (newName && newName.trim()){
-            r.name = newName.trim();
-            render();
-          }
-        }
-      });
-
-      addBtn && addBtn.addEventListener('click', addOne);
-
-      render();
-    })();
+      // Удалён legacy-список «Каталог регионов» (табличный)
 
     // Каталог городов/локаций — UI-заглушка без обращений к реальным API
     (function(){
