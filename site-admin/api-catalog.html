@@ -26,6 +26,8 @@
       .map-test{ font-size:11px; padding:6px 10px; }
       .expand-icon{ position:absolute; bottom:10px; right:12px; cursor:pointer; color:#6b7280; opacity:.9; transform: scale(.7); }
       .expand-icon:hover{ color:#374151; }
+      .btn-icon{ width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #e5e7eb; border-radius:8px; background:#f5f5f4; color:#374151; }
+      .btn-icon:hover{ background:#eee; }
     </style>
 </head>
 <body data-no-redirect="true">
@@ -72,6 +74,7 @@
                             <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseAirtable" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestAirtable" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <button id="am_toggle" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionAirtable">
@@ -116,7 +119,6 @@
                             </div>
                           </div>
                         </div>
-                        <i id="am_toggle" class="expand-icon fas fa-chevron-up" title="Toggle"></i>
                     </div>
                 </div>
 
