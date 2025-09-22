@@ -74,10 +74,26 @@
             <div id="regions_schema" class="text-sm text-gray-600">
               Структура берётся из Project Description.md. Настройка схемы будет подключена.
             </div>
-            <div class="mt-4">
-              <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
-              <div id="regions_preview" class="japanese-table w-full rounded-lg overflow-hidden">
-                <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-3">
+                <div class="text-xs text-gray-500">Каталог регионов</div>
+                <div class="flex items-center gap-2">
+                  <button id="regions_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
+                  <button id="regions_add" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Добавить регион</button>
+                </div>
+              </div>
+              <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+                <table id="regions_table" class="min-w-full text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Region ID (PK)</th>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Название</th>
+                      <th class="px-4 py-2 text-left text-gray-600 font-medium">Города/Локации</th>
+                      <th class="px-4 py-2 text-right text-gray-600 font-medium">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -159,6 +175,90 @@
           if (sections[key]) sections[key].classList.add('active');
         });
       });
+    })();
+
+    // Каталог регионов — UI-заглушка без обращений к реальным API
+    (function(){
+      const table = document.getElementById('regions_table');
+      if (!table) return;
+      const tbody = table.querySelector('tbody');
+      const seedBtn = document.getElementById('regions_seed');
+      const addBtn = document.getElementById('regions_add');
+
+      let regions = [];
+
+      function generateId(){
+        const n = regions.length + 1;
+        return 'REG-' + String(n).padStart(3, '0');
+      }
+
+      function render(){
+        tbody.innerHTML = '';
+        if (regions.length === 0){
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = 4;
+          td.className = 'px-4 py-4 text-gray-500';
+          td.textContent = 'Нет данных. Добавьте регион или используйте предустановленный список.';
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+          return;
+        }
+        regions.forEach((r, idx)=>{
+          const tr = document.createElement('tr');
+          tr.className = idx % 2 ? 'bg-gray-50' : '';
+          tr.innerHTML = `
+            <td class="px-4 py-2 text-gray-800">${r.id}</td>
+            <td class="px-4 py-2 text-gray-800">${r.name}</td>
+            <td class="px-4 py-2">
+              <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">Перейти к городам</a>
+              <span class="text-xs text-gray-500 ml-2">(${r.citiesCount || 0})</span>
+            </td>
+            <td class="px-4 py-2 text-right">
+              <button data-action="edit" data-id="${r.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
+              <button data-action="delete" data-id="${r.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function seed(){
+        regions = [
+          'Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава'
+        ].map((name, i)=>({ id: 'REG-' + String(i+1).padStart(3,'0'), name, citiesCount: 0 }));
+        render();
+      }
+
+      function addOne(){
+        const name = prompt('Название региона:');
+        if (!name) return;
+        regions.push({ id: generateId(), name: name.trim(), citiesCount: 0 });
+        render();
+      }
+
+      tbody.addEventListener('click', function(e){
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if (action === 'delete'){
+          regions = regions.filter(r=>r.id !== id);
+          render();
+        } else if (action === 'edit'){
+          const r = regions.find(x=>x.id===id);
+          if (!r) return;
+          const newName = prompt('Новое название региона:', r.name);
+          if (newName && newName.trim()){
+            r.name = newName.trim();
+            render();
+          }
+        }
+      });
+
+      seedBtn && seedBtn.addEventListener('click', seed);
+      addBtn && addBtn.addEventListener('click', addOne);
+
+      render();
     })();
     </script>
   </body>
