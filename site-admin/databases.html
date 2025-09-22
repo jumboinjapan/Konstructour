@@ -237,14 +237,7 @@
         if (isSyncing) el.classList.add('animate-spin'); else el.classList.remove('animate-spin');
       }
 
-      // Example: start/stop spinning when navigating (as a placeholder)
-      const cardsDemo = document.getElementById('db_cards');
-      if (cardsDemo){
-        cardsDemo.addEventListener('click', function(){
-          setSyncing('regions', true);
-          setTimeout(function(){ setSyncing('regions', false); }, 800);
-        });
-      }
+      // Remove placeholder spinner handler to avoid side-effects on clicks
 
       // Base label auto-switch for API type
       function bindApiLabel(selectId, labelId, inputId, tableLabelId, tableInputId){
