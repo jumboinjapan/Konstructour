@@ -66,11 +66,10 @@
                 <select id="regions_api_type" class="input-japanese" style="padding:6px 10px;">
                   <option value="airtable">Airtable</option>
                   <option value="gsheets">Google Sheets</option>
-                  <option value="brilliantdirectory">BD</option>
                 </select>
-                <div class="text-xs text-gray-600 ml-3">Base ID:</div>
+                <div id="regions_base_label" class="text-xs text-gray-600 ml-3">Base ID:</div>
                 <input id="regions_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX" style="width:220px; padding:6px 10px;">
-                <i class="fas fa-sync animate-spin text-gray-400 ml-2" title="Автосинхронизация"></i>
+                <i id="regions_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
 
@@ -82,10 +81,12 @@
             <!-- Контейнер карточек уровня -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
-            <!-- Плавающая кнопка добавления -->
-            <button id="db_fab_add" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 btn-japanese rounded-full w-12 h-12 flex items-center justify-center shadow-lg" title="Добавить">
-              <i class="fas fa-plus"></i>
-            </button>
+            <!-- Кнопка добавления под сеткой -->
+            <div class="mt-6 flex justify-center">
+              <button id="db_fab_add" class="btn-japanese rounded-full w-12 h-12 flex items-center justify-center shadow-lg" title="Добавить">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -99,11 +100,10 @@
                 <select id="tours_api_type" class="input-japanese" style="padding:6px 10px;">
                   <option value="airtable">Airtable</option>
                   <option value="gsheets">Google Sheets</option>
-                  <option value="brilliantdirectory">BD</option>
                 </select>
-                <div class="text-xs text-gray-600 ml-3">Base ID:</div>
+                <div id="tours_base_label" class="text-xs text-gray-600 ml-3">Base ID:</div>
                 <input id="tours_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX" style="width:220px; padding:6px 10px;">
-                <i class="fas fa-sync animate-spin text-gray-400 ml-2" title="Автосинхронизация"></i>
+                <i id="tours_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
             <div id="tours_schema" class="text-sm text-gray-600">
@@ -128,11 +128,10 @@
                 <select id="templates_api_type" class="input-japanese" style="padding:6px 10px;">
                   <option value="airtable">Airtable</option>
                   <option value="gsheets">Google Sheets</option>
-                  <option value="brilliantdirectory">BD</option>
                 </select>
-                <div class="text-xs text-gray-600 ml-3">Base ID:</div>
+                <div id="templates_base_label" class="text-xs text-gray-600 ml-3">Base ID:</div>
                 <input id="templates_base_id" type="text" class="input-japanese" placeholder="appXXXXXXXXXXXXXX" style="width:220px; padding:6px 10px;">
-                <i class="fas fa-sync animate-spin text-gray-400 ml-2" title="Автосинхронизация"></i>
+                <i id="templates_sync_icon" class="fas fa-sync text-gray-400 ml-2" title="Автосинхронизация"></i>
               </div>
             </div>
             <div id="templates_schema" class="text-sm text-gray-600">
@@ -169,6 +168,38 @@
           if (sections[key]) sections[key].classList.add('active');
         });
       });
+
+      // Fake sync state toggling for icon demo (replace with real sync hooks)
+      function setSyncing(scope, isSyncing){
+        const el = document.getElementById(scope+'_sync_icon');
+        if (!el) return;
+        if (isSyncing) el.classList.add('animate-spin'); else el.classList.remove('animate-spin');
+      }
+
+      // Example: start/stop spinning when navigating (as a placeholder)
+      cards.addEventListener('click', function(){ setSyncing('regions', true); setTimeout(()=>setSyncing('regions', false), 800); }, { capture:false });
+
+      // Base label auto-switch for API type
+      function bindApiLabel(selectId, labelId, inputId){
+        const sel = document.getElementById(selectId);
+        const label = document.getElementById(labelId);
+        const input = document.getElementById(inputId);
+        if (!sel || !label || !input) return;
+        function update(){
+          if (sel.value === 'gsheets'){
+            label.textContent = 'Spreadsheet ID:';
+            input.placeholder = '1AbC...';
+          } else { // airtable default
+            label.textContent = 'Base ID:';
+            input.placeholder = 'appXXXXXXXXXXXXXX';
+          }
+        }
+        sel.addEventListener('change', update);
+        update();
+      }
+      bindApiLabel('regions_api_type','regions_base_label','regions_base_id');
+      bindApiLabel('tours_api_type','tours_base_label','tours_base_id');
+      bindApiLabel('templates_api_type','templates_base_label','templates_base_id');
     })();
 
     // Иерархия карточек: регионы → города → POI → билеты (UI, без API)
