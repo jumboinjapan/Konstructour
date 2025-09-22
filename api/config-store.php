@@ -25,7 +25,7 @@ $raw = file_get_contents('php://input');
 $payload = json_decode($raw, true);
 if (!$payload || !is_array($payload)) respond(false, ['error'=>'Invalid JSON'], 400);
 
-$providersAllowed = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdb'];
+$providersAllowed = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdb','databases'];
 
 // Bootstrap: allow setting admin token once if file does not exist yet
 $adminTokenFile = __DIR__.'/admin-token.php';
@@ -45,7 +45,19 @@ $cfgFile = __DIR__.'/config.php';
 if (file_exists($cfgFile)) { $cfg = require $cfgFile; if (!is_array($cfg)) $cfg = []; }
 
 // Merge
-foreach ($incoming as $prov=>$data){ if (is_array($data)) { $cfg[$prov] = array_merge($cfg[$prov] ?? [], $data); } }
+foreach ($incoming as $prov=>$data){
+  if (!is_array($data)) continue;
+  if ($prov === 'databases'){
+    // Merge per-scope (regions/tours/templates)
+    $cfg['databases'] = $cfg['databases'] ?? [];
+    foreach ($data as $scope=>$scopeData){
+      if (!is_array($scopeData)) continue;
+      $cfg['databases'][$scope] = array_merge($cfg['databases'][$scope] ?? [], $scopeData);
+    }
+  } else {
+    $cfg[$prov] = array_merge($cfg[$prov] ?? [], $data);
+  }
+}
 
 // Backup current config (retain last 10)
 $backupsDir = __DIR__.'/backups';
