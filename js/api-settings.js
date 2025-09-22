@@ -50,7 +50,7 @@
         show('badgeRecaptcha', !!map.recaptcha);
         show('badgeBrilliant', !!map.brilliantdirectory);
         // collapse sections by default
-        ['sectionOpenAI','sectionAirtable','sectionGSheets','sectionGMaps','sectionRecaptcha','sectionBrilliant']
+        ['sectionOpenAI','sectionGSheets','sectionGMaps','sectionRecaptcha','sectionBrilliant']
           .forEach(id => collapse(id));
       }catch(_){ /* ignore */ }
     }
@@ -299,7 +299,8 @@
     load();
     loadServerKeyBadges();
     loadHealth();
-    ['OpenAI','Airtable','GSheets','GMaps','Recaptcha','Brilliant'].forEach(setupAddFlow);
+    // Не используем Add как toggle для Airtable; оставим отдельную иконку toggle в карточке
+    ['OpenAI','GSheets','GMaps','Recaptcha','Brilliant'].forEach(setupAddFlow);
     // Убрали прежний capture-блокировщик кликов внутри .api-actions,
     // чтобы не гасить обработчики кнопок (Test/Save)
     // Global capture guard: блокируем только переходы по ссылкам внутри .api-actions,
