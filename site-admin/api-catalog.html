@@ -275,7 +275,9 @@
           const icon = toggle.querySelector('i');
           const isCollapsed = ()=> window.getComputedStyle(mappingRoot).display === 'none';
           const renderIcon = ()=>{ if (!icon) return; const collapsed = isCollapsed(); icon.classList.remove('fa-chevron-up','fa-chevron-down'); icon.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); };
-          renderIcon(); setTimeout(renderIcon, 500);
+          // По умолчанию секция свёрнута, чтобы стрелка сразу была вниз без мигания
+          if (!isCollapsed()) { mappingRoot.style.display = 'none'; }
+          renderIcon();
           toggle.addEventListener('click', function(){ const collapsed = isCollapsed(); mappingRoot.style.display = collapsed ? '' : 'none'; renderIcon(); });
           const addBtn = document.getElementById('btnSaveAirtable');
           if (addBtn){ addBtn.addEventListener('click', function(){ mappingRoot.style.display=''; renderIcon(); }); }
@@ -286,7 +288,8 @@
           const btn = document.getElementById(btnId); const root = document.getElementById(sectionId); if (!btn || !root) return;
           const ic = btn.querySelector('i');
           const sync = ()=>{ const collapsed = window.getComputedStyle(root).display === 'none'; if (ic){ ic.classList.remove('fa-chevron-up','fa-chevron-down'); ic.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); } };
-          sync(); setTimeout(sync, 500);
+          if (window.getComputedStyle(root).display !== 'none') { root.style.display = 'none'; }
+          sync();
           btn.addEventListener('click', ()=>{ const collapsed = window.getComputedStyle(root).display === 'none'; root.style.display = collapsed ? '' : 'none'; sync(); });
           // Add- кнопки разворачивают
           const add = document.getElementById('btnSave'+(sectionId.replace('section','')));
