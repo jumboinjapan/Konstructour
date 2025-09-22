@@ -130,6 +130,7 @@
                             <button id="btnSaveOpenAI" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseOpenAI" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestOpenAI" type="button" class="btn-japanese" data-no-redirect="true"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <button id="toggleOpenAI" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionOpenAI">
@@ -156,6 +157,7 @@
                             <button id="btnSaveGSheets" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseGSheets" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestGSheets" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <button id="toggleGSheets" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionGSheets">
@@ -182,6 +184,7 @@
                             <button id="btnSaveGMaps" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseGMaps" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestGMaps" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <button id="toggleGMaps" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionGMaps">
@@ -209,6 +212,7 @@
                             <button id="btnSaveRecaptcha" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseRecaptcha" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestRecaptcha" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <button id="toggleRecaptcha" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionRecaptcha">
@@ -235,6 +239,7 @@
                             <button id="btnSaveBrilliant" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
                             <button id="btnEraseBrilliant" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
                             <button id="btnTestBrilliant" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
+                            <button id="toggleBrilliant" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
                     </div>
                     <div class="form-grid" id="sectionBrilliant">
@@ -275,6 +280,23 @@
           const addBtn = document.getElementById('btnSaveAirtable');
           if (addBtn){ addBtn.addEventListener('click', function(){ mappingRoot.style.display=''; renderIcon(); }); }
         }
+
+        // Универсальные toggle для остальных карточек
+        function bindToggle(btnId, sectionId){
+          const btn = document.getElementById(btnId); const root = document.getElementById(sectionId); if (!btn || !root) return;
+          const ic = btn.querySelector('i');
+          const sync = ()=>{ const collapsed = window.getComputedStyle(root).display === 'none'; if (ic){ ic.classList.remove('fa-chevron-up','fa-chevron-down'); ic.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); } };
+          sync(); setTimeout(sync, 500);
+          btn.addEventListener('click', ()=>{ const collapsed = window.getComputedStyle(root).display === 'none'; root.style.display = collapsed ? '' : 'none'; sync(); });
+          // Add- кнопки разворачивают
+          const add = document.getElementById('btnSave'+(sectionId.replace('section','')));
+          if (add){ add.addEventListener('click', ()=>{ root.style.display=''; sync(); }); }
+        }
+        bindToggle('toggleOpenAI','sectionOpenAI');
+        bindToggle('toggleGSheets','sectionGSheets');
+        bindToggle('toggleGMaps','sectionGMaps');
+        bindToggle('toggleRecaptcha','sectionRecaptcha');
+        bindToggle('toggleBrilliant','sectionBrilliant');
         async function testTable(entity){
           const baseId = document.getElementById('airtable_base_id')?.value || '';
           const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
