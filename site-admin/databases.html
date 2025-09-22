@@ -634,6 +634,12 @@
           const obj = { id, name:name.trim(), type };
           list.push(obj);
           renderCities();
+          // Пишем на сервер (демо-заглушка)
+          fetch('../api/db-sync.php',{
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            body: JSON.stringify({ scope:'cities', action:'create', data:{ name:name.trim(), type, regionId: selectedRegion.id } })
+          }).catch(()=>{});
         } else if (level==='pois'){
           const name = prompt('Название POI:'); if(!name) return;
           const type = prompt('Тип (культура/природа/гастро):','культура')||'';
