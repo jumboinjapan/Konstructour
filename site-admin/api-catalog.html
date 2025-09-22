@@ -269,15 +269,15 @@
     <script>
       (function(){
         const toggle = document.getElementById('am_toggle');
-        const mapping = document.getElementById('am_mapping');
-        if (toggle && mapping){
+        const mappingRoot = document.getElementById('sectionAirtable');
+        if (toggle && mappingRoot){
           const icon = toggle.querySelector('i');
-          let collapsed = (mapping.style.display === 'none');
+          let collapsed = (mappingRoot.style.display === 'none');
           const renderIcon = ()=>{ if (!icon) return; icon.classList.remove('fa-chevron-up','fa-chevron-down'); icon.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); };
           renderIcon();
           toggle.addEventListener('click', function(){
             collapsed = !collapsed;
-            mapping.style.display = collapsed ? 'none' : '';
+            mappingRoot.style.display = collapsed ? 'none' : '';
             renderIcon();
           });
         }
