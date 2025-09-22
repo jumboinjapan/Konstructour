@@ -174,6 +174,110 @@
           </div>
         </section>
 
+        <!-- Airtable Mapping -->
+        <section id="tab-airtable-mapping" class="tab-content">
+          <div class="glass-panel p-6 rounded-lg">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-database mr-2 text-indigo-600"></i>Airtable Mapping</h3>
+              <div class="flex items-center gap-2">
+                <button id="am_test_base" class="btn-japanese text-sm">Test Base</button>
+                <button id="am_save" class="btn-japanese text-sm">Save</button>
+              </div>
+            </div>
+
+            <div class="mb-4 flex items-center gap-3 flex-wrap">
+              <div class="text-xs text-gray-600 api-base-label">Base ID:</div>
+              <input id="am_base_id" type="text" class="input-japanese api-base-input" placeholder="appXXXXXXXXXXXXXX" style="padding:6px 10px;">
+              <span id="am_base_status" class="text-xs text-gray-500"></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+              <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm font-medium mb-2">Country</div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Label:</div>
+                  <input id="am_country_label" class="input-japanese api-table-input" placeholder="Country" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
+                  <input id="am_country_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
+                  <input id="am_country_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
+                </div>
+                <div class="mt-2">
+                  <button data-entity="country" class="am_test_table btn-japanese text-xs">Test Table</button>
+                  <span id="am_country_status" class="text-xs text-gray-500 ml-2"></span>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm font-medium mb-2">Region</div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Label:</div>
+                  <input id="am_region_label" class="input-japanese api-table-input" placeholder="Region" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
+                  <input id="am_region_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
+                  <input id="am_region_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
+                </div>
+                <div class="mt-2">
+                  <button data-entity="region" class="am_test_table btn-japanese text-xs">Test Table</button>
+                  <span id="am_region_status" class="text-xs text-gray-500 ml-2"></span>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm font-medium mb-2">City</div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Label:</div>
+                  <input id="am_city_label" class="input-japanese api-table-input" placeholder="City" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
+                  <input id="am_city_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
+                  <input id="am_city_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
+                </div>
+                <div class="mt-2">
+                  <button data-entity="city" class="am_test_table btn-japanese text-xs">Test Table</button>
+                  <span id="am_city_status" class="text-xs text-gray-500 ml-2"></span>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="text-sm font-medium mb-2">POI</div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Label:</div>
+                  <input id="am_poi_label" class="input-japanese api-table-input" placeholder="POI" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="api-table-label text-xs text-gray-600">Table ID:</div>
+                  <input id="am_poi_table" class="input-japanese api-table-input" placeholder="tblXXXXXXXXXXXXXX" style="padding:6px 10px;">
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="api-table-label text-xs text-gray-600">View ID:</div>
+                  <input id="am_poi_view" class="input-japanese api-table-input" placeholder="viwXXXXXXXXXXXXXX (опц.)" style="padding:6px 10px;">
+                </div>
+                <div class="mt-2">
+                  <button data-entity="poi" class="am_test_table btn-japanese text-xs">Test Table</button>
+                  <span id="am_poi_status" class="text-xs text-gray-500 ml-2"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 text-xs text-gray-600">
+              Иерархия: Country → Region → City → POI. Используются Base ID + Table ID (+ View ID).
+            </div>
+          </div>
+        </section>
         <!-- Шаблоны -->
         <section id="tab-templates" class="tab-content">
           <div class="glass-panel p-6 rounded-lg">
@@ -285,6 +389,7 @@
           if (!res.ok) return;
           const data = await res.json();
           const db = (data && data.databases) || {};
+          const reg = (data && data.airtable_registry) || null;
           function fill(scope, obj){
             if (!obj) return;
             const sel = document.getElementById(scope+'_api_type');
@@ -297,9 +402,63 @@
           fill('regions', db.regions);
           fill('tours', db.tours);
           fill('templates', db.templates);
+          // Fill Airtable Mapping UI
+          if (reg){
+            const baseId = reg.baseId || reg.base_id || '';
+            const t = reg.tables || {};
+            document.getElementById('am_base_id') && (document.getElementById('am_base_id').value = baseId);
+            function setv(id, val){ const el = document.getElementById(id); if (el && typeof val==='string') el.value = val; }
+            setv('am_country_label', t.country?.label||''); setv('am_country_table', t.country?.tableId||''); setv('am_country_view', t.country?.viewId||'');
+            setv('am_region_label',  t.region?.label||'');  setv('am_region_table',  t.region?.tableId||'');  setv('am_region_view',  t.region?.viewId||'');
+            setv('am_city_label',    t.city?.label||'');    setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
+            setv('am_poi_label',     t.poi?.label||'');     setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
+          }
         }catch(e){ console.warn('loadDbConfig failed', e); }
       }
       loadDbConfig();
+
+      // Save Airtable Mapping
+      async function saveAirtableRegistry(){
+        const reg = {
+          baseId: document.getElementById('am_base_id')?.value || '',
+          tables: {
+            country: { label: document.getElementById('am_country_label')?.value || '', tableId: document.getElementById('am_country_table')?.value || '', viewId: document.getElementById('am_country_view')?.value || '' },
+            region:  { label: document.getElementById('am_region_label')?.value  || '', tableId: document.getElementById('am_region_table')?.value  || '', viewId: document.getElementById('am_region_view')?.value  || '' },
+            city:    { label: document.getElementById('am_city_label')?.value    || '', tableId: document.getElementById('am_city_table')?.value    || '', viewId: document.getElementById('am_city_view')?.value    || '' },
+            poi:     { label: document.getElementById('am_poi_label')?.value     || '', tableId: document.getElementById('am_poi_table')?.value     || '', viewId: document.getElementById('am_poi_view')?.value     || '' }
+          }
+        };
+        try{
+          await fetch('../api/config-store.php',{
+            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            body: JSON.stringify({ airtable_registry: reg })
+          });
+        }catch(e){ console.warn('save registry failed', e); }
+      }
+      document.getElementById('am_save')?.addEventListener('click', saveAirtableRegistry);
+
+      // Test Base / Table
+      document.getElementById('am_test_base')?.addEventListener('click', async function(){
+        const baseId = document.getElementById('am_base_id')?.value || '';
+        const key = ''; // сервер возьмёт PAT из server keys
+        const res = await fetch('../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId));
+        const t = await res.json();
+        const label = document.getElementById('am_base_status');
+        if (label) label.textContent = t.ok ? 'OK' : ('Ошибка: '+(t.error||''));
+      });
+      document.querySelectorAll('.am_test_table').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const entity = this.getAttribute('data-entity');
+          const baseId = document.getElementById('am_base_id')?.value || '';
+          const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
+          const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
+          const url = '../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(tableId)+(viewId?('&view='+encodeURIComponent(viewId)):'');
+          const res = await fetch(url);
+          const t = await res.json();
+          const label = document.getElementById('am_'+entity+'_status');
+          if (label) label.textContent = t.ok ? 'OK' : ('Ошибка: '+(t.error||''));
+        });
+      });
     })();
 
     // Иерархия карточек: регионы → города → POI → билеты (UI, без API)
@@ -581,6 +740,12 @@
           const id = genId('REG', regions.length+1);
           regions.push({ id, name:name.trim() });
           renderRegions();
+          // Try server create in Airtable
+          fetch('../api/db-sync.php',{
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+            body: JSON.stringify({ scope:'regions', action:'create', data:{ name:name.trim() } })
+          }).catch(()=>{});
         } else if (level==='cities'){
           const name = prompt('Название (город/локация):'); if(!name) return;
           let typeRaw = (prompt('Тип записи (Город|Локация):','Город')||'Город').trim().toLowerCase();

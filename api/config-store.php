@@ -25,7 +25,7 @@ $raw = file_get_contents('php://input');
 $payload = json_decode($raw, true);
 if (!$payload || !is_array($payload)) respond(false, ['error'=>'Invalid JSON'], 400);
 
-$providersAllowed = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdb','databases'];
+$providersAllowed = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdb','databases','airtable_registry'];
 
 // Bootstrap: allow setting admin token once if file does not exist yet
 $adminTokenFile = __DIR__.'/admin-token.php';
