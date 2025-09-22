@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Konstructour — Базы данных</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../styles/admin-japanese.css" rel="stylesheet">
+    <style>
+      body{ background: rgb(var(--color-washi)); min-height:100vh; }
+      .tab{ padding:8px 14px; font-size:12px; border-radius:8px; cursor:pointer; }
+      .tab.active{ background:#fff; border:1px solid rgba(139,90,43,.15); }
+      .tab-content{ display:none; }
+      .tab-content.active{ display:block; }
+    </style>
+  </head>
+  <body data-no-redirect="true">
+    <div class="dashboard-grid">
+      <aside class="sidebar texture-wood">
+        <div class="p-6">
+          <div class="flex items-center mb-8">
+            <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mr-3">
+              <svg class="w-8 h-8 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>
+            </div>
+            <div>
+              <h1 class="text-xl font-light text-gray-800">Konstructour</h1>
+              <p class="text-xs text-gray-600">Site Admin</p>
+            </div>
+          </div>
+          <nav class="space-y-2">
+            <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор</a>
+            <a href="api-catalog.html" class="sidebar-link"><i class="fas fa-list mr-3 text-gray-600"></i>Каталог API</a>
+            <a href="databases.html" class="menu-item active sidebar-link"><i class="fas fa-database mr-3 text-green-600"></i>Базы данных</a>
+          </nav>
+        </div>
+      </aside>
+      <main class="p-8">
+        <header class="mb-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-3xl font-light text-gray-800 mb-1">Базы данных</h2>
+              <p class="text-gray-600">Выберите базу и управляйте данными через интеграции API</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="glass-panel p-4 rounded-lg mb-6">
+          <div class="flex items-center gap-2">
+            <button class="tab active" data-tab="regions"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</button>
+            <button class="tab" data-tab="tours"><i class="fas fa-route mr-2 text-green-600"></i>Туры</button>
+            <button class="tab" data-tab="templates"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</button>
+          </div>
+        </div>
+
+        <!-- Регионы -->
+        <section id="tab-regions" class="tab-content active">
+          <div class="glass-panel p-6 rounded-lg">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</h3>
+              <div class="api-actions flex items-center gap-2 flex-wrap">
+                <div class="text-xs text-gray-600">Тип API:</div>
+                <select id="regions_api_type" class="input-japanese" style="padding:6px 10px;">
+                  <option value="airtable">Airtable</option>
+                  <option value="gsheets">Google Sheets</option>
+                  <option value="brilliantdirectory">BD</option>
+                </select>
+                <button id="regions_sync" type="button" class="btn-japanese"><i class="fas fa-sync mr-2"></i>Синхронизировать</button>
+              </div>
+            </div>
+            <div id="regions_schema" class="text-sm text-gray-600">
+              Структура берётся из Project Description.md. Настройка схемы будет подключена.
+            </div>
+            <div class="mt-4">
+              <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
+              <div id="regions_preview" class="japanese-table w-full rounded-lg overflow-hidden">
+                <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Туры -->
+        <section id="tab-tours" class="tab-content">
+          <div class="glass-panel p-6 rounded-lg">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-route mr-2 text-green-600"></i>Туры</h3>
+              <div class="api-actions flex items-center gap-2 flex-wrap">
+                <div class="text-xs text-gray-600">Тип API:</div>
+                <select id="tours_api_type" class="input-japanese" style="padding:6px 10px;">
+                  <option value="airtable">Airtable</option>
+                  <option value="gsheets">Google Sheets</option>
+                  <option value="brilliantdirectory">BD</option>
+                </select>
+                <button id="tours_sync" type="button" class="btn-japanese"><i class="fas fa-sync mr-2"></i>Синхронизировать</button>
+              </div>
+            </div>
+            <div id="tours_schema" class="text-sm text-gray-600">
+              Структура берётся из Project Description.md. Настройка схемы будет подключена.
+            </div>
+            <div class="mt-4">
+              <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
+              <div id="tours_preview" class="japanese-table w-full rounded-lg overflow-hidden">
+                <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Шаблоны -->
+        <section id="tab-templates" class="tab-content">
+          <div class="glass-panel p-6 rounded-lg">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</h3>
+              <div class="api-actions flex items-center gap-2 flex-wrap">
+                <div class="text-xs text-gray-600">Тип API:</div>
+                <select id="templates_api_type" class="input-japanese" style="padding:6px 10px;">
+                  <option value="airtable">Airtable</option>
+                  <option value="gsheets">Google Sheets</option>
+                  <option value="brilliantdirectory">BD</option>
+                </select>
+                <button id="templates_sync" type="button" class="btn-japanese"><i class="fas fa-sync mr-2"></i>Синхронизировать</button>
+              </div>
+            </div>
+            <div id="templates_schema" class="text-sm text-gray-600">
+              Структура настраивается индивидуально.
+            </div>
+            <div class="mt-4">
+              <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
+              <div id="templates_preview" class="japanese-table w-full rounded-lg overflow-hidden">
+                <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script>
+    // Простые вкладки без сторонних зависимостей
+    (function(){
+      const tabs = document.querySelectorAll('.tab');
+      const sections = {
+        regions: document.getElementById('tab-regions'),
+        tours: document.getElementById('tab-tours'),
+        templates: document.getElementById('tab-templates')
+      };
+      tabs.forEach(btn=>{
+        btn.addEventListener('click', function(e){
+          e.preventDefault();
+          tabs.forEach(b=>b.classList.remove('active'));
+          this.classList.add('active');
+          Object.values(sections).forEach(s=>s.classList.remove('active'));
+          const key = this.getAttribute('data-tab');
+          if (sections[key]) sections[key].classList.add('active');
+        });
+      });
+    })();
+    </script>
+  </body>
+</html>
+
+
