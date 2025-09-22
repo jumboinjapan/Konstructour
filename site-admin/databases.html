@@ -78,7 +78,6 @@
               <div class="flex items-center justify-between mb-3">
                 <div class="text-xs text-gray-500">Каталог регионов</div>
                 <div class="flex items-center gap-2">
-                  <button id="regions_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
                   <button id="regions_add" type="button" class="btn-japanese"><i class="fas fa-plus"></i></button>
                 </div>
               </div>
@@ -102,7 +101,6 @@
               <div class="flex items-center justify-between mb-3">
                 <div class="text-xs text-gray-500">Каталог городов и локаций</div>
                 <div class="flex items-center gap-2">
-                  <button id="cities_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
                   <button id="cities_add" type="button" class="btn-japanese"><i class="fas fa-plus"></i></button>
                 </div>
               </div>
@@ -129,7 +127,6 @@
               <div class="flex items-center justify-between mb-3">
                 <div class="text-xs text-gray-500">POIs (объекты)</div>
                 <div class="flex items-center gap-2">
-                  <button id="pois_seed" type="button" class="btn-japanese"><i class="fas fa-plus-square mr-2"></i>Заполнить предустановленные</button>
                   <button id="pois_add" type="button" class="btn-japanese"><i class="fas fa-plus"></i></button>
                 </div>
               </div>
@@ -261,7 +258,6 @@
       const table = document.getElementById('regions_table');
       if (!table) return;
       const tbody = table.querySelector('tbody');
-      const seedBtn = document.getElementById('regions_seed');
       const addBtn = document.getElementById('regions_add');
 
       let regions = [];
@@ -271,6 +267,11 @@
         return 'REG-' + String(n).padStart(3, '0');
       }
 
+      // Предзаполним список регионов сразу
+      regions = [
+        'Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава'
+      ].map((name, i)=>({ id: 'REG-' + String(i+1).padStart(3,'0'), name, citiesCount: 0 }));
+
       function render(){
         tbody.innerHTML = '';
         if (regions.length === 0){
@@ -278,7 +279,7 @@
           const td = document.createElement('td');
           td.colSpan = 4;
           td.className = 'px-4 py-4 text-gray-500';
-          td.textContent = 'Нет данных. Добавьте регион или используйте предустановленный список.';
+          td.textContent = 'Нет данных. Добавьте регион.';
           tr.appendChild(td);
           tbody.appendChild(tr);
           return;
@@ -299,13 +300,6 @@
             </td>`;
           tbody.appendChild(tr);
         });
-      }
-
-      function seed(){
-        regions = [
-          'Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава'
-        ].map((name, i)=>({ id: 'REG-' + String(i+1).padStart(3,'0'), name, citiesCount: 0 }));
-        render();
       }
 
       function addOne(){
@@ -334,7 +328,6 @@
         }
       });
 
-      seedBtn && seedBtn.addEventListener('click', seed);
       addBtn && addBtn.addEventListener('click', addOne);
 
       render();
@@ -345,7 +338,6 @@
       const table = document.getElementById('cities_table');
       if (!table) return;
       const tbody = table.querySelector('tbody');
-      const seedBtn = document.getElementById('cities_seed');
       const addBtn = document.getElementById('cities_add');
 
       // Используем регионы из раздела выше как справочник
@@ -374,7 +366,7 @@
           const td = document.createElement('td');
           td.colSpan = 7;
           td.className = 'px-4 py-4 text-gray-500';
-          td.textContent = 'Нет данных. Добавьте запись или используйте предустановленный список.';
+          td.textContent = 'Нет данных. Добавьте запись.';
           tr.appendChild(td);
           tbody.appendChild(tr);
           return;
@@ -395,24 +387,6 @@
             </td>`;
           tbody.appendChild(tr);
         });
-      }
-
-      function seed(){
-        const r = getRegionList();
-        const pick = (name)=>{
-          const ri = r.find(x=>/Канто|Кансай|Хоккайдо|Тохоку|Тюбу|Тюгоку|Сикоку|Кюсю|Окинава/.test(x.name)) || r[0];
-          return ri ? { regionId: ri.id, regionName: ri.name } : { regionId: '', regionName: '' };
-        };
-        items = [
-          { name: 'Токио', type: 'Город' },
-          { name: 'Нара-парк', type: 'Локация', parentCity: 'Нара' },
-          { name: 'Ноборицава', type: 'Локация', parentCity: 'Саппоро' }
-        ].map((it, i)=>{
-          const id = 'CL-' + String(i+1).padStart(4,'0');
-          const rbind = pick(it.name);
-          return { id, name: it.name, type: it.type, coords: '', parentCity: it.parentCity || '', ...rbind };
-        });
-        render();
       }
 
       function addOne(){
@@ -465,19 +439,21 @@
         }
       });
 
-      seedBtn && seedBtn.addEventListener('click', seed);
       addBtn && addBtn.addEventListener('click', addOne);
 
       render();
     })();
 
-    // POIs — UI-заглушка
+    // POIs — UI-заглушка (с билеты внутри блока)
     (function(){
       const table = document.getElementById('pois_table');
       if (!table) return;
       const tbody = table.querySelector('tbody');
-      const seedBtn = document.getElementById('pois_seed');
       const addBtn = document.getElementById('pois_add');
+      const ticketsTitle = document.getElementById('poi_tickets_title');
+      const ticketsTable = document.getElementById('tickets_table');
+      const ticketsTbody = ticketsTable ? ticketsTable.querySelector('tbody') : null;
+      const ticketsAddBtn = document.getElementById('tickets_add');
 
       function getCities(){
         const rows = document.querySelectorAll('#cities_table tbody tr');
@@ -492,6 +468,8 @@
       }
 
       let items = [];
+      let selectedPoiId = '';
+
       function genId(){ return 'POI-' + String(items.length+1).padStart(4,'0'); }
 
       function render(){
@@ -501,9 +479,10 @@
           const td = document.createElement('td');
           td.colSpan = 7;
           td.className = 'px-4 py-4 text-gray-500';
-          td.textContent = 'Нет данных. Добавьте POI или используйте предустановленный список.';
+          td.textContent = 'Нет данных. Добавьте POI.';
           tr.appendChild(td);
           tbody.appendChild(tr);
+          updateTicketsPanel();
           return;
         }
         items.forEach((it, idx)=>{
@@ -523,16 +502,7 @@
             </td>`;
           tbody.appendChild(tr);
         });
-      }
-
-      function seed(){
-        const cities = getCities();
-        const tokyo = cities.find(c=>/Токио/i.test(c.name)) || cities[0];
-        items = [
-          { name: 'Сэнсодзи', type:'культура', city: tokyo },
-          { name: 'Цукидзи', type:'гастро', city: tokyo }
-        ].map((p, i)=>({ id:'POI-'+String(i+1).padStart(4,'0'), name:p.name, type:p.type, cityId:p.city?.id||'', cityName:p.city?.name||'', regionName:p.city?.region||'', tickets:[] }));
-        render();
+        updateTicketsPanel();
       }
 
       function addOne(){
@@ -541,13 +511,15 @@
         const type = prompt('Тип объекта (культура, природа, гастро, …):', 'культура') || '';
         const cities = getCities();
         let cityName = '';
+        let regionName = '';
         if (cities.length){
           const names = cities.map(x=>x.name).join(', ');
           const picked = prompt('Город/Локация ('+names+'):') || '';
           const found = cities.find(x=>x.name===picked.trim());
           cityName = found ? found.name : (cities[0]?.name || '');
+          regionName = found ? (found.region || '') : (cities[0]?.region || '');
         }
-        items.push({ id: genId(), name: name.trim(), type: type.trim(), cityName, regionName: '' , tickets: []});
+        items.push({ id: genId(), name: name.trim(), type: type.trim(), cityName, regionName, tickets: []});
         render();
       }
 
@@ -558,6 +530,7 @@
         const action = btn.getAttribute('data-action');
         if (action === 'delete'){
           items = items.filter(r=>r.id !== id);
+          if (selectedPoiId === id) selectedPoiId = '';
           render();
         } else if (action === 'edit'){
           const it = items.find(x=>x.id===id);
@@ -568,121 +541,89 @@
           it.type = newType.trim();
           render();
         } else if (action === 'tickets'){
-          const it = items.find(x=>x.id===id);
-          if (!it) return;
-          alert('Откройте редактор билетов ниже и свяжите записи (UI-заглушка).');
+          selectedPoiId = id;
+          updateTicketsPanel();
         }
       });
 
-      seedBtn && seedBtn.addEventListener('click', seed);
       addBtn && addBtn.addEventListener('click', addOne);
 
-      render();
-    })();
+      // Билеты внутри POI
+      let tickets = {};// { poiId: [ {id,category,price,currency,note} ] }
+      function ensureArr(poiId){ if (!tickets[poiId]) tickets[poiId] = []; return tickets[poiId]; }
 
-    // Tickets — UI-заглушка
-    (function(){
-      const table = document.getElementById('tickets_table');
-      if (!table) return;
-      const tbody = table.querySelector('tbody');
-      const seedBtn = document.getElementById('tickets_seed');
-      const addBtn = document.getElementById('tickets_add');
-
-      function getPois(){
-        const rows = document.querySelectorAll('#pois_table tbody tr');
-        const list = [];
-        rows.forEach(r=>{
-          const id = r.querySelector('td:nth-child(1)')?.textContent?.trim();
-          const name = r.querySelector('td:nth-child(2)')?.textContent?.trim();
-          if (id && name && !id.startsWith('Нет данных')) list.push({id,name});
-        });
-        return list;
-      }
-
-      let items = [];
-      function genId(){ return 'TKT-' + String(items.length+1).padStart(4,'0'); }
-
-      function render(){
-        tbody.innerHTML = '';
-        if (items.length === 0){
+      function updateTicketsPanel(){
+        if (!ticketsTbody || !ticketsTitle) return;
+        const poi = items.find(x=>x.id===selectedPoiId);
+        ticketsTitle.textContent = poi ? poi.name : '— не выбран —';
+        const list = poi ? ensureArr(poi.id) : [];
+        ticketsTbody.innerHTML = '';
+        if (!poi){
           const tr = document.createElement('tr');
           const td = document.createElement('td');
-          td.colSpan = 7;
-          td.className = 'px-4 py-4 text-gray-500';
-          td.textContent = 'Нет данных. Добавьте билет или используйте предустановленный список.';
-          tr.appendChild(td);
-          tbody.appendChild(tr);
-          return;
+          td.colSpan = 6; td.className='px-4 py-4 text-gray-500';
+          td.textContent = 'Выберите POI (кнопка «Билеты»)';
+          tr.appendChild(td); ticketsTbody.appendChild(tr); return;
         }
-        items.forEach((it, idx)=>{
+        if (list.length===0){
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = 6; td.className='px-4 py-4 text-gray-500';
+          td.textContent = 'Нет билетов. Добавьте билет.';
+          tr.appendChild(td); ticketsTbody.appendChild(tr); return;
+        }
+        list.forEach((t, idx)=>{
           const tr = document.createElement('tr');
           tr.className = idx % 2 ? 'bg-gray-50' : '';
           tr.innerHTML = `
-            <td class="px-4 py-2 text-gray-800">${it.id}</td>
-            <td class="px-4 py-2 text-gray-800">${it.poiName || ''}</td>
-            <td class="px-4 py-2 text-gray-800">${it.category}</td>
-            <td class="px-4 py-2 text-gray-800">${it.price}</td>
-            <td class="px-4 py-2 text-gray-800">${it.currency}</td>
-            <td class="px-4 py-2 text-gray-800">${it.note || ''}</td>
-            <td class="px-4 py-2 text-right">
-              <button data-action="edit" data-id="${it.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
-              <button data-action="delete" data-id="${it.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
+            <td class=\"px-4 py-2 text-gray-800\">${t.id}</td>
+            <td class=\"px-4 py-2 text-gray-800\">${t.category}</td>
+            <td class=\"px-4 py-2 text-gray-800\">${t.price}</td>
+            <td class=\"px-4 py-2 text-gray-800\">${t.currency}</td>
+            <td class=\"px-4 py-2 text-gray-800\">${t.note||''}</td>
+            <td class=\"px-4 py-2 text-right\">\n              <button data-action=\"t-edit\" data-id=\"${t.id}\" class=\"text-xs text-gray-700 hover:text-gray-900 mr-3\"><i class=\"fas fa-pen mr-1\"></i>Редактировать</button>\n              <button data-action=\"t-delete\" data-id=\"${t.id}\" class=\"text-xs text-red-600 hover:text-red-800\"><i class="fas fa-trash mr-1"></i>Удалить</button>
             </td>`;
-          tbody.appendChild(tr);
+          ticketsTbody.appendChild(tr);
         });
       }
 
-      function seed(){
-        const pois = getPois();
-        const poi = pois[0];
-        items = [
-          { poiName: poi?.name || 'POI', category: 'Adult', price: 1500, currency: '¥', note: '' },
-          { poiName: poi?.name || 'POI', category: 'Child', price: 800, currency: '¥', note: '6–11' }
-        ].map((t,i)=>({ id:'TKT-'+String(i+1).padStart(4,'0'), ...t }));
-        render();
-      }
-
-      function addOne(){
-        const pois = getPois();
-        let poiName = '';
-        if (pois.length){
-          const names = pois.map(x=>x.name).join(', ');
-          const picked = prompt('POI ('+names+'):') || '';
-          const found = pois.find(x=>x.name===picked.trim());
-          poiName = found ? found.name : (pois[0]?.name || '');
+      function genTicketId(poiId){
+        const n = ensureArr(poiId).length + 1;
+        return poiId.replace('POI-','TKT-') + '-' + String(n).padStart(2,'0');
         }
+
+      ticketsAddBtn && ticketsAddBtn.addEventListener('click', function(){
+        if (!selectedPoiId) { alert('Сначала выберите POI (кнопка «Билеты»).'); return; }
         const category = prompt('Категория (Adult / Child / Infant / Senior / Special):', 'Adult') || 'Adult';
         const priceStr = prompt('Цена (¥):', '1000') || '0';
         const price = parseInt(priceStr, 10) || 0;
         const currency = '¥';
         const note = prompt('Примечание:', '') || '';
-        items.push({ id: genId(), poiName, category, price, currency, note });
-        render();
-      }
-
-      tbody.addEventListener('click', function(e){
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        const id = btn.getAttribute('data-id');
-        const action = btn.getAttribute('data-action');
-        if (action === 'delete'){
-          items = items.filter(r=>r.id !== id);
-          render();
-        } else if (action === 'edit'){
-          const it = items.find(x=>x.id===id);
-          if (!it) return;
-          const newCategory = prompt('Категория:', it.category) || it.category;
-          const newPriceStr = prompt('Цена (¥):', String(it.price)) || String(it.price);
-          const newNote = prompt('Примечание:', it.note||'') || it.note;
-          it.category = newCategory.trim();
-          it.price = parseInt(newPriceStr, 10) || it.price;
-          it.note = newNote.trim();
-          render();
-        }
+        const arr = ensureArr(selectedPoiId);
+        arr.push({ id: genTicketId(selectedPoiId), category, price, currency, note });
+        updateTicketsPanel();
       });
 
-      seedBtn && seedBtn.addEventListener('click', seed);
-      addBtn && addBtn.addEventListener('click', addOne);
+      ticketsTbody && ticketsTbody.addEventListener('click', function(e){
+        const btn = e.target.closest('button');
+        if (!btn || !selectedPoiId) return;
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+        const arr = ensureArr(selectedPoiId);
+        if (action==='t-delete'){
+          const idx = arr.findIndex(x=>x.id===id);
+          if (idx>=0){ arr.splice(idx,1); updateTicketsPanel(); }
+        } else if (action==='t-edit'){
+          const t = arr.find(x=>x.id===id); if (!t) return;
+          const newCategory = prompt('Категория:', t.category) || t.category;
+          const newPriceStr = prompt('Цена (¥):', String(t.price)) || String(t.price);
+          const newNote = prompt('Примечание:', t.note||'') || t.note;
+          t.category = newCategory.trim();
+          t.price = parseInt(newPriceStr, 10) || t.price;
+          t.note = newNote.trim();
+          updateTicketsPanel();
+        }
+      });
 
       render();
     })();
