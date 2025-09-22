@@ -277,6 +277,29 @@
       bindApiLabel('regions_api_type','regions_base_label','regions_base_id','regions_table_label','regions_table_id');
       bindApiLabel('tours_api_type','tours_base_label','tours_base_id','tours_table_label','tours_table_id');
       bindApiLabel('templates_api_type','templates_base_label','templates_base_id','templates_table_label','templates_table_id');
+
+      // Load saved config from server and populate fields
+      async function loadDbConfig(){
+        try{
+          const res = await fetch('../api/config-read.php', { headers: { 'X-Admin-Token': (window.ADMIN_TOKEN||'') } });
+          if (!res.ok) return;
+          const data = await res.json();
+          const db = (data && data.databases) || {};
+          function fill(scope, obj){
+            if (!obj) return;
+            const sel = document.getElementById(scope+'_api_type');
+            const base = document.getElementById(scope+'_base_id');
+            const table = document.getElementById(scope+'_table_id');
+            if (sel && obj.provider){ sel.value = obj.provider; sel.dispatchEvent(new Event('change')); }
+            if (base && obj.base_id){ base.value = obj.base_id; }
+            if (table && obj.table_id){ table.value = obj.table_id; }
+          }
+          fill('regions', db.regions);
+          fill('tours', db.tours);
+          fill('templates', db.templates);
+        }catch(e){ console.warn('loadDbConfig failed', e); }
+      }
+      loadDbConfig();
     })();
 
     // Иерархия карточек: регионы → города → POI → билеты (UI, без API)
