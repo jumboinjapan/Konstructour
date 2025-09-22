@@ -271,11 +271,14 @@
         const toggle = document.getElementById('am_toggle');
         const mapping = document.getElementById('am_mapping');
         if (toggle && mapping){
-          let collapsed = false;
+          const icon = toggle.querySelector('i');
+          let collapsed = (mapping.style.display === 'none');
+          const renderIcon = ()=>{ if (!icon) return; icon.classList.remove('fa-chevron-up','fa-chevron-down'); icon.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); };
+          renderIcon();
           toggle.addEventListener('click', function(){
             collapsed = !collapsed;
             mapping.style.display = collapsed ? 'none' : '';
-            this.innerHTML = '<i class="fas '+(collapsed?'fa-chevron-down':'fa-chevron-up')+' mr-2"></i>Toggle';
+            renderIcon();
           });
         }
         async function testTable(entity){
