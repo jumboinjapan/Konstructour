@@ -578,10 +578,10 @@
         }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
       }
 
-      // Navigation (cards)
-      cards.addEventListener('click', function(e){
+      // Navigation (cards) — делегировано на документ, чтобы исключить проблемы привязки
+      document.addEventListener('click', function(e){
         const go = e.target.closest('[data-go]');
-        if (!go) return;
+        if (!go || !cards.contains(go)) return;
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
         if (to==='cities'){
