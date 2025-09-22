@@ -272,17 +272,12 @@
         const mappingRoot = document.getElementById('sectionAirtable');
         if (toggle && mappingRoot){
           const icon = toggle.querySelector('i');
-          let collapsed = (window.getComputedStyle(mappingRoot).display === 'none');
-          const renderIcon = ()=>{ if (!icon) return; icon.classList.remove('fa-chevron-up','fa-chevron-down'); icon.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); };
-          renderIcon();
-          toggle.addEventListener('click', function(){
-            collapsed = !collapsed;
-            mappingRoot.style.display = collapsed ? 'none' : '';
-            renderIcon();
-          });
-          // Синхронизируем иконку при раскрытии через кнопку Add
+          const isCollapsed = ()=> window.getComputedStyle(mappingRoot).display === 'none';
+          const renderIcon = ()=>{ if (!icon) return; const collapsed = isCollapsed(); icon.classList.remove('fa-chevron-up','fa-chevron-down'); icon.classList.add(collapsed?'fa-chevron-down':'fa-chevron-up'); };
+          renderIcon(); setTimeout(renderIcon, 500);
+          toggle.addEventListener('click', function(){ const collapsed = isCollapsed(); mappingRoot.style.display = collapsed ? '' : 'none'; renderIcon(); });
           const addBtn = document.getElementById('btnSaveAirtable');
-          if (addBtn){ addBtn.addEventListener('click', function(){ collapsed = false; renderIcon(); }); }
+          if (addBtn){ addBtn.addEventListener('click', function(){ mappingRoot.style.display=''; renderIcon(); }); }
         }
         async function testTable(entity){
           const baseId = document.getElementById('airtable_base_id')?.value || '';
