@@ -673,8 +673,12 @@
               method:'POST', headers:{ 'Content-Type':'application/json' },
               body: JSON.stringify({ name_ru: data.ru, name_en: data.en })
             });
-            const j = await res.json();
-            if (!res.ok || !j.ok) throw new Error(j.error||('HTTP '+res.status));
+            const j = await res.json().catch(()=>({}));
+            if (!res.ok || !j.ok){
+              const detailsMsg = (j && (j.details?.error?.message || j.details?.message || j.error)) || ('HTTP '+res.status);
+              console.error('REGION_CREATE_ERR', j);
+              throw new Error(detailsMsg);
+            }
             if (window.osNotify){ window.osNotify('Сохранено','ID: '+j.region_id); } else { alert('Сохранено: '+j.region_id); }
             await syncRegionsFromAirtable();
           }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
