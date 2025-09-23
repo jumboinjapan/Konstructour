@@ -61,16 +61,42 @@ do{
 $nextId = sprintf('%s-%04d',$prefix,$max+1);
 
 // 2) Build fields
-$fields = [ 'ID'=>$nextId, 'Name (RU)'=>$name_ru, 'Name (EN)'=>$name_en ];
-if ($type) $fields['Type'] = ($type==='location'?'location':'city');
-// Link to Region — try common field names, expect recordId array
-if ($regionId!==''){
-  foreach (['Region','Регион'] as $linkField){ $fields[$linkField] = [ ['id'=>$regionId] ]; }
+$nameRuCandidates = ['Name (RU)','Название (RU)','Название','Name','Title'];
+$nameEnCandidates = ['Name (EN)','Название (EN)','English Name','EN Name','Name (EN) '];
+$idCandidates     = ['ID','Идентификатор','Идентификатор ','Id'];
+$linkCandidates   = ['Region','Регион','Region Link','Регион (ссылка)'];
+
+// Build candidate payloads without link/type first (уменьшаем шанс 422)
+$attempts = [];
+foreach ($idCandidates as $fid){
+  foreach ($nameRuCandidates as $fru){
+    foreach ($nameEnCandidates as $fen){
+      $attempts[] = ['fields'=>[ $fid=>$nextId, $fru=>$name_ru, $fen=>$name_en ]];
+    }
+  }
 }
 
-list($code,$out,$err)=air_call('POST', "$BASE_ID/$CITY_TABLE_ID", $API_KEY, ['fields'=>$fields]);
-if ($code>=300){ $resp=json_decode($out,true); log_err('City create failed',['status'=>$code,'request'=>$fields,'response'=>$resp]); http_response_code(500); echo json_encode(['ok'=>false,'error'=>"Airtable $code",'details'=>$resp], JSON_UNESCAPED_UNICODE); exit; }
-$created=json_decode($out,true);
+$created = null; $lastErr=null; $lastResp=null; $lastReq=null;
+foreach ($attempts as $payload){
+  list($code,$out,$err)=air_call('POST', "$BASE_ID/$CITY_TABLE_ID", $API_KEY, $payload);
+  if ($code<300){ $created=json_decode($out,true); $lastReq=$payload; break; }
+  $lastErr=$err; $lastResp=json_decode($out,true); $lastReq=$payload;
+}
+
+if (!$created){
+  log_err('City create failed (all attempts)',['response'=>$lastResp,'request'=>$lastReq]);
+  http_response_code(500); echo json_encode(['ok'=>false,'error'=>'Airtable 422','details'=>$lastResp?:['message'=>'Unprocessable Entity']], JSON_UNESCAPED_UNICODE); exit;
+}
+
+// Try to link Region after creation (best-effort)
+if ($regionId!=='' && !empty($created['id'])){
+  foreach ($linkCandidates as $lf){
+    $patch = ['fields'=>[ $lf => [ ['id'=>$regionId] ] ]];
+    list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
+    if ($c2<300) break; // ok
+  }
+}
+
 echo json_encode(['ok'=>true,'record_id'=>$created['id']??null,'city_id'=>$nextId,'type'=>$type], JSON_UNESCAPED_UNICODE);
 
 
