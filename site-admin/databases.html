@@ -379,7 +379,7 @@
                 </div>\
               </div>\
             </div>';
-          return '<div class="cursor-pointer" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</div>';
+          return '<a href="#" role="button" class="block" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</a>';
         }).join('');
       }
 
@@ -542,6 +542,7 @@
         if (e.target.closest('button[data-act]')) return;
         const go = e.target.closest('#db_cards [data-go]');
         if (!go) return;
+        e.preventDefault();
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
         if (to==='cities'){
