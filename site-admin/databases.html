@@ -176,7 +176,7 @@
       let airtableReg = null; // cache for mapping header
       async function loadDbConfig(){
         try{
-          const res = await fetch('../api/config-read.php', { headers: { 'X-Admin-Token': (window.ADMIN_TOKEN||'') } });
+          const res = await fetch('/api/config-read.php', { headers: { 'X-Admin-Token': (window.ADMIN_TOKEN||'') } });
           if (!res.ok) return;
           const data = await res.json();
           const db = (data && data.databases) || {};
@@ -213,7 +213,7 @@
           let baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || '';
           let regTbl = (airtableReg && airtableReg.tables && (airtableReg.tables.region?.tableId || airtableReg.tables.region?.table_id)) || '';
           if (!baseId || !regTbl){
-            const cfg = await fetch('../api/config-read.php').then(r=>r.ok?r.json():null).catch(()=>null);
+            const cfg = await fetch('/api/config-read.php').then(r=>r.ok?r.json():null).catch(()=>null);
             const reg = cfg && (cfg.airtable_registry||{});
             if (reg){
               baseId = baseId || reg.baseId || reg.base_id || '';
@@ -224,7 +224,7 @@
           if (!baseId) baseId = 'apppwhjFN82N9zNqm';
           if (!regTbl) regTbl = 'tblbSajWkzI8X7M4U';
           if (!baseId || !regTbl) return false;
-          const u = '../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
+          const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
           const r2 = await fetch(u); if(!r2.ok) return false; const j2 = await r2.json();
           const recs = j2.records || j2.items || [];
           regions = recs.map((rec, idx)=>{
@@ -251,7 +251,7 @@
           }
         };
         try{
-          await fetch('../api/config-store.php',{
+          await fetch('/api/config-store.php',{
             method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
             body: JSON.stringify({ airtable_registry: reg })
           });
@@ -263,7 +263,7 @@
       document.getElementById('am_test_base')?.addEventListener('click', async function(){
         const baseId = document.getElementById('am_base_id')?.value || '';
         const key = ''; // сервер возьмёт PAT из server keys
-        const res = await fetch('../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId));
+        const res = await fetch('/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId));
         const t = await res.json();
         const label = document.getElementById('am_base_status');
         if (label) label.textContent = t.ok ? 'OK' : ('Ошибка: '+(t.error||''));
@@ -274,7 +274,7 @@
           const baseId = document.getElementById('am_base_id')?.value || '';
           const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
           const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
-          const url = '../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(tableId)+(viewId?('&view='+encodeURIComponent(viewId)):'');
+          const url = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(tableId)+(viewId?('&view='+encodeURIComponent(viewId)):'');
           const res = await fetch(url);
           const t = await res.json();
           const label = document.getElementById('am_'+entity+'_status');
@@ -289,7 +289,7 @@
       async function saveDbConfig(scope){
         try{
           // UI полей удалён — функция оставлена на будущее, сейчас no-op
-          await fetch('../api/config-store.php',{
+          await fetch('/api/config-store.php',{
             method:'POST',
             headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
             body: JSON.stringify({})
@@ -434,7 +434,7 @@
       // Загрузка регионов из Airtable и отрисовка
       async function syncRegionsFromAirtable(){
         try{
-          const res = await fetch('../api/db-sync.php',{
+          const res = await fetch('/api/db-sync.php',{
             method:'POST', headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify({ scope:'regions', action:'list' })
           });
@@ -454,7 +454,7 @@
           try{
             await Promise.all(regions.map(async (r)=>{
               try{
-                const rs = await fetch('../api/db-sync.php',{
+                const rs = await fetch('/api/db-sync.php',{
                   method:'POST', headers:{ 'Content-Type':'application/json' },
                   body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: r.id, regionName: r.name } } })
                 });
@@ -475,7 +475,7 @@
             if (!baseId) baseId = 'apppwhjFN82N9zNqm';
             if (!regTbl) regTbl = 'tblbSajWkzI8X7M4U';
             if (!baseId || !regTbl) return;
-            const u = '../api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
+            const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
             const r2 = await fetch(u);
             const j2 = await r2.json();
             const recs = j2.records || j2.items || [];
@@ -496,7 +496,7 @@
           let recordId = region && region.id ? region.id : '';
           if (!/^rec/i.test(recordId)){
             // Найдём запись по полю Region ID или имени
-            const res = await fetch('../api/db-sync.php',{
+            const res = await fetch('/api/db-sync.php',{
               method:'POST', headers:{ 'Content-Type':'application/json' },
               body: JSON.stringify({ scope:'regions', action:'list' })
             });
@@ -507,7 +507,7 @@
             }
           }
           if (recordId && /^rec/i.test(recordId)){
-            await fetch('../api/db-sync.php',{
+            await fetch('/api/db-sync.php',{
               method:'POST', headers:{ 'Content-Type':'application/json' },
               body: JSON.stringify({ scope:'regions', action:'delete', data:{ id: recordId } })
             });
@@ -571,7 +571,7 @@
       // Airtable-backed loaders for each level
       async function loadCitiesForRegion(region){
         try{
-          const res = await fetch('../api/db-sync.php',{
+          const res = await fetch('/api/db-sync.php',{
             method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
             body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: region.id, regionName: region.name } } })
           });
@@ -699,7 +699,7 @@
       });
 
       // Card action buttons
-      cards.addEventListener('click', function(e){
+      cards.addEventListener('click', async function(e){
         const btn = e.target.closest('button[data-act]');
         if (!btn) return;
         e.stopPropagation();
@@ -709,7 +709,7 @@
           const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){
             const old = r.name; r.name=n.trim(); renderRegions();
             try{
-              await fetch('../api/db-sync.php',{
+              await fetch('/api/db-sync.php',{
                 method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
                 body: JSON.stringify({ scope:'regions', action:'update', data:{ id: r.id, name: r.name } })
               }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
@@ -724,7 +724,7 @@
           const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города/локации:', c.name); if(n){
             const old=c.name; c.name=n.trim(); renderCities();
             try{
-              await fetch('../api/db-sync.php',{
+              await fetch('/api/db-sync.php',{
                 method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
                 body: JSON.stringify({ scope:'cities', action:'update', data:{ id: c.id, name: c.name } })
               }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
