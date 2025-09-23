@@ -536,10 +536,10 @@
         }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
       }
 
-      // Navigation (cards) — делегировано на документ, чтобы исключить проблемы привязки
+      // Navigation (cards)
       document.addEventListener('click', async function(e){
         const go = e.target.closest('[data-go]');
-        if (!go || !cards.contains(go)) return;
+        if (!go || !cards.contains(go) || e.__handledGo) return;
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
         if (to==='cities'){
@@ -559,6 +559,34 @@
           selectedPoi = list.find(p=>p.id===id) || null;
           push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
           renderTickets();
+        }
+      });
+
+      // Навигация — дублируем на контейнер для надёжности
+      cards.addEventListener('click', async function(e){
+        const go = e.target.closest('[data-go]');
+        if (!go) return; e.__handledGo = true;
+        const id = go.getAttribute('data-id');
+        const to = go.getAttribute('data-go');
+        if (to==='cities'){
+          selectedRegion = regions.find(r=>r.id===id) || null;
+          push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
+          await loadCitiesForRegion(selectedRegion);
+          await preloadPoisCountsForRegion(selectedRegion);
+          return renderCities();
+        }
+        if (to==='pois'){
+          const list = citiesByRegion[selectedRegion.id] || [];
+          selectedCity = list.find(c=>c.id===id) || null;
+          push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
+          await loadPoisForCity(selectedCity);
+          return renderPois();
+        }
+        if (to==='tickets'){
+          const list = poisByCity[selectedCity.id] || [];
+          selectedPoi = list.find(p=>p.id===id) || null;
+          push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
+          return renderTickets();
         }
       });
 
