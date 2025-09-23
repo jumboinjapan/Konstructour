@@ -860,7 +860,7 @@
           try{
             const res = await fetch('/api/cities-create.php',{
               method:'POST', headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ name_ru: name_ru, name_en: name_en, type: picked, region_rec_id: selectedRegion.id, region_name: selectedRegion.name })
+              body: JSON.stringify({ name_ru: name_ru, name_en: name_en, type: picked, region_rec_id: selectedRegion.id, region_name: selectedRegion.name, region_rid: (selectedRegion.rid||'') })
             });
             const j = await res.json();
             if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
