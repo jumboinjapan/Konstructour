@@ -176,7 +176,9 @@ if ($provider === 'airtable'){
       foreach ($records as $rec){
         $fields = $rec['fields'] ?? [];
         $name = '';
-        foreach (['Name','Название','Наименование','Title','name','title'] as $fn){ if (isset($fields[$fn]) && $fields[$fn] !== '') { $name = $fields[$fn]; break; } }
+        // Prefer explicit RU name if present
+        $candidates = ['Name (RU)','Название (RU)','Name','Название','Наименование','Title','Name (EN)','name','title'];
+        foreach ($candidates as $fn){ if (isset($fields[$fn]) && $fields[$fn] !== '') { $name = $fields[$fn]; break; } }
         $items[] = [ 'id'=>($rec['id'] ?? ''), 'name'=>$name, 'fields'=>$fields ];
       }
       respond(true, ['items'=>$items]);
