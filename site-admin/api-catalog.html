@@ -359,6 +359,7 @@
             setv('airtable_base_id', baseId);
             setv('am_country_table', t.country?.tableId||''); setv('am_country_view', t.country?.viewId||'');
             setv('am_region_table',  t.region?.tableId||'');  setv('am_region_view',  t.region?.viewId||'');
+            setv('am_region_id_field', t.region?.idField||'');
             setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
             setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
             autoTestMapping();
@@ -375,7 +376,9 @@
             const tables = {};
             const pushField = (obj, key, v)=>{ if (typeof v==='string' && v.trim()!=='') obj[key]=v.trim(); };
             const addTable = (name, tblId, viewId)=>{
-              const t = {}; pushField(t,'tableId', tblId); pushField(t,'viewId', viewId); if (Object.keys(t).length) tables[name]=t;
+              const t = {}; pushField(t,'tableId', tblId); pushField(t,'viewId', viewId);
+              if (name==='region'){ const idf = val('am_region_id_field'); pushField(t, 'idField', idf); }
+              if (Object.keys(t).length) tables[name]=t;
             };
             addTable('country', val('am_country_table'), val('am_country_view'));
             addTable('region',  val('am_region_table'),  val('am_region_view'));
