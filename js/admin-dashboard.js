@@ -136,10 +136,14 @@ function setupEventListeners() {
         notificationBell.addEventListener('click', showNotifications);
     }
 
-    // Show errors log modal
+    // Show errors log modal (specific listener only)
     const btnShowErrors = document.querySelector('[data-show-errors]');
-    if (btnShowErrors){ btnShowErrors.addEventListener('click', (e)=>{ e.preventDefault(); openErrorsModal(); }); }
-    document.addEventListener('click', function(e){ const t=e.target.closest && e.target.closest('[data-show-errors]'); if (t){ e.preventDefault(); openErrorsModal(); } });
+    if (btnShowErrors) {
+        btnShowErrors.addEventListener('click', (e) => {
+            e.preventDefault();
+            openErrorsModal();
+        });
+    }
     
     // Create tour button
     const createTourBtn = document.querySelector('[data-create-tour]');
@@ -387,7 +391,9 @@ function createModal(title, content) {
 
 async function openErrorsModal(){
     try{
-        const res = await fetch('../api/error-log.php?action=list&limit=50', { cache:'no-store' });
+        showLoadingIndicator();
+        const res = await fetch('/api/error-log.php?action=list&limit=50', { cache:'no-store' });
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
         const j = await res.json();
         const items = (j && j.items) ? j.items : [];
         const html = items.length ? (
@@ -404,7 +410,8 @@ async function openErrorsModal(){
         const modal = createModal('Ошибки в работе сайта', html);
         document.body.appendChild(modal);
         setTimeout(()=>{ modal.style.opacity='1'; modal.querySelector('.modal-content').style.transform='scale(1)'; }, 10);
-    }catch(_){ showError('Не удалось загрузить лог ошибок'); }
+    }catch(e){ console.error('Error fetching error log:', e); showError('Не удалось загрузить лог ошибок: '+e.message); }
+    finally{ hideLoadingIndicator(); }
 }
 
 function escapeHtml(str){
@@ -593,7 +600,8 @@ document.documentElement.setAttribute('data-theme', savedTheme);
 // Обновить карточку "Ошибки за час"
 async function updateErrorsCard(){
     try{
-        const res = await fetch('../api/error-log.php?action=count&window=3600', { cache:'no-store' });
+        const res = await fetch('/api/error-log.php?action=count&window=3600', { cache:'no-store' });
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
         const j = await res.json();
         if (!j || !j.ok) return;
         const count = j.count || 0;
@@ -603,7 +611,16 @@ async function updateErrorsCard(){
             if (title && /Ошибки в работе сайта/i.test(title.textContent || '')){
                 const val = card.querySelector('p.text-2xl');
                 if (val) val.textContent = String(count);
+                if (count > 0){
+                    card.classList.add('has-errors');
+                    const link = card.querySelector('[data-show-errors]');
+                    if (link) link.textContent = 'Просмотреть лог ('+count+')';
+                } else {
+                    card.classList.remove('has-errors');
+                    const link = card.querySelector('[data-show-errors]');
+                    if (link) link.textContent = 'Лог пуст';
+                }
             }
         });
-    }catch(_){ }
+    }catch(e){ console.error('Error updating errors card:', e); }
 }
