@@ -397,7 +397,7 @@
           regions = items.map((it, idx)=>({
             id: it.id || ('REG-'+String(idx+1).padStart(3,'0')),
             name: (it.name || ('Регион '+(idx+1))),
-            rid: (it.fields && (it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || ''
+            rid: (it.fields && (it.fields['Идентификатор'] || it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || ''
           }));
           // сбросим счетчики; реальныеCounts можно подтянуть отдельно
           citiesByRegion = {};
@@ -604,6 +604,38 @@
       // Floating add button
       function genId(prefix, n){ return prefix+'-'+String(n).padStart(3,'0'); }
 
+      // Модальное окно создания региона (RU/EN)
+      function openCreateRegionModal(){
+        return new Promise(resolve=>{
+          const wrap = document.createElement('div');
+          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
+          wrap.innerHTML = '\
+            <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
+            <div class="relative bg-white rounded-lg shadow-xl p-6 w-96">\
+              <div class="text-lg text-gray-800 mb-4">Новый регион</div>\
+              <div class="space-y-3">\
+                <input id="cr_ru" class="input-japanese w-full" placeholder="Название (RU)"/>\
+                <input id="cr_en" class="input-japanese w-full" placeholder="Название (EN)"/>\
+              </div>\
+              <div class="mt-5 flex justify-end gap-2">\
+                <button id="cr_cancel" class="btn-japanese">Отмена</button>\
+                <button id="cr_ok" class="btn-japanese accent">Сохранить</button>\
+              </div>\
+            </div>';
+          document.body.appendChild(wrap);
+          function done(val){ try{ document.body.removeChild(wrap); }catch{} resolve(val||null); }
+          wrap.addEventListener('click', e=>{ if (e.target===wrap.firstChild) done(null); });
+          wrap.querySelector('#cr_cancel').addEventListener('click', ()=>done(null));
+          wrap.querySelector('#cr_ok').addEventListener('click', ()=>{
+            const ru = wrap.querySelector('#cr_ru').value.trim();
+            const en = wrap.querySelector('#cr_en').value.trim();
+            if (!ru || !en){ alert('Заполните оба поля'); return; }
+            done({ ru, en });
+          });
+          wrap.querySelector('#cr_ru').focus();
+        });
+      }
+
       // Выбор типа (Город/Локация) — модалка с 2 кнопками
       function chooseCityType(){
         if (level !== 'cities') { return Promise.resolve(null); }
@@ -634,33 +666,18 @@
 
       if (fab) fab.addEventListener('click', async function(){
         if (level==='regions'){
-          const name = prompt('Название региона:'); if(!name) return;
-          const businessId = genId('REG', (regions.length||0)+1);
-          // Оптимистичное добавление временной карточки
-          const tempId = 'TMP-'+Date.now();
-          regions.push({ id: tempId, name: name.trim(), rid: businessId });
-          renderRegions();
+          const data = await openCreateRegionModal();
+          if (!data) return;
           try{
-            const res = await fetch('../api/db-sync.php',{
-              method:'POST',
-              headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ scope:'regions', action:'create', data:{ name: name.trim(), rid: businessId } })
+            const res = await fetch('/api/regions-create.php',{
+              method:'POST', headers:{ 'Content-Type':'application/json' },
+              body: JSON.stringify({ name_ru: data.ru, name_en: data.en })
             });
-            const j = await res.json().catch(()=>({ok:false,error:'Invalid JSON'}));
-            if (!res.ok || !j.ok){
-              let msg = j && (j.error||('HTTP '+res.status)) || ('HTTP '+res.status);
-              const detail = j && j.response && j.response.error && (j.response.error.message||j.response.error.type);
-              if (detail) msg += ': '+detail;
-              throw new Error(msg);
-            }
+            const j = await res.json();
+            if (!res.ok || !j.ok) throw new Error(j.error||('HTTP '+res.status));
+            if (window.osNotify){ window.osNotify('Сохранено','ID: '+j.region_id); } else { alert('Сохранено: '+j.region_id); }
             await syncRegionsFromAirtable();
-          }catch(e){
-            // Откатываем временную карточку и сообщаем об ошибке
-            regions = regions.filter(r=>r.id!==tempId);
-            renderRegions();
-            if (window.osNotify){ window.osNotify('Ошибка сохранения', String(e.message||e)); }
-            else { alert('Не удалось сохранить регион: '+String(e && e.message ? e.message : e)); }
-          }
+          }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
         } else if (level==='cities'){
           const name = prompt('Название (город/локация):'); if(!name) return;
           const picked = await chooseCityType();
