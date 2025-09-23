@@ -327,6 +327,11 @@
       let poisByCity = {};     // cityId -> [ {id,name,type} ]
       let ticketsByPoi = {};   // poiId -> [ {id,category,price,currency,note} ]
 
+      // Persisted cache so карточки не пропадают визуально при сбоях сети/серверов
+      const LS_REGIONS_KEY = 'konstructour_regions_cache_v1';
+      function loadRegionsCache(){ try{ const s=localStorage.getItem(LS_REGIONS_KEY); return s?JSON.parse(s):[]; }catch(_e){ return []; } }
+      function saveRegionsCache(list){ try{ localStorage.setItem(LS_REGIONS_KEY, JSON.stringify(Array.isArray(list)?list:[])); }catch(_e){} }
+
       let level = 'regions';
       let selectedRegion = null;
       let selectedCity = null;
@@ -450,6 +455,7 @@
           // Сначала быстрый рендер с нулями
           citiesByRegion = {};
           renderRegions();
+          saveRegionsCache(regions);
           // Затем предзагрузим количество городов по всем регионам и перерисуем
           try{
             await Promise.all(regions.map(async (r)=>{
@@ -487,6 +493,7 @@
             });
             citiesByRegion = {};
             renderRegions();
+            saveRegionsCache(regions);
           }catch(e2){ console.warn('fallback regions failed', e2); }
         }
       }
@@ -662,22 +669,22 @@
         }
       });
 
-      // Breadcrumbs
-      document.addEventListener('click', function(e){
+      // Breadcrumbs — строго в пределах контейнера, чтобы не было конфликтов с делегатами
+      crumbs.addEventListener('click', function(e){
         const a = e.target.closest && e.target.closest('a[data-level]');
-        if (!a || !crumbs.contains(a)) return;
+        if (!a) return;
         e.preventDefault();
         const lv = a.getAttribute('data-level');
         if (lv==='regions'){
           selectedRegion=null; selectedCity=null; selectedPoi=null;
-          push('regions'); return renderRegions();
+          push('regions'); renderRegions(); return;
         }
         if (lv==='cities'){
           const regionId = a.getAttribute('data-region-id');
           selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
           selectedCity=null; selectedPoi=null;
           push('cities', { regionId: (selectedRegion?selectedRegion.id:null) });
-          return renderCities();
+          renderCities(); return;
         }
         if (lv==='pois'){
           const regionId = a.getAttribute('data-region-id');
@@ -687,7 +694,7 @@
           selectedCity = list.find(c=>c.id===cityId) || selectedCity;
           selectedPoi=null;
           push('pois', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null) });
-          return renderPois();
+          renderPois(); return;
         }
       });
 

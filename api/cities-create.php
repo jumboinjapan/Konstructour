@@ -36,6 +36,7 @@ $name_en = trim((string)($body['name_en'] ?? ''));
 $type    = strtolower(trim((string)($body['type'] ?? 'city')));
 $regionId = trim((string)($body['region_rec_id'] ?? ''));
 $regionName = trim((string)($body['region_name'] ?? ''));
+$regionRid = trim((string)($body['region_rid'] ?? ''));
 if ($name_ru==='' || $name_en===''){ http_response_code(400); echo json_encode(['ok'=>false,'error'=>'name_ru and name_en are required'], JSON_UNESCAPED_UNICODE); exit; }
 if ($type!=='city' && $type!=='location') $type='city';
 
@@ -66,7 +67,14 @@ $nextId = sprintf('%s-%04d',$prefix,$max+1);
 $nameRuCandidates = ['Name (RU)','Название (RU)','Название','Name','Title'];
 $nameEnCandidates = ['Name (EN)','Название (EN)','English Name','EN Name','Name (EN) '];
 $idCandidates     = ['ID','Идентификатор','Идентификатор ','Id'];
-$linkCandidates   = ['Region','Регион','Regions','Регионы','Region Link','Регион (ссылка)'];
+$linkCandidates   = ['Region','Регион','Regions','Регионы','Region Link','Регион (ссылка)','Region → Cities','Регион → Города'];
+// Если в реестре прописано точное имя поля-ссылки — используем его в приоритете
+if (!empty($cfg['airtable_registry']['tables']['city']['linkField'])){
+  $lf = $cfg['airtable_registry']['tables']['city']['linkField'];
+  if (is_string($lf) && $lf!==''){ array_unshift($linkCandidates, $lf); }
+}
+// Кандидаты для сохранения бизнес-кода региона (RID), если он передан
+$regionCodeCandidates = ['Region Code','RegionID','Регион ID','Регион код','Region Business ID','Идентификатор региона','Регион ID (код)','Region RID','Регион RID'];
 
 // Build candidate payloads without link/type first (уменьшаем шанс 422)
 $attempts = [];
@@ -109,7 +117,7 @@ if (!$created){
        if ($c2<300){ $linkedOk=true; break; }
      }
    }
-   // 3) Fallback: resolve Region record by name via Regions table, then link by id
+ // 3) Fallback: resolve Region record by name via Regions table, then link by id
    if (!$linkedOk && $regionName!=='' && !empty($REGION_TABLE_ID)){
      $offset=null; do{
        list($cr,$or,$er)=air_call('GET', "$BASE_ID/".rawurlencode($REGION_TABLE_ID), $API_KEY, null, ['pageSize'=>100,'offset'=>$offset]);
@@ -129,6 +137,15 @@ if (!$created){
      }
    }
    if (!$linkedOk){ log_err('City link-to-region failed', ['created'=>$created,'regionId'=>$regionId,'regionName'=>$regionName]); }
+ }
+
+ // 4) (optional) Проставим бизнес-код региона в поле города, если передан
+ if (!empty($created['id']) && $regionRid!==''){
+   foreach ($regionCodeCandidates as $rf){
+     $patch = ['fields'=>[ $rf => $regionRid ]];
+     list($c3,$o3,$e3)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
+     if ($c3<300){ break; }
+   }
  }
 
 echo json_encode(['ok'=>true,'record_id'=>$created['id']??null,'city_id'=>$nextId,'type'=>$type,'linked'=>$linkedOk], JSON_UNESCAPED_UNICODE);
