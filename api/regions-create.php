@@ -6,10 +6,10 @@ $API_KEY = getenv('AIRTABLE_API_KEY') ?: getenv('AIRTABLE_PAT') ?: getenv('AIRTA
 $BASE_ID  = 'apppwhjFN82N9zNqm';
 $TABLE_ID = 'tblbSajWkzI8X7M4U'; // Regions by Table ID
 
-// FIELD NAMES (пока по именам; при желании позже заменим на Field ID fldXXXX...)
-$F_ID = 'Идентификатор';
-$F_RU = 'Название (RU)';
-$F_EN = 'Название (EN)';
+// FIELD NAMES (latin labels in Airtable UI)
+$F_ID = 'ID';
+$F_RU = 'Name (RU)';
+$F_EN = 'Name (EN)';
 
 // Fallback: попытаться взять ключ из server config.php
 if (!$API_KEY) {
@@ -66,8 +66,12 @@ do {
   }
   $j = json_decode($out,true);
   foreach (($j['records'] ?? []) as $rec) {
-    $val = strval($rec['fields'][$F_ID] ?? '');
-    if (preg_match('/^REG-(\d{4})$/', $val, $m)) {
+    // поддерживаем старые варианты имени поля ID (на случай миграций)
+    $val = '';
+    foreach ([$F_ID, 'Идентификатор', 'Region ID', 'Регион ID'] as $cand){
+      if (isset($rec['fields'][$cand])) { $val = strval($rec['fields'][$cand]); break; }
+    }
+    if (preg_match('/^REG-(\d{3,4})$/', $val, $m)) {
       $max = max($max, intval($m[1],10));
     }
   }
@@ -78,14 +82,7 @@ $nextId = format_id($max + 1);
 
 // 2) создание с попытками: сначала с Идентификатор, если ошибка Unknown field — пробуем с Name
 $nbsp = "\xC2\xA0"; // NBSP in UTF-8
-$candidates = [
-  $F_ID,
-  $F_ID.' ',           // trailing space
-  ' '.$F_ID,           // leading space
-  $F_ID.$nbsp,         // trailing NBSP
-  $nbsp.$F_ID,         // leading NBSP
-  'Name'
-];
+$candidates = [ $F_ID, 'ID ', ' ID', $F_ID.$nbsp, $nbsp.$F_ID, 'Идентификатор', 'Name' ];
 $created = null; $lastResp=null; $attempt=null; $lastStatus=0;
 foreach($candidates as $primary){
   $attempt = ['fields'=>[ $primary=>$nextId, $F_RU=>$name_ru, $F_EN=>$name_en ]];
