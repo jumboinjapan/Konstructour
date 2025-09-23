@@ -74,25 +74,39 @@ do {
   $offset = $j['offset'] ?? null;
 } while ($offset);
 
-$next = format_id($max + 1);
+$nextId = format_id($max + 1);
 
-// 2) создать запись с Primary = Идентификатор
-$payload = ['fields'=>[
-  $F_ID => $next,
-  $F_RU => $name_ru,
-  $F_EN => $name_en
-]];
-list($code,$out,$err) = air_call('POST', "$BASE_ID/$TABLE_ID", $API_KEY, $payload);
-
-if ($code>=300) {
-  // Логируем для диагностики 422
-  @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
-    'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Region create failed','ctx'=>['status'=>$code,'request'=>$payload,'response'=>json_decode($out,true)]], JSON_UNESCAPED_UNICODE)
-  ]]));
-  http_response_code(500);
-  echo json_encode(['ok'=>false,'error'=>"Airtable $code",'request'=>$payload,'details'=>json_decode($out,true)], JSON_UNESCAPED_UNICODE); exit;
+// 2) создание с попытками: сначала с Идентификатор, если ошибка Unknown field — пробуем с Name
+$candidates = [$F_ID, 'Name'];
+$created = null; $lastResp=null; $attempt=null; $lastStatus=0;
+foreach($candidates as $primary){
+  $attempt = ['fields'=>[ $primary=>$nextId, $F_RU=>$name_ru, $F_EN=>$name_en ]];
+  list($code,$out,$err) = air_call('POST', "$BASE_ID/$TABLE_ID", $API_KEY, $attempt);
+  if ($code>=300){
+    $resp=json_decode($out,true); $lastResp=$resp; $lastStatus=$code;
+    $msg = strtolower(json_encode($resp, JSON_UNESCAPED_UNICODE));
+    if (strpos($msg,'unknown field')!==false || strpos($msg,'could not find field')!==false){
+      continue; // попробуем следующий кандидат
+    } else {
+      @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Region create failed','ctx'=>['status'=>$code,'request'=>$attempt,'response'=>$resp]], JSON_UNESCAPED_UNICODE) ]]));
+      http_response_code(500); echo json_encode(['ok'=>false,'error'=>"Airtable $code",'request'=>$attempt,'details'=>$resp], JSON_UNESCAPED_UNICODE); exit;
+    }
+  } else { $created=json_decode($out,true); break; }
 }
 
-$created = json_decode($out,true);
-echo json_encode(['ok'=>true,'record_id'=>$created['id'] ?? null,'region_id'=>$next], JSON_UNESCAPED_UNICODE);
+if (!$created){
+  // fallback: создать без первичного, затем PATCH первичное
+  $first = ['fields'=>[ $F_RU=>$name_ru, $F_EN=>$name_en ]];
+  list($c2,$o2,$e2)=air_call('POST', "$BASE_ID/$TABLE_ID", $API_KEY, $first);
+  if ($c2>=300){ $r2=json_decode($o2,true); @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Region create no-primary failed','ctx'=>['status'=>$c2,'request'=>$first,'response'=>$r2]], JSON_UNESCAPED_UNICODE) ]])); http_response_code(500); echo json_encode(['ok'=>false,'error'=>"Airtable $c2",'request'=>$first,'details'=>$r2], JSON_UNESCAPED_UNICODE); exit; }
+  $created = json_decode($o2,true); $recId = $created['id'] ?? '';
+  if ($recId){
+    foreach($candidates as $primary){
+      $patch=['fields'=>[ $primary=>$nextId ]]; list($pc,$po,$pe)=air_call('PATCH', "$BASE_ID/$TABLE_ID/".rawurlencode($recId), $API_KEY, $patch);
+      if ($pc<300) break; // patched
+    }
+  }
+}
+
+echo json_encode(['ok'=>true,'record_id'=>$created['id'] ?? null,'region_id'=>$nextId], JSON_UNESCAPED_UNICODE);
 
