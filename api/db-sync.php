@@ -197,14 +197,7 @@ if ($provider === 'airtable'){
       // Optional type for City/Location demo
       if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
     }
-    // Optionally include business Region ID into a known field
-    if ($scope === 'regions'){
-      $rid = $payload['rid'] ?? ($payload['businessId'] ?? ($payload['Region ID'] ?? ($payload['ID'] ?? '')));
-      if (!empty($rid)){
-        $idField = detectIdFieldForRegion($airReg ?? [], $baseUrl, $pat);
-        if ($idField){ $fields[$idField] = $rid; }
-      }
-    }
+    // Per requirement: do not store business Region ID in Airtable
     if (!$fields || !is_array($fields)) respond(false, ['error'=>'No fields'], 400);
 
     $ch = curl_init($baseUrl);
