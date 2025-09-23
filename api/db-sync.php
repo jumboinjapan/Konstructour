@@ -197,7 +197,17 @@ if ($provider === 'airtable'){
       // Optional type for City/Location demo
       if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
     }
-    // Per requirement: do not store business Region ID in Airtable
+    // Strict requirement: for regions we must store business Region ID using explicit mapping
+    if ($scope === 'regions'){
+      $rid = $payload['rid'] ?? ($payload['businessId'] ?? ($payload['Region ID'] ?? ($payload['ID'] ?? '')));
+      if ($rid === '' || $rid === null) respond(false, ['error'=>'Region ID is required'], 400);
+      $idField = '';
+      if (!empty($airReg['tables']['region']['idField'])) $idField = $airReg['tables']['region']['idField'];
+      elseif (!empty($airReg['tables']['region']['id_field'])) $idField = $airReg['tables']['region']['id_field'];
+      if (!$idField) respond(false, ['error'=>'Region ID field mapping missing (airtable_registry.tables.region.idField)'], 400);
+      if (!is_array($fields)) $fields = [];
+      $fields[$idField] = $rid;
+    }
     if (!$fields || !is_array($fields)) respond(false, ['error'=>'No fields'], 400);
 
     $ch = curl_init($baseUrl);
@@ -231,6 +241,16 @@ if ($provider === 'airtable'){
         $fields[$nameField] = $payload['name'];
       }
       if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
+    }
+    // Allow updating Region ID for regions if mapping provided
+    if ($scope === 'regions'){
+      $rid = $payload['rid'] ?? ($payload['businessId'] ?? ($payload['Region ID'] ?? ($payload['ID'] ?? '')));
+      if ($rid !== '' && $rid !== null){
+        $idField = '';
+        if (!empty($airReg['tables']['region']['idField'])) $idField = $airReg['tables']['region']['idField'];
+        elseif (!empty($airReg['tables']['region']['id_field'])) $idField = $airReg['tables']['region']['id_field'];
+        if ($idField){ $fields[$idField] = $rid; }
+      }
     }
     $ch = curl_init($baseUrl);
     curl_setopt_array($ch, [
