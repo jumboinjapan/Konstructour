@@ -78,11 +78,21 @@ foreach ($providers as $p){
             $ch = curl_init($url);
             curl_setopt_array($ch, [ CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$pat], CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>8 ]);
             $resp = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-            if (!($code>=200 && $code<300)) { $ok=false; $text='Ошибка'; break; }
+            if (!($code>=200 && $code<300)) {
+              $ok=false; $text='Ошибка';
+              // логируем отказ проверки конкретной таблицы
+              @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+                'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable health table check failed','ctx'=>['table'=>$tbl,'code'=>$code]])
+              ]]));
+              break;
+            }
           }
         }
       } else if ($code===401){
         $ok = false; $text = '401 Unauthorized';
+        @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+          'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable whoami unauthorized','ctx'=>['code'=>$code]])
+        ]]));
       }
     }
   }

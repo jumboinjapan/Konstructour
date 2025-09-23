@@ -644,10 +644,15 @@
             const res = await fetch('../api/db-sync.php',{
               method:'POST',
               headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim(), 'Region ID': businessId } } })
+              body: JSON.stringify({ scope:'regions', action:'create', data:{ name: name.trim(), rid: businessId } })
             });
             const j = await res.json().catch(()=>({ok:false,error:'Invalid JSON'}));
-            if (!res.ok || !j.ok) throw new Error(j.error||('HTTP '+res.status));
+            if (!res.ok || !j.ok){
+              let msg = j && (j.error||('HTTP '+res.status)) || ('HTTP '+res.status);
+              const detail = j && j.response && j.response.error && (j.response.error.message||j.response.error.type);
+              if (detail) msg += ': '+detail;
+              throw new Error(msg);
+            }
             await syncRegionsFromAirtable();
           }catch(e){
             // Откатываем временную карточку и сообщаем об ошибке

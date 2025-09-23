@@ -5,6 +5,32 @@ header('Cache-Control: no-store');
 
 function respond($ok, $data=[], $code=200){ http_response_code($code); echo json_encode(['ok'=>$ok]+$data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); exit; }
 
+// Try to determine which field should store business Region ID
+function detectIdFieldForRegion($airReg, $baseUrl, $pat){
+  // Prefer explicit mapping from registry
+  if (!empty($airReg['tables']['region']['idField'])) return $airReg['tables']['region']['idField'];
+  if (!empty($airReg['tables']['region']['id_field'])) return $airReg['tables']['region']['id_field'];
+  // Probe first record to see existing field names
+  $url = $baseUrl.'?pageSize=1';
+  $ch = curl_init($url);
+  curl_setopt_array($ch, [
+    CURLOPT_HTTPHEADER=>[
+      'Authorization: Bearer '.$pat
+    ],
+    CURLOPT_RETURNTRANSFER=>true,
+    CURLOPT_TIMEOUT=>10
+  ]);
+  $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+  if ($err || $code < 200 || $code >= 300) return null;
+  $json = json_decode($resp, true);
+  $records = $json['records'] ?? [];
+  if (!$records) return null;
+  $fields = $records[0]['fields'] ?? [];
+  $candidates = ['Region ID','Регион ID','ID','RegionID','РегионID'];
+  foreach ($candidates as $name){ if (array_key_exists($name, $fields)) return $name; }
+  return null;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(false, ['error'=>'Invalid method'], 405);
 // Allow HTTP for local/admin pages; production usually fronted by TLS terminator
 $ref = $_SERVER['HTTP_REFERER'] ?? '';
@@ -86,7 +112,9 @@ if ($provider === 'airtable'){
       CURLOPT_TIMEOUT=>15
     ]);
     $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-    if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
+    if ($err) { @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+      'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable list curl error','ctx'=>['scope'=>$scope,'err'=>$err]])
+    ]])); respond(false, ['error'=>'Curl: '.$err], 500); }
     $json = json_decode($resp, true);
     if ($code >= 200 && $code < 300){
       // Optional filtering by parent
@@ -146,6 +174,14 @@ if ($provider === 'airtable'){
       // Optional type for City/Location demo
       if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
     }
+    // Optionally include business Region ID into a known field
+    if ($scope === 'regions'){
+      $rid = $payload['rid'] ?? ($payload['businessId'] ?? ($payload['Region ID'] ?? ($payload['ID'] ?? '')));
+      if (!empty($rid)){
+        $idField = detectIdFieldForRegion($airReg ?? [], $baseUrl, $pat);
+        if ($idField){ $fields[$idField] = $rid; }
+      }
+    }
     if (!$fields || !is_array($fields)) respond(false, ['error'=>'No fields'], 400);
 
     $ch = curl_init($baseUrl);
@@ -163,6 +199,9 @@ if ($provider === 'airtable'){
     if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
     $json = json_decode($resp, true);
     if ($code >= 200 && $code < 300){ respond(true, ['result'=>$json]); }
+    @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+      'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable create failed','ctx'=>['scope'=>$scope,'code'=>$code,'response'=>$json]])
+    ]]));
     respond(false, ['error'=>'Airtable '.$code, 'response'=>$json], $code ?: 500);
   }
 
@@ -186,9 +225,14 @@ if ($provider === 'airtable'){
       CURLOPT_TIMEOUT=>15
     ]);
     $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-    if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
+    if ($err) { @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+      'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable update curl error','ctx'=>['scope'=>$scope,'err'=>$err]])
+    ]])); respond(false, ['error'=>'Curl: '.$err], 500); }
     $json = json_decode($resp, true);
     if ($code >= 200 && $code < 300){ respond(true, ['result'=>$json]); }
+    @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+      'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable update failed','ctx'=>['scope'=>$scope,'code'=>$code,'response'=>$json]])
+    ]]));
     respond(false, ['error'=>'Airtable '.$code, 'response'=>$json], $code ?: 500);
   }
 
@@ -206,9 +250,14 @@ if ($provider === 'airtable'){
       CURLOPT_TIMEOUT=>15
     ]);
     $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-    if ($err) respond(false, ['error'=>'Curl: '.$err], 500);
+    if ($err) { @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+      'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable delete curl error','ctx'=>['scope'=>$scope,'err'=>$err]])
+    ]])); respond(false, ['error'=>'Curl: '.$err], 500); }
     $json = json_decode($resp, true);
     if ($code >= 200 && $code < 300){ respond(true, ['result'=>$json]); }
+    @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+      'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Airtable delete failed','ctx'=>['scope'=>$scope,'code'=>$code,'response'=>$json]])
+    ]]));
     respond(false, ['error'=>'Airtable '.$code, 'response'=>$json], $code ?: 500);
   }
 

@@ -526,6 +526,8 @@ function startRealtimeUpdates() {
     setInterval(() => { updateRealtimeStats(); }, 30000);
     // Периодический опрос серверного health (каждые 20с)
     setInterval(() => { try { pollHealth(); } catch(_) {} }, 20000);
+    // Периодический опрос счетчика ошибок за час (каждые 20с)
+    setInterval(() => { try { updateErrorsCard(); } catch(_) {} }, 20000);
 }
 
 // Update realtime stats
@@ -551,3 +553,21 @@ function updateRealtimeStats() {
 // Initialize theme
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
+
+// Обновить карточку "Ошибки за час"
+async function updateErrorsCard(){
+    try{
+        const res = await fetch('../api/error-log.php?action=count&window=3600', { cache:'no-store' });
+        const j = await res.json();
+        if (!j || !j.ok) return;
+        const count = j.count || 0;
+        const cards = document.querySelectorAll('.stat-card');
+        cards.forEach(card=>{
+            const title = card.querySelector('p.text-sm');
+            if (title && /Ошибки за час/i.test(title.textContent || '')){
+                const val = card.querySelector('p.text-2xl');
+                if (val) val.textContent = String(count);
+            }
+        });
+    }catch(_){ }
+}
