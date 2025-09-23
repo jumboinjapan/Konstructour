@@ -635,16 +635,27 @@
       if (fab) fab.addEventListener('click', async function(){
         if (level==='regions'){
           const name = prompt('Название региона:'); if(!name) return;
-          const id = genId('REG', regions.length+1);
-          // Пишем в Airtable, затем перечитываем список для получения recordId
+          const businessId = genId('REG', (regions.length||0)+1);
+          // Оптимистичное добавление временной карточки
+          const tempId = 'TMP-'+Date.now();
+          regions.push({ id: tempId, name: name.trim(), rid: businessId });
+          renderRegions();
           try{
-            await fetch('../api/db-sync.php',{
+            const res = await fetch('../api/db-sync.php',{
               method:'POST',
               headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim(), 'Region ID': id } } })
+              body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim(), 'Region ID': businessId } } })
             });
-          }catch{}
-          await syncRegionsFromAirtable();
+            const j = await res.json().catch(()=>({ok:false,error:'Invalid JSON'}));
+            if (!res.ok || !j.ok) throw new Error(j.error||('HTTP '+res.status));
+            await syncRegionsFromAirtable();
+          }catch(e){
+            // Откатываем временную карточку и сообщаем об ошибке
+            regions = regions.filter(r=>r.id!==tempId);
+            renderRegions();
+            if (window.osNotify){ window.osNotify('Ошибка сохранения', String(e.message||e)); }
+            else { alert('Не удалось сохранить регион: '+String(e && e.message ? e.message : e)); }
+          }
         } else if (level==='cities'){
           const name = prompt('Название (город/локация):'); if(!name) return;
           const picked = await chooseCityType();
