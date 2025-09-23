@@ -167,8 +167,10 @@ if ($provider === 'airtable'){
               if ($val===$rid || $val===$rname || $val===$cid || $val===$cname) return true;
             }
           }
-          // if no candidate field or no match, keep if no filter provided
-          return ($scope!=='cities' && $scope!=='pois') ? true : false;
+          // if no candidate field or no match:
+          // - ранее отбрасывали города (false), из-за чего каталог был пуст
+          // - теперь оставляем запись, чтобы показывать города даже без связи
+          return true;
         }));
       }
       // Normalize to simple array, tolerant field names
