@@ -65,7 +65,7 @@ $nextId = sprintf('%s-%04d',$prefix,$max+1);
 $nameRuCandidates = ['Name (RU)','Название (RU)','Название','Name','Title'];
 $nameEnCandidates = ['Name (EN)','Название (EN)','English Name','EN Name','Name (EN) '];
 $idCandidates     = ['ID','Идентификатор','Идентификатор ','Id'];
-$linkCandidates   = ['Region','Регион','Region Link','Регион (ссылка)'];
+$linkCandidates   = ['Region','Регион','Regions','Регионы','Region Link','Регион (ссылка)'];
 
 // Build candidate payloads without link/type first (уменьшаем шанс 422)
 $attempts = [];
