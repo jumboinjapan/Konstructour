@@ -432,6 +432,7 @@
       function renderCities(){
         level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
         const list = citiesByRegion[selectedRegion.id] || [];
+        // Если список пуст — показываем кнопку добавления через ту же +
         function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
         cards.innerHTML = list.map(c=>{
           const actions = '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -683,21 +684,36 @@
             await syncRegionsFromAirtable();
           }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
         } else if (level==='cities'){
-          const name = prompt('Название (город/локация):'); if(!name) return;
-          const picked = await chooseCityType();
-          if (!picked) return; // отмена
-          let type = picked; // 'city' | 'location'
-          const list = citiesByRegion[selectedRegion.id] || (citiesByRegion[selectedRegion.id]=[]);
-          const id = genId('CL', list.length+1);
-          const obj = { id, name:name.trim(), type };
-          list.push(obj);
-          renderCities();
-          // Пишем на сервер (демо-заглушка)
-          fetch('../api/db-sync.php',{
-            method:'POST',
-            headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({ scope:'cities', action:'create', data:{ name:name.trim(), type, regionId: selectedRegion.id } })
-          }).catch(()=>{});
+          // модалка выбора типа + ввод названия
+          const picked = await chooseCityType(); if (!picked) return;
+          const wrap = await new Promise(res=>{
+            const w = document.createElement('div');
+            w.className='fixed inset-0 z-50 flex items-center justify-center';
+            w.innerHTML='\
+              <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
+              <div class="relative bg-white rounded-lg shadow-xl p-6 w-96">\
+                <div class="text-lg text-gray-800 mb-4">'+(picked==='location'?'Новая локация':'Новый город')+'</div>\
+                <input id="nm" class="input-japanese w-full" placeholder="Название (RU)"/>\
+                <div class="mt-5 flex justify-end gap-2">\
+                  <button id="c" class="btn-japanese">Отмена</button>\
+                  <button id="o" class="btn-japanese accent">Сохранить</button>\
+                </div>\
+              </div>';
+            document.body.appendChild(w);
+            w.querySelector('#c').onclick=()=>{ try{document.body.removeChild(w);}catch{}; res(null); };
+            w.querySelector('#o').onclick=()=>{ const v=w.querySelector('#nm').value.trim(); if(!v){alert('Введите название');return;} try{document.body.removeChild(w);}catch{}; res(v); };
+            w.addEventListener('click',e=>{ if(e.target===w.firstChild){ try{document.body.removeChild(w);}catch{}; res(null);} });
+          });
+          if (!wrap) return; const name = wrap;
+          try{
+            const res = await fetch('/api/cities-create.php',{
+              method:'POST', headers:{ 'Content-Type':'application/json' },
+              body: JSON.stringify({ name_ru: name, name_en: name, type: picked, region_rec_id: selectedRegion.id })
+            });
+            const j = await res.json();
+            if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
+            await loadCitiesForRegion(selectedRegion); renderCities();
+          }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
         } else if (level==='pois'){
           const name = prompt('Название POI:'); if(!name) return;
           const type = prompt('Тип (культура/природа/гастро):','культура')||'';
