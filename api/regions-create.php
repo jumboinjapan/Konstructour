@@ -77,7 +77,15 @@ do {
 $nextId = format_id($max + 1);
 
 // 2) создание с попытками: сначала с Идентификатор, если ошибка Unknown field — пробуем с Name
-$candidates = [$F_ID, 'Name'];
+$nbsp = "\xC2\xA0"; // NBSP in UTF-8
+$candidates = [
+  $F_ID,
+  $F_ID.' ',           // trailing space
+  ' '.$F_ID,           // leading space
+  $F_ID.$nbsp,         // trailing NBSP
+  $nbsp.$F_ID,         // leading NBSP
+  'Name'
+];
 $created = null; $lastResp=null; $attempt=null; $lastStatus=0;
 foreach($candidates as $primary){
   $attempt = ['fields'=>[ $primary=>$nextId, $F_RU=>$name_ru, $F_EN=>$name_en ]];
