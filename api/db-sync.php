@@ -147,11 +147,12 @@ if ($provider === 'airtable'){
         $rname = $flt['regionName'] ?? '';
         $cid = $flt['cityId'] ?? '';
         $cname = $flt['cityName'] ?? '';
-        $records = array_values(array_filter($records, function($rec) use ($scope,$rid,$rname,$cid,$cname){
+          $records = array_values(array_filter($records, function($rec) use ($scope,$rid,$rname,$cid,$cname){
           $fields = $rec['fields'] ?? [];
           $candidates = [];
           if ($scope==='cities'){ $candidates = ['Region','Регион','region','Страна/Регион','Region Link','Регион (ссылка)','Регион → Города']; }
           if ($scope==='pois'){ $candidates = ['City','Город','city','Локация/Город']; }
+            $hasFilter = (bool)($rid || $rname || $cid || $cname);
           foreach ($candidates as $fn){
             if (!array_key_exists($fn, $fields)) continue;
             $val = $fields[$fn];
@@ -167,10 +168,9 @@ if ($provider === 'airtable'){
               if ($val===$rid || $val===$rname || $val===$cid || $val===$cname) return true;
             }
           }
-          // if no candidate field or no match:
-          // - ранее отбрасывали города (false), из-за чего каталог был пуст
-          // - теперь оставляем запись, чтобы показывать города даже без связи
-          return true;
+            // Если фильтр задан, но соответствующих полей/совпадений нет — запись не включаем.
+            // Если фильтра нет — оставляем запись.
+            return !$hasFilter;
         }));
       }
       // Normalize to simple array, tolerant field names
