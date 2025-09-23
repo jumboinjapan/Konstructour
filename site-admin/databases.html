@@ -483,7 +483,7 @@
           });
           const j = await res.json();
           const items = j.ok ? (j.items||[]) : [];
-          citiesByRegion[region.id] = items.map(it=>({ id: it.id, name: it.name || '—', type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
+          citiesByRegion[region.id] = items.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
         }catch(e){ citiesByRegion[region.id] = []; }
       }
 
