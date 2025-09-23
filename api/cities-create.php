@@ -34,6 +34,7 @@ $name_ru = trim((string)($body['name_ru'] ?? ''));
 $name_en = trim((string)($body['name_en'] ?? ''));
 $type    = strtolower(trim((string)($body['type'] ?? 'city')));
 $regionId = trim((string)($body['region_rec_id'] ?? ''));
+$regionName = trim((string)($body['region_name'] ?? ''));
 if ($name_ru==='' || $name_en===''){ http_response_code(400); echo json_encode(['ok'=>false,'error'=>'name_ru and name_en are required'], JSON_UNESCAPED_UNICODE); exit; }
 if ($type!=='city' && $type!=='location') $type='city';
 
@@ -89,11 +90,19 @@ if (!$created){
 }
 
 // Try to link Region after creation (best-effort)
-if ($regionId!=='' && !empty($created['id'])){
-  foreach ($linkCandidates as $lf){
-    $patch = ['fields'=>[ $lf => [ ['id'=>$regionId] ] ]];
-    list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
-    if ($c2<300) break; // ok
+if (!empty($created['id'])){
+  if ($regionId!==''){
+    foreach ($linkCandidates as $lf){
+      $patch = ['fields'=>[ $lf => [ ['id'=>$regionId] ] ]];
+      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
+      if ($c2<300) break;
+    }
+  } elseif ($regionName!==''){
+    foreach ($linkCandidates as $lf){
+      $patch = ['fields'=>[ $lf => [ ['name'=>$regionName] ] ]];
+      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
+      if ($c2<300) break;
+    }
   }
 }
 
