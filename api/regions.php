@@ -1,5 +1,5 @@
 <?php
-// Create Region (RU/EN) in Airtable and wait for Automation to assign stable ID
+// Create Region (RU/EN) in Airtable with server-generated sequential ID (no Automations)
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
@@ -31,58 +31,85 @@ if (file_exists($cfgFile)) { $cfg = require $cfgFile; if (!is_array($cfg)) $cfg 
 $airReg = $cfg['airtable_registry'] ?? [];
 $pat = $cfg['airtable']['api_key'] ?? ($airReg['api_key'] ?? ($cfg['airtable']['token'] ?? ''));
 $baseId = $airReg['baseId'] ?? ($airReg['base_id'] ?? ($cfg['airtable']['base_id'] ?? ''));
-$tableId = '';
-if (!empty($airReg['tables']['region']['tableId'])) $tableId = $airReg['tables']['region']['tableId'];
-elseif (!empty($cfg['airtable']['table'])) $tableId = $cfg['airtable']['table'];
+$regionsTableId = '';
+if (!empty($airReg['tables']['region']['tableId'])) $regionsTableId = $airReg['tables']['region']['tableId'];
+elseif (!empty($cfg['airtable']['table'])) $regionsTableId = $cfg['airtable']['table'];
+if (!$pat || !$baseId || !$regionsTableId) respond(false, ['error'=>'Airtable settings incomplete'], 400);
 
-if (!$pat || !$baseId || !$tableId) respond(false, ['error'=>'Airtable settings incomplete'], 400);
+$apiBase = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/';
 
-$baseUrl = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/'.rawurlencode($tableId);
-
-// 1) Create record
-$createPayload = [ 'fields' => [ 'Название (RU)' => $nameRu, 'Название (EN)' => $nameEn ] ];
-$ch = curl_init($baseUrl);
-curl_setopt_array($ch, [
-  CURLOPT_POST=>true,
-  CURLOPT_HTTPHEADER=>[
-    'Authorization: Bearer '.$pat,
-    'Content-Type: application/json'
-  ],
-  CURLOPT_POSTFIELDS=>json_encode($createPayload, JSON_UNESCAPED_UNICODE),
-  CURLOPT_RETURNTRANSFER=>true,
-  CURLOPT_TIMEOUT=>20
-]);
-$resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-if ($err) { @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'regions.create curl error','ctx'=>['err'=>$err]])]])); respond(false, ['error'=>'Curl: '.$err], 500); }
-$j = json_decode($resp, true);
-if (!($code>=200 && $code<300)){
-  @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'regions.create failed','ctx'=>['code'=>$code,'response'=>$j]])]]));
-  respond(false, ['error'=>'Airtable '.$code, 'response'=>$j], $code ?: 500);
-}
-
-$recordId = $j['id'] ?? '';
-if (!$recordId) respond(false, ['error'=>'No record id'], 500);
-
-// 2) Poll for stable ID assigned by Automation: field name "Идентификатор"
-$stableId = '';
-for ($i=0; $i<10; $i++){
-  $url = $baseUrl.'/'.rawurlencode($recordId);
+// Helpers
+function http_json($url, $method, $pat, $payload=null){
   $ch = curl_init($url);
-  curl_setopt_array($ch, [
-    CURLOPT_HTTPHEADER=>[ 'Authorization: Bearer '.$pat ],
+  $opts = [
+    CURLOPT_CUSTOMREQUEST=>$method,
+    CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$pat, 'Content-Type: application/json'],
     CURLOPT_RETURNTRANSFER=>true,
     CURLOPT_TIMEOUT=>20
-  ]);
+  ];
+  if ($payload!==null) $opts[CURLOPT_POSTFIELDS] = json_encode($payload, JSON_UNESCAPED_UNICODE);
+  curl_setopt_array($ch, $opts);
   $resp = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-  if ($err) break;
-  if ($code>=200 && $code<300){
-    $rj = json_decode($resp, true);
-    $stableId = $rj['fields']['Идентификатор'] ?? '';
-    if ($stableId) break;
-  }
-  usleep(500000); // 500 ms
+  return [$code,$err,$resp];
 }
 
-respond(true, [ 'record_id'=>$recordId, 'region_id'=>($stableId?:null), 'name_ru'=>$nameRu, 'name_en'=>$nameEn ]);
+// Counter table config
+$countersTableName = 'Counters'; // create manually with fields: Name(text), Last(number)
+$counterName = 'regions';
+
+// Ensure counter record exists
+function ensure_counter($apiBase,$pat,$countersTableName,$counterName){
+  [$code,$err,$resp] = http_json($apiBase.rawurlencode($countersTableName).'?'.http_build_query(['filterByFormula'=>"Name = '".$counterName."'",'maxRecords'=>1]), 'GET', $pat);
+  if ($err) return [null,'Curl: '.$err];
+  $j = json_decode($resp,true);
+  if ($code>=200 && $code<300 && !empty($j['records'])) return [$j['records'][0],null];
+  if ($code>=200 && $code<300){
+    // create
+    [$c2,$e2,$r2] = http_json($apiBase.rawurlencode($countersTableName), 'POST', $pat, ['fields'=>['Name'=>$counterName,'Last'=>0]]);
+    if ($e2) return [null,'Curl: '.$e2];
+    $j2 = json_decode($r2,true);
+    if ($c2>=200 && $c2<300) return [$j2,null];
+    return [null,'Airtable '.$c2];
+  }
+  return [null,'Airtable '.$code];
+}
+
+function next_seq($apiBase,$pat,$countersTableName,$counterName,$maxRetries=5){
+  for ($attempt=1; $attempt<=$maxRetries; $attempt++){
+    [$rec,$err] = ensure_counter($apiBase,$pat,$countersTableName,$counterName);
+    if ($err || !$rec) { usleep(100000*$attempt); continue; }
+    $id = $rec['id'];
+    $last = intval($rec['fields']['Last'] ?? 0);
+    $next = $last + 1;
+    [$c,$e,$r] = http_json($apiBase.rawurlencode($countersTableName).'/'.rawurlencode($id), 'PATCH', $pat, ['fields'=>['Last'=>$next]]);
+    if ($e){ usleep(100000*$attempt); continue; }
+    if ($c>=200 && $c<300) return $next;
+    usleep(100000*$attempt);
+  }
+  return null;
+}
+
+function format_reg($n){ return 'REG-'.str_pad(strval($n), 4, '0', STR_PAD_LEFT); }
+
+// Generate next region id with retries and create record
+for ($loop=0; $loop<5; $loop++){
+  $seq = next_seq($apiBase,$pat,$countersTableName,$counterName);
+  if (!$seq){ continue; }
+  $regionId = format_reg($seq);
+  // pre-check duplicate
+  $filter = '{Идентификатор} = '.json_encode($regionId, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+  [$c0,$e0,$r0] = http_json($apiBase.rawurlencode($regionsTableId).'?'.http_build_query(['filterByFormula'=>$filter,'maxRecords'=>1]), 'GET', $pat);
+  if ($e0) { continue; }
+  if ($c0>=200 && $c0<300){
+    $j0 = json_decode($r0,true);
+    if (!empty($j0['records'])) { usleep(150000); continue; }
+  }
+  // create
+  [$c1,$e1,$r1] = http_json($apiBase.rawurlencode($regionsTableId), 'POST', $pat, ['fields'=>['Название (RU)'=>$nameRu,'Название (EN)'=>$nameEn,'Идентификатор'=>$regionId]]);
+  if ($e1){ @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'regions.create curl error','ctx'=>['err'=>$e1]])]])); continue; }
+  if ($c1>=200 && $c1<300){ $j1=json_decode($r1,true); respond(true, ['record_id'=>$j1['id']??'', 'region_id'=>$regionId, 'name_ru'=>$nameRu, 'name_en'=>$nameEn]); }
+}
+
+respond(false, ['error'=>'could_not_generate_id'], 500);
 
 
