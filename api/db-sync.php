@@ -31,6 +31,28 @@ function detectIdFieldForRegion($airReg, $baseUrl, $pat){
   return null;
 }
 
+// Determine a safe name field to write into. Prefer registry label only if it exists; otherwise fallback to 'Name'.
+function determineNameField($airReg, $scope, $baseUrl, $pat){
+  $label = null;
+  if (!empty($airReg['tables']) && is_array($airReg['tables'])){
+    $map = [ 'regions'=>'region', 'cities'=>'city', 'pois'=>'poi' ];
+    $key = $map[$scope] ?? '';
+    if ($key && !empty($airReg['tables'][$key]['label'])){ $label = $airReg['tables'][$key]['label']; }
+  }
+  if (!$label || $label === 'Name') return 'Name';
+  // Verify the label exists by probing one record; if table empty or field missing, fallback to 'Name'
+  $url = $baseUrl.'?pageSize=1';
+  $ch = curl_init($url);
+  curl_setopt_array($ch, [ CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$pat], CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>8 ]);
+  $resp = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+  if (!($code>=200 && $code<300)) return 'Name';
+  $json = json_decode($resp, true);
+  $recs = $json['records'] ?? [];
+  if (!$recs) return 'Name';
+  $fields = $recs[0]['fields'] ?? [];
+  return array_key_exists($label, $fields) ? $label : 'Name';
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(false, ['error'=>'Invalid method'], 405);
 // Allow HTTP for local/admin pages; production usually fronted by TLS terminator
 $ref = $_SERVER['HTTP_REFERER'] ?? '';
@@ -168,8 +190,9 @@ if ($provider === 'airtable'){
     if (!$fields){
       $name = $payload['name'] ?? '';
       if ($name){
-        // Duplicate into common name variants for compatibility
-        $fields = ['Name'=>$name, 'Название'=>$name, 'Title'=>$name];
+        // Choose a single safe name field
+        $nameField = determineNameField($airReg ?? [], $scope, $baseUrl, $pat);
+        $fields = [$nameField=>$name];
       }
       // Optional type for City/Location demo
       if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
@@ -210,7 +233,10 @@ if ($provider === 'airtable'){
     if (!$id) respond(false, ['error'=>'Missing id'], 400);
     $fields = $payload['fields'] ?? [];
     if (!$fields){
-      if (!empty($payload['name'])){ $fields['Name'] = $payload['name']; }
+      if (!empty($payload['name'])){
+        $nameField = determineNameField($airReg ?? [], $scope, $baseUrl, $pat);
+        $fields[$nameField] = $payload['name'];
+      }
       if (!empty($payload['type'])){ $fields['Type'] = $payload['type']; }
     }
     $ch = curl_init($baseUrl);

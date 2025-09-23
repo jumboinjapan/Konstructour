@@ -137,9 +137,10 @@ function setupEventListeners() {
     }
 
     // Show errors log modal
-    const btnShowErrors = document.getElementById('btnShowErrors');
+    const btnShowErrors = document.querySelector('[data-show-errors]');
     if (btnShowErrors){
-        btnShowErrors.addEventListener('click', async function(){
+        btnShowErrors.addEventListener('click', async function(e){
+            e.preventDefault();
             try{
                 const res = await fetch('../api/error-log.php?action=list&limit=50', { cache:'no-store' });
                 const j = await res.json();
