@@ -85,6 +85,10 @@ $payload = ['fields'=>[
 list($code,$out,$err) = air_call('POST', "$BASE_ID/$TABLE_ID", $API_KEY, $payload);
 
 if ($code>=300) {
+  // Логируем для диагностики 422
+  @file_get_contents(__DIR__.'/error-log.php?action=add', false, stream_context_create(['http'=>[
+    'method'=>'POST','header'=>"Content-Type: application/json\r\n", 'content'=>json_encode(['type'=>'error','msg'=>'Region create failed','ctx'=>['status'=>$code,'request'=>$payload,'response'=>json_decode($out,true)]], JSON_UNESCAPED_UNICODE)
+  ]]));
   http_response_code(500);
   echo json_encode(['ok'=>false,'error'=>"Airtable $code",'request'=>$payload,'details'=>json_decode($out,true)], JSON_UNESCAPED_UNICODE); exit;
 }
