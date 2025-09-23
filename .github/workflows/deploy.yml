@@ -14,14 +14,16 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Setup SSH key
+      shell: bash
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keygen -l -f ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        echo "SSH key ready"
         
     - name: Deploy to server
+      shell: bash
       run: |
         echo "🚀 Starting deployment..."
         
@@ -39,9 +41,9 @@ jobs:
         "
         
         # Sync files
-        rsync -avz --delete \
-          --filter='protect api/config.php' \
-          --filter='protect api/backups/' \
+        rsync -avz --delete --rsync-path='rsync' \
+          --exclude='api/config.php' \
+          --exclude='api/backups/' \
           -e "ssh -i ~/.ssh/id_rsa" \
           --exclude='.git' \
           --exclude='node_modules' \
