@@ -76,33 +76,26 @@ if (!empty($cfg['airtable_registry']['tables']['city']['linkField'])){
 // Кандидаты для сохранения бизнес-кода региона (RID), если он передан
 $regionCodeCandidates = ['Region Code','RegionID','Регион ID','Регион код','Region Business ID','Идентификатор региона','Регион ID (код)','Region RID','Регион RID'];
 
-// Build candidate payloads. Включаем ссылку на родительский регион сразу при создании.
+// Build candidate payloads. Сначала пробуем сразу создать с линком по recordId.
 $attempts = [];
 foreach ($idCandidates as $fid){
   foreach ($nameRuCandidates as $fru){
     foreach ($nameEnCandidates as $fen){
       $baseFields = [ $fid=>$nextId, $fru=>$name_ru, $fen=>$name_en, 'Type'=>($type==='location'?'location':'city') ];
-      // Варианты с немедленной линковкой по recordId
       if ($regionId!==''){
         foreach ($linkCandidates as $lf){
-          $attempts[] = ['fields'=> $baseFields + [ $lf => [ ['id'=>$regionId] ] ], 'typecast'=>true ];
+          $attempts[] = ['fields'=> $baseFields + [ $lf => [ ['id'=>$regionId] ] ] ];
         }
       }
-      // Варианты с линком по бизнес-коду региона (если он является отображаемым полем в Regions)
-      if ($regionRid!==''){
-        foreach ($linkCandidates as $lf){
-          $attempts[] = ['fields'=> $baseFields + [ $lf => [ $regionRid ] ], 'typecast'=>true ];
-        }
-      }
-      // Вариант без ссылки (если линк запретит создание — попробуем затем патчем)
-      $attempts[] = ['fields'=>$baseFields, 'typecast'=>true ];
+      // запасной вариант без ссылки
+      $attempts[] = ['fields'=>$baseFields ];
     }
   }
 }
 
 $created = null; $lastErr=null; $lastResp=null; $lastReq=null;
 foreach ($attempts as $payload){
-  list($code,$out,$err)=air_call('POST', "$BASE_ID/$CITY_TABLE_ID", $API_KEY, $payload);
+  list($code,$out,$err)=air_call('POST', "$BASE_ID/$CITY_TABLE_ID", $API_KEY, $payload, ['typecast'=>'true']);
   if ($code<300){ $created=json_decode($out,true); $lastReq=$payload; break; }
   $lastErr=$err; $lastResp=json_decode($out,true); $lastReq=$payload;
 }
@@ -119,23 +112,23 @@ if (!$created){
    if ($regionId!==''){
      foreach ($linkCandidates as $lf){
        $patch = ['fields'=>[ $lf => [ ['id'=>$regionId] ] ]];
-     list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch+['typecast'=>true]);
+     list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
        if ($c2<300){ $linkedOk=true; break; }
      }
    }
    // 2) Try by region name into link field directly (some bases accept name)
    if (!$linkedOk && $regionName!==''){
      foreach ($linkCandidates as $lf){
-      $patch = ['fields'=>[ $lf => [ $regionName ] ], 'typecast'=>true];
-      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
+      $patch = ['fields'=>[ $lf => [ $regionName ] ]];
+      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
        if ($c2<300){ $linkedOk=true; break; }
      }
    }
   // 2b) Try by region business code (RID)
   if (!$linkedOk && $regionRid!==''){
     foreach ($linkCandidates as $lf){
-      $patch = ['fields'=>[ $lf => [ $regionRid ] ], 'typecast'=>true];
-      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
+      $patch = ['fields'=>[ $lf => [ $regionRid ] ]];
+      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
       if ($c2<300){ $linkedOk=true; break; }
     }
   }
@@ -153,7 +146,7 @@ if (!$created){
      if ($regionId!==''){
        foreach ($linkCandidates as $lf){
          $patch = ['fields'=>[ $lf => [ ['id'=>$regionId] ] ]];
-         list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch+['typecast'=>true]);
+         list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
          if ($c2<300){ $linkedOk=true; break; }
        }
      }
