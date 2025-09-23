@@ -150,7 +150,7 @@ if ($provider === 'airtable'){
           $records = array_values(array_filter($records, function($rec) use ($scope,$rid,$rname,$cid,$cname){
           $fields = $rec['fields'] ?? [];
           $candidates = [];
-          if ($scope==='cities'){ $candidates = ['Region','Регион','region','Страна/Регион','Region Link','Регион (ссылка)','Регион → Города']; }
+          if ($scope==='cities'){ $candidates = ['Region','Регион','Regions','Регионы','region','Страна/Регион','Region Link','Регион (ссылка)','Регион → Города']; }
           if ($scope==='pois'){ $candidates = ['City','Город','city','Локация/Город']; }
             $hasFilter = (bool)($rid || $rname || $cid || $cname);
           foreach ($candidates as $fn){
