@@ -394,15 +394,29 @@
         document.getElementById('btnSaveAirtable')?.addEventListener('click', function(){ saveRegistry(true); });
 
         async function refreshServerKeyBadge(){
+          const badge = document.getElementById('badgeAirtable');
+          const status = document.getElementById('statusAirtable');
+          const dot = status ? status.querySelector('.api-dot') : null;
+          if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
           try{
-            const r = await fetch('../api/test-proxy.php?provider=server_keys');
-            const j = await r.json();
-            const has = j && j.keys && !!j.keys.airtable;
-            const badge = document.getElementById('badgeAirtable');
-            const status = document.getElementById('statusAirtable');
-            if (badge){ badge.classList.toggle('hidden', !has); }
-            if (status){ const dot=status.querySelector('.api-dot'); if (dot){ dot.classList.toggle('ok', has); dot.classList.toggle('err', !has); } }
-          }catch(_){ }
+            // 1) Узнаём, есть ли серверный ключ
+            const r1 = await fetch('../api/test-proxy.php?provider=server_keys');
+            const j1 = await r1.json();
+            const hasKey = !!(j1 && j1.keys && j1.keys.airtable);
+            if (badge){ badge.classList.toggle('hidden', !hasKey); }
+            // 2) Тестируем реальное подключение (whoami или таблицу, если задана)
+            const val = id=> (document.getElementById(id)?.value||'').trim();
+            const baseId = val('airtable_base_id');
+            const tableId = val('am_region_table') || val('am_city_table') || val('am_country_table') || val('am_poi_table');
+            let url = '../api/test-proxy.php?provider=airtable';
+            const body = {};
+            if (baseId) body.base_id = baseId;
+            if (tableId) body.table = tableId;
+            const r2 = await fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+            const j2 = await r2.json();
+            const ok = !!(j2 && j2.ok);
+            if (dot){ dot.classList.remove('loading'); dot.classList.toggle('ok', ok); dot.classList.toggle('err', !ok); }
+          }catch(_){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
         }
 
         loadRegistry();
