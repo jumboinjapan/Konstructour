@@ -83,6 +83,10 @@ $provider = $dbCfg['provider'] ?? '';
 $baseId = '';
 $table = '';
 $pat = $cfg['airtable']['api_key'] ?? '';
+// tolerate alternate locations for PAT
+if (!$pat) { $pat = $cfg['airtable']['token'] ?? ''; }
+if (!$pat) { $pat = $cfg['airtable_pat'] ?? ''; }
+if (!$pat) { $pat = getenv('AIRTABLE_PAT') ?: ''; }
 
 if ($airReg && in_array($scope, ['regions','cities','pois'], true)){
   $regBase = $airReg['baseId'] ?? ($airReg['base_id'] ?? '');
@@ -109,6 +113,11 @@ if ($provider === 'airtable'){
     if (!empty($cfg['airtable']['token'])) { $pat = $cfg['airtable']['token']; }
     elseif (!empty($cfg['airtable_pat'])) { $pat = $cfg['airtable_pat']; }
     elseif (getenv('AIRTABLE_PAT')) { $pat = getenv('AIRTABLE_PAT'); }
+  }
+  // Жёсткие дефолты на случай отсутствия config.php, только для regions
+  if ((!$baseId || !$table) && $scope==='regions'){
+    $baseId = $baseId ?: 'apppwhjFN82N9zNqm';
+    $table = $table ?: 'tblbSajWkzI8X7M4U';
   }
   if (!$baseId || !$table || !$pat) respond(false, ['error'=>'Airtable settings incomplete'], 400);
 
