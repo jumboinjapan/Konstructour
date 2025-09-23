@@ -274,25 +274,11 @@
         'Окинава':'bg-cyan-100 text-cyan-800'
       };
 
-      // State (in-memory for UI only)
-      let regions = [ 'Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава' ]
-        .map((name, i)=>({ id:'REG-'+String(i+1).padStart(3,'0'), name }));
+      // State (in-memory for UI only). Источник правды — Airtable
+      let regions = [];
       let citiesByRegion = {}; // regionId -> [ { id, name, type: 'city'|'location', parentCityId? } ]
       let poisByCity = {};     // cityId -> [ {id,name,type} ]
       let ticketsByPoi = {};   // poiId -> [ {id,category,price,currency,note} ]
-
-      // Demo seed
-      const kansai = regions.find(r=>r.name==='Кансай');
-      if (kansai){
-        citiesByRegion[kansai.id] = [
-          { id:'CL-001', name:'Киото', type:'city' },
-          { id:'CL-002', name:'Осака', type:'city' },
-          { id:'CL-003', name:'Нара', type:'city' }
-          // { id:'CL-004', name:'Асино-ко (Хаконе)', type:'location', parentCityId:'CL-001' },
-        ];
-        poisByCity['CL-001'] = [ { id:'POI-001', name:'Храм Киёмидзу', type:'культура' }, { id:'POI-002', name:'Золотой павильон', type:'культура' } ];
-        ticketsByPoi['POI-001'] = [ { id:'TKT-001', category:'Adult', price:500, currency:'¥', note:'' }, { id:'TKT-002', category:'Child', price:200, currency:'¥', note:'6–11' } ];
-      }
 
       let level = 'regions';
       let selectedRegion = null;
@@ -369,6 +355,10 @@
 
       function renderRegions(){
         level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs(); setMappingHeader('region');
+        if (!regions.length){
+          cards.innerHTML = '<div class="text-gray-500">Нет регионов. Нажмите + чтобы добавить.</div>';
+          return;
+        }
         cards.innerHTML = regions.map(r=>{
           const count = (citiesByRegion[r.id]||[]).length;
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
@@ -405,38 +395,11 @@
           if (!data.ok) throw new Error(data.error||'Airtable');
           const items = data.items || [];
           regions = items.map((it, idx)=>({
-            id: it.id || ('REG-'+String(idx+1).padStart(3,'0')), // Airtable record id
+            id: it.id || ('REG-'+String(idx+1).padStart(3,'0')),
             name: (it.name || ('Регион '+(idx+1))),
             rid: (it.fields && (it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || ''
           }));
-          // Если в Airtable пусто или лежат только заглушки "Регион N", выполним авто-сид из 9 регионов
-          const canonical = ['Хоккайдо','Тохоку','Канто','Тюбу','Кансай','Тюгоку','Сикоку','Кюсю','Окинава'];
-          const names = new Set(regions.map(r=>r.name));
-          const onlyPlaceholders = regions.length>0 && regions.every(r=>/^Регион\s*\d+$/i.test(r.name));
-          if (regions.length===0 || onlyPlaceholders){
-            for (let i=0; i<canonical.length; i++){
-              const name = canonical[i];
-              if (!names.has(name)){
-                try{
-                  await fetch('../api/db-sync.php',{
-                    method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-                    body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name, 'Region ID': 'REG-'+String(i+1).padStart(3,'0') } } })
-                  });
-                }catch{ /* ignore */ }
-              }
-            }
-            // При желании удалим заглушки «Регион N»
-            if (onlyPlaceholders){
-              for (const r of regions){
-                if (/^Регион\s*\d+$/i.test(r.name)){
-                  try{ await fetch('../api/db-sync.php',{ method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') }, body: JSON.stringify({ scope:'regions', action:'delete', data:{ id: r.id } }) }); }catch{}
-                }
-              }
-            }
-            // Перечитаем список после сида
-            return await syncRegionsFromAirtable();
-          }
-          // сбросим счетчики; реальныеCounts можно будет подтягивать отдельно
+          // сбросим счетчики; реальныеCounts можно подтянуть отдельно
           citiesByRegion = {};
           renderRegions();
         }catch(e){ console.warn('syncRegionsFromAirtable failed', e); }
@@ -673,14 +636,15 @@
         if (level==='regions'){
           const name = prompt('Название региона:'); if(!name) return;
           const id = genId('REG', regions.length+1);
-          regions.push({ id, name:name.trim() });
-          renderRegions();
-          // Try server create in Airtable
-          fetch('../api/db-sync.php',{
-            method:'POST',
-            headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim(), 'Region ID': id } } })
-          }).catch(()=>{});
+          // Пишем в Airtable, затем перечитываем список для получения recordId
+          try{
+            await fetch('../api/db-sync.php',{
+              method:'POST',
+              headers:{ 'Content-Type':'application/json' },
+              body: JSON.stringify({ scope:'regions', action:'create', data:{ fields: { 'Name': name.trim(), 'Region ID': id } } })
+            });
+          }catch{}
+          await syncRegionsFromAirtable();
         } else if (level==='cities'){
           const name = prompt('Название (город/локация):'); if(!name) return;
           const picked = await chooseCityType();
