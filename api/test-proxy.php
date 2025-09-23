@@ -47,7 +47,16 @@ if (file_exists(__DIR__.'/config.php')) {
 
 switch ($provider) {
   case 'airtable':
-    $key = $payload['api_key'] ?? ($cfg['airtable']['api_key'] ?? '');
+    // Accept multiple key names for robustness: api_key, token, pat; also top-level airtable_pat
+    $key = $payload['api_key']
+      ?? ($payload['token'] ?? ($payload['pat'] ?? (
+        ($cfg['airtable']['api_key'] ?? '')
+        ?: (($cfg['airtable']['token'] ?? '')
+        ?: (($cfg['airtable_pat'] ?? '')
+        ?: (($cfg['airtable_registry']['api_key'] ?? '')
+        ?: (($cfg['airtable_registry']['token'] ?? '')
+        ?: (getenv('AIRTABLE_PAT') ?: (getenv('AIRTABLE_API_KEY') ?: ''))))))
+      )));
     $base = $payload['base_id'] ?? ($cfg['airtable']['base_id'] ?? '');
     $table = $payload['table'] ?? ($cfg['airtable']['table'] ?? '');
     if (!$key) respond(false, ['error'=>'Missing api_key'], 400);
@@ -218,7 +227,10 @@ switch ($provider) {
       // Report which providers have keys configured server-side
       $presence = [
         'openai' => !empty($cfg['openai']['api_key'] ?? ''),
-        'airtable' => !empty($cfg['airtable']['api_key'] ?? ''),
+        // Airtable may store PAT under api_key, token or top-level airtable_pat
+        'airtable' => !empty(($cfg['airtable']['api_key'] ?? '')
+                      ?: (($cfg['airtable']['token'] ?? '')
+                      ?: ($cfg['airtable_pat'] ?? ''))),
         'gsheets' => !empty($cfg['gsheets']['api_key'] ?? ''),
         'gmaps' => !empty($cfg['gmaps']['api_key'] ?? ''),
         'recaptcha' => !empty($cfg['recaptcha']['secret'] ?? ''),
