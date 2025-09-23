@@ -117,7 +117,7 @@
                         <div>
                             <p class="text-sm text-gray-600 mb-1">Ошибки в работе сайта</p>
                             <p class="text-2xl font-light text-gray-800">0</p>
-                            <a href="#" id="btnShowErrors" data-show-errors class="text-xs text-yellow-600 mt-1 underline cursor-pointer">Нужно проверить</a>
+                            <a href="#" id="btnShowErrors" data-show-errors onclick="event.preventDefault(); if (window.openErrorsModal) openErrorsModal(); return false;" class="text-xs text-yellow-600 mt-1 underline cursor-pointer">Нужно проверить</a>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center"><i class="fas fa-exclamation-triangle text-yellow-600"></i></div>
                     </div>
