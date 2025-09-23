@@ -442,6 +442,30 @@
         }catch(e){ console.warn('syncRegionsFromAirtable failed', e); }
       }
 
+      async function deleteRegionOnServer(region){
+        try{
+          let recordId = region && region.id ? region.id : '';
+          if (!/^rec/i.test(recordId)){
+            // Найдём запись по полю Region ID или имени
+            const res = await fetch('../api/db-sync.php',{
+              method:'POST', headers:{ 'Content-Type':'application/json' },
+              body: JSON.stringify({ scope:'regions', action:'list' })
+            });
+            const j = await res.json();
+            if (j && j.ok && Array.isArray(j.items)){
+              const found = j.items.find(it => (it.fields && (it.fields['Region ID']===region.id || it.fields['Регион ID']===region.id)) || it.name===region.name);
+              if (found && found.id) recordId = found.id;
+            }
+          }
+          if (recordId && /^rec/i.test(recordId)){
+            await fetch('../api/db-sync.php',{
+              method:'POST', headers:{ 'Content-Type':'application/json' },
+              body: JSON.stringify({ scope:'regions', action:'delete', data:{ id: recordId } })
+            });
+          }
+        }catch(e){ console.warn('deleteRegionOnServer failed', e); }
+      }
+
       function renderCities(){
         level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
         const list = citiesByRegion[selectedRegion.id] || [];
@@ -596,7 +620,9 @@
         if (act==='edit-region'){
           const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){ r.name=n.trim(); renderRegions(); }
         } else if (act==='del-region'){
+          const r = regions.find(x=>x.id===id);
           regions = regions.filter(x=>x.id!==id); delete citiesByRegion[id]; renderRegions();
+          if (r) deleteRegionOnServer(r);
         } else if (act==='edit-city'){
           const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города:', c.name); if(n){ c.name=n.trim(); renderCities(); }
         } else if (act==='del-city'){
