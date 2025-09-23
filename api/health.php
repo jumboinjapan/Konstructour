@@ -25,9 +25,12 @@ $cfg = [];
 if (file_exists(__DIR__.'/config.php')) {
   $cfg = require __DIR__.'/config.php';
 }
+// Resolve presence of keys
 $presence = [
   'openai' => !empty($cfg['openai']['api_key'] ?? ''),
-  'airtable' => !empty($cfg['airtable']['api_key'] ?? ''),
+  'airtable' => !empty($cfg['airtable']['api_key'] ?? '')
+               || !empty($cfg['airtable']['token'] ?? '')
+               || !empty($cfg['airtable_pat'] ?? ''),
   'gsheets' => !empty($cfg['gsheets']['api_key'] ?? ''),
   'gmaps' => !empty($cfg['gmaps']['api_key'] ?? ''),
   'recaptcha' => !empty($cfg['recaptcha']['secret'] ?? ''),
@@ -38,11 +41,45 @@ $presence = [
 $providers = ['openai','airtable','gsheets','gmaps','recaptcha','brilliantdirectory'];
 $results = [];
 foreach ($providers as $p){
-  if (!empty($presence[$p])) {
-    $results[$p] = [ 'ok' => true, 'text' => 'Подключено', 'checked_at' => time() ];
-  } else {
-    $results[$p] = [ 'ok' => null, 'text' => 'Ожидание', 'checked_at' => time() ];
+  $now = time();
+  if (empty($presence[$p])) { $results[$p] = [ 'ok' => null, 'text' => 'Ожидание', 'checked_at' => $now ]; continue; }
+
+  // По умолчанию: наличие ключа = ок (для большинства провайдеров)
+  $ok = true; $text = 'Подключено';
+
+  if ($p === 'airtable'){
+    // Для Airtable делаем реальный лёгкий тест: whoami, а если задана таблица — один запрос к таблице
+    $pat = $cfg['airtable']['api_key'] ?? ($cfg['airtable']['token'] ?? ($cfg['airtable_pat'] ?? ''));
+    $airReg = $cfg['airtable_registry'] ?? [];
+    $baseId = $airReg['baseId'] ?? ($airReg['base_id'] ?? ($cfg['airtable']['base_id'] ?? ''));
+    $tableId = '';
+    if (!empty($airReg['tables']['region']['tableId'])) $tableId = $airReg['tables']['region']['tableId'];
+    elseif (!empty($cfg['airtable']['table'])) $tableId = $cfg['airtable']['table'];
+
+    $ok = false; $text = 'Ошибка';
+    if ($pat){
+      // 1) whoami
+      $ch = curl_init('https://api.airtable.com/v0/meta/whoami');
+      curl_setopt_array($ch, [ CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$pat], CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>8 ]);
+      $resp = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+      if ($code>=200 && $code<300){
+        $ok = true; $text = 'Подключено';
+        // 2) если есть base+table — проверим доступность таблицы (1 запись)
+        if ($baseId && $tableId){
+          $url = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/'.rawurlencode($tableId).'?maxRecords=1';
+          $ch = curl_init($url);
+          curl_setopt_array($ch, [ CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$pat], CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>8 ]);
+          $resp = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+          $ok = ($code>=200 && $code<300);
+          $text = $ok ? 'Подключено' : 'Ошибка';
+        }
+      } else if ($code===401){
+        $ok = false; $text = '401 Unauthorized';
+      }
+    }
   }
+
+  $results[$p] = [ 'ok' => $ok, 'text' => $text, 'checked_at' => $now ];
 }
 
 $payload = [ 'ts' => time(), 'ttl' => $CACHE_TTL, 'results' => $results ];
