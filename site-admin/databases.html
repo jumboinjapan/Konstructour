@@ -126,8 +126,23 @@
     </div>
 
     <script>
+    // Глобальный перехват ошибок — пишем в серверный лог
+    (function(){
+      function postError(payload){
+        try{ fetch('/api/error-log.php?action=add',{ method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }); }catch(_e){}
+      }
+      window.addEventListener('error', function(e){
+        postError({ type:'js-error', page:'databases.html', msg: String(e.message||'error'), file: e.filename||'', line: e.lineno||0, col: e.colno||0, stack: e.error && e.error.stack ? String(e.error.stack) : '' });
+      });
+      window.addEventListener('unhandledrejection', function(e){
+        const r = e && (e.reason||e.detail||{});
+        postError({ type:'js-unhandled', page:'databases.html', msg: (r && (r.message||r)) ? String(r.message||r) : 'unhandled', stack: r && r.stack ? String(r.stack) : '' });
+      });
+    })();
     // Простые вкладки без сторонних зависимостей
     (function(){
+      const DEBUG = /(^|[?&])debug=1(&|$)/.test(location.search) || (localStorage.getItem('debug_admin_db')==='1');
+      const dlog = (...a)=>{ if (DEBUG) try{ console.log('[DB]', ...a); }catch(_e){} };
       const tabs = document.querySelectorAll('.tab');
       const sections = {
         regions: document.getElementById('tab-regions'),
@@ -361,6 +376,7 @@
         }
         cards.innerHTML = regions.map(r=>{
           const count = (citiesByRegion[r.id]||[]).length;
+          dlog('region-card', {id:r.id, name:r.name, count});
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
               '+(r.rid ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
               <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
@@ -541,10 +557,11 @@
         // игнорируем клики по кнопкам действий внутри карточек
         if (e.target.closest('button[data-act]')) return;
         const go = e.target.closest('#db_cards [data-go]');
-        if (!go) return;
+        if (!go) { if (DEBUG) dlog('click outside actionable', e.target); return; }
         e.preventDefault();
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
+        dlog('navigate', {to,id});
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
           push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
