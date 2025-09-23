@@ -399,9 +399,24 @@
             name: (it.name || ('Регион '+(idx+1))),
             rid: (it.fields && (it.fields['Идентификатор'] || it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || ''
           }));
-          // сбросим счетчики; реальныеCounts можно подтянуть отдельно
+          // Сначала быстрый рендер с нулями
           citiesByRegion = {};
           renderRegions();
+          // Затем предзагрузим количество городов по всем регионам и перерисуем
+          try{
+            await Promise.all(regions.map(async (r)=>{
+              try{
+                const rs = await fetch('../api/db-sync.php',{
+                  method:'POST', headers:{ 'Content-Type':'application/json' },
+                  body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: r.id, regionName: r.name } } })
+                });
+                const jj = await rs.json();
+                const its = jj.ok ? (jj.items||[]) : [];
+                citiesByRegion[r.id] = its.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code:(it.fields?.['ID']||it.fields?.['Идентификатор']||''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
+              }catch(_e){ citiesByRegion[r.id] = citiesByRegion[r.id] || []; }
+            }));
+            renderRegions();
+          }catch(_e){ /* ignore */ }
         }catch(e){ console.warn('syncRegionsFromAirtable failed', e); }
       }
 
