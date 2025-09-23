@@ -45,12 +45,23 @@ if ($airReg && in_array($scope, ['regions','cities','pois'], true)){
   $baseId = $regBase;
   $table = $tbl['tableId'] ?? ($tbl['table_id'] ?? '');
   $provider = 'airtable';
+  // fallback PAT из реестра, если задан
+  if (!$pat){
+    if (!empty($airReg['api_key'])) { $pat = $airReg['api_key']; }
+    elseif (!empty($airReg['token'])) { $pat = $airReg['token']; }
+  }
 }
 
 if ($provider === 'airtable'){
-  // Fallback to old databases config if registry was not used
+  // Fallback to old databases config если реестр не использован
   if (!$baseId){ $baseId = $dbCfg['base_id'] ?? ''; }
   if (!$table){ $table = $dbCfg['table_id'] ?? ''; }
+  // Дополнительные источники PAT, если не задан
+  if (!$pat){
+    if (!empty($cfg['airtable']['token'])) { $pat = $cfg['airtable']['token']; }
+    elseif (!empty($cfg['airtable_pat'])) { $pat = $cfg['airtable_pat']; }
+    elseif (getenv('AIRTABLE_PAT')) { $pat = getenv('AIRTABLE_PAT'); }
+  }
   if (!$baseId || !$table || !$pat) respond(false, ['error'=>'Airtable settings incomplete'], 400);
 
   $baseUrl = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/'.rawurlencode($table);
