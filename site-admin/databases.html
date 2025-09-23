@@ -538,6 +538,26 @@
         }catch(e){ poisByCity[city.id] = []; }
       }
 
+      // Предзагрузка количества POI для всех городов региона
+      async function preloadPoisCountsForRegion(region){
+        try{
+          const list = citiesByRegion[region.id] || [];
+          if (!list.length) return;
+          await Promise.all(list.map(async (c)=>{
+            if (Array.isArray(poisByCity[c.id])) return;
+            try{
+              const res = await fetch('../api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                body: JSON.stringify({ scope:'pois', action:'list', data:{ filter:{ cityId: c.id, cityName: c.name } } })
+              });
+              const j = await res.json();
+              const items = j.ok ? (j.items||[]) : [];
+              poisByCity[c.id] = items.map(it=>({ id: it.id, name: it.name || '—', type: (it.fields?.Category||'') }));
+            }catch(_e){ poisByCity[c.id] = []; }
+          }));
+        }catch(_e){ /* ignore */ }
+      }
+
       function renderTickets(){
         level='tickets'; renderCrumbs();
         const list = ticketsByPoi[selectedPoi.id] || [];
