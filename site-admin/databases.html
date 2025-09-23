@@ -536,10 +536,12 @@
         }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
       }
 
-      // Navigation (cards)
+      // Навигация — один надёжный делегат на документ по селектору в пределах #db_cards
       document.addEventListener('click', async function(e){
-        const go = e.target.closest('[data-go]');
-        if (!go || !cards.contains(go) || e.__handledGo) return;
+        // игнорируем клики по кнопкам действий внутри карточек
+        if (e.target.closest('button[data-act]')) return;
+        const go = e.target.closest('#db_cards [data-go]');
+        if (!go) return;
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
         if (to==='cities'){
@@ -548,45 +550,22 @@
           await loadCitiesForRegion(selectedRegion);
           await preloadPoisCountsForRegion(selectedRegion);
           renderCities();
-        } else if (to==='pois'){
-          const list = citiesByRegion[selectedRegion.id] || [];
-          selectedCity = list.find(c=>c.id===id) || null;
-          push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
-          await loadPoisForCity(selectedCity);
-          renderPois();
-        } else if (to==='tickets'){
-          const list = poisByCity[selectedCity.id] || [];
-          selectedPoi = list.find(p=>p.id===id) || null;
-          push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
-          renderTickets();
-        }
-      });
-
-      // Навигация — дублируем на контейнер для надёжности
-      cards.addEventListener('click', async function(e){
-        const go = e.target.closest('[data-go]');
-        if (!go) return; e.__handledGo = true;
-        const id = go.getAttribute('data-id');
-        const to = go.getAttribute('data-go');
-        if (to==='cities'){
-          selectedRegion = regions.find(r=>r.id===id) || null;
-          push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
-          await loadCitiesForRegion(selectedRegion);
-          await preloadPoisCountsForRegion(selectedRegion);
-          return renderCities();
+          return;
         }
         if (to==='pois'){
           const list = citiesByRegion[selectedRegion.id] || [];
           selectedCity = list.find(c=>c.id===id) || null;
           push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
           await loadPoisForCity(selectedCity);
-          return renderPois();
+          renderPois();
+          return;
         }
         if (to==='tickets'){
           const list = poisByCity[selectedCity.id] || [];
           selectedPoi = list.find(p=>p.id===id) || null;
           push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
-          return renderTickets();
+          renderTickets();
+          return;
         }
       });
 
