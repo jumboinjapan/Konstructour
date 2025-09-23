@@ -4,12 +4,13 @@
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-// CORS: mirror origin for browser requests
+// CORS: mirror origin; если нет — разрешаем текущий хост (http/https)
 if (isset($_SERVER['HTTP_ORIGIN'])){
   header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
   header('Vary: Origin');
 } else {
-  header('Access-Control-Allow-Origin: *');
+  $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http';
+  header('Access-Control-Allow-Origin: '.$scheme.'://'.$_SERVER['HTTP_HOST']);
 }
 header('Vary: Origin');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

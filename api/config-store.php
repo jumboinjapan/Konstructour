@@ -7,9 +7,13 @@ header('Cache-Control: no-store');
 function respond($ok, $data=[], $code=200){ http_response_code($code); echo json_encode(['ok'=>$ok]+$data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); exit; }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(false, ['error'=>'Invalid method'], 405);
-if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') respond(false, ['error'=>'HTTPS required'], 403);
+// Allow http on localhost/127.0.0.1 for local admin usage
 $ref = $_SERVER['HTTP_REFERER'] ?? '';
-if ($ref && strpos($ref, (isset($_SERVER['HTTPS'])?'https':'http').'://'.$_SERVER['HTTP_HOST'].'/') !== 0) respond(false, ['error'=>'Invalid origin'], 403);
+$scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http';
+if ($ref && strpos($ref, $scheme.'://'.$_SERVER['HTTP_HOST'].'/') !== 0) {
+  $alt = ($scheme==='https'?'http':'https').'://'.$_SERVER['HTTP_HOST'].'/';
+  if (strpos($ref, $alt) !== 0) respond(false, ['error'=>'Invalid origin'], 403);
+}
 
 // Optional admin token protection: create api/admin-token.php returning ['token'=>'...']
 $adminTokenCfg = __DIR__.'/admin-token.php';
