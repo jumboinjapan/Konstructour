@@ -318,8 +318,8 @@
             if (dot){ dot.classList.remove('loading'); dot.classList.add(t.ok?'ok':'err'); }
             if (msg){ msg.textContent = t.ok ? 'OK' : (t.error || ('HTTP '+(t.status||''))); }
             if (t.ok){
-              // успешный тест = сохранить текущий mapping на сервере
-              try{ await saveRegistry(); }catch(_){ /* ignore */ }
+              // успешный тест = сохранить текущий mapping и PAT (если введён) на сервере
+              try{ await saveRegistry(true); }catch(_){ /* ignore */ }
             }
           }catch(e){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
         }
@@ -358,28 +358,52 @@
             setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
             setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
             autoTestMapping();
+            try{ await refreshServerKeyBadge(); }catch(_){ }
           }catch(_){ /* ignore */ }
         }
 
-        // Save registry to server (called together с обычным Save Airtable)
-        async function saveRegistry(){
+        // Save registry (и опц. PAT) на сервер; не отправляем пустые значения, чтобы не затирать
+        async function saveRegistry(saveKeyAlso){
           try{
-            const reg = {
-              baseId: document.getElementById('airtable_base_id')?.value || '',
-              tables: {
-                country: { tableId: document.getElementById('am_country_table')?.value || '', viewId: document.getElementById('am_country_view')?.value || '' },
-                region:  { tableId: document.getElementById('am_region_table')?.value  || '', viewId: document.getElementById('am_region_view')?.value  || '' },
-                city:    { tableId: document.getElementById('am_city_table')?.value    || '', viewId: document.getElementById('am_city_view')?.value    || '' },
-                poi:     { tableId: document.getElementById('am_poi_table')?.value     || '', viewId: document.getElementById('am_poi_view')?.value     || '' }
-              }
+            const val = id=> (document.getElementById(id)?.value||'').trim();
+            const payload = {};
+            const baseId = val('airtable_base_id');
+            const tables = {};
+            const pushField = (obj, key, v)=>{ if (typeof v==='string' && v.trim()!=='') obj[key]=v.trim(); };
+            const addTable = (name, tblId, viewId)=>{
+              const t = {}; pushField(t,'tableId', tblId); pushField(t,'viewId', viewId); if (Object.keys(t).length) tables[name]=t;
             };
+            addTable('country', val('am_country_table'), val('am_country_view'));
+            addTable('region',  val('am_region_table'),  val('am_region_view'));
+            addTable('city',    val('am_city_table'),    val('am_city_view'));
+            addTable('poi',     val('am_poi_table'),     val('am_poi_view'));
+            const reg = { tables };
+            if (baseId) reg.baseId = baseId;
+            payload.airtable_registry = reg;
+            if (saveKeyAlso){
+              const apiKey = val('airtable_api_key');
+              if (apiKey){ payload.airtable = { api_key: apiKey }; }
+            }
             const headers = { 'Content-Type':'application/json' };
             if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
-            await fetch('../api/config-store.php', { method:'POST', headers, body: JSON.stringify({ airtable_registry: reg }) });
+            await fetch('../api/config-store.php', { method:'POST', headers, body: JSON.stringify(payload) });
+            try{ await refreshServerKeyBadge(); }catch(_){ }
           }catch(_){ /* ignore */ }
         }
 
-        document.getElementById('btnSaveAirtable')?.addEventListener('click', function(){ saveRegistry(); });
+        document.getElementById('btnSaveAirtable')?.addEventListener('click', function(){ saveRegistry(true); });
+
+        async function refreshServerKeyBadge(){
+          try{
+            const r = await fetch('../api/test-proxy.php?provider=server_keys');
+            const j = await r.json();
+            const has = j && j.keys && !!j.keys.airtable;
+            const badge = document.getElementById('badgeAirtable');
+            const status = document.getElementById('statusAirtable');
+            if (badge){ badge.classList.toggle('hidden', !has); }
+            if (status){ const dot=status.querySelector('.api-dot'); if (dot){ dot.classList.toggle('ok', has); dot.classList.toggle('err', !has); } }
+          }catch(_){ }
+        }
 
         loadRegistry();
       })();
