@@ -135,6 +135,32 @@ function setupEventListeners() {
     if (notificationBell) {
         notificationBell.addEventListener('click', showNotifications);
     }
+
+    // Show errors log modal
+    const btnShowErrors = document.getElementById('btnShowErrors');
+    if (btnShowErrors){
+        btnShowErrors.addEventListener('click', async function(){
+            try{
+                const res = await fetch('../api/error-log.php?action=list&limit=50', { cache:'no-store' });
+                const j = await res.json();
+                const items = (j && j.items) ? j.items : [];
+                const html = items.length ? (
+                    '<div class="space-y-2">'+
+                    items.map(e=>{
+                        const ts = new Date((e.ts||0)*1000).toLocaleString();
+                        const ctx = e.ctx ? ('<pre class="bg-gray-50 border border-gray-200 rounded p-2 text-xs overflow-auto">'+escapeHtml(JSON.stringify(e.ctx, null, 2))+'</pre>') : '';
+                        return '<div class="p-2 bg-white border border-gray-200 rounded">'+
+                               '<div class="text-sm text-gray-800">'+escapeHtml(e.msg||'')+'</div>'+
+                               '<div class="text-xs text-gray-500 mt-1">'+ts+'</div>'+ctx+
+                               '</div>';
+                    }).join('')+
+                    '</div>') : '<div class="text-sm text-gray-600">Лог пуст.</div>';
+                const modal = createModal('Ошибки в работе сайта', html);
+                document.body.appendChild(modal);
+                setTimeout(()=>{ modal.style.opacity='1'; modal.querySelector('.modal-content').style.transform='scale(1)'; }, 10);
+            }catch(_){ showError('Не удалось загрузить лог ошибок'); }
+        });
+    }
     
     // Create tour button
     const createTourBtn = document.querySelector('[data-create-tour]');
@@ -378,6 +404,13 @@ function createModal(title, content) {
     });
     
     return modal;
+}
+
+function escapeHtml(str){
+    if (typeof str !== 'string') return String(str);
+    return str.replace(/[&<>"]/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] || c;
+    });
 }
 
 // Load section
