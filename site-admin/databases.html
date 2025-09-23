@@ -651,13 +651,31 @@
         const act = btn.getAttribute('data-act');
         const id = btn.getAttribute('data-id');
         if (act==='edit-region'){
-          const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){ r.name=n.trim(); renderRegions(); }
+          const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){
+            const old = r.name; r.name=n.trim(); renderRegions();
+            try{
+              await fetch('../api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                body: JSON.stringify({ scope:'regions', action:'update', data:{ id: r.id, name: r.name } })
+              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+              if (window.osNotify) window.osNotify('Обновлено','Регион переименован');
+            }catch(e){ r.name = old; renderRegions(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+          }
         } else if (act==='del-region'){
           const r = regions.find(x=>x.id===id);
           regions = regions.filter(x=>x.id!==id); delete citiesByRegion[id]; renderRegions();
           if (r) deleteRegionOnServer(r);
         } else if (act==='edit-city'){
-          const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города:', c.name); if(n){ c.name=n.trim(); renderCities(); }
+          const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города/локации:', c.name); if(n){
+            const old=c.name; c.name=n.trim(); renderCities();
+            try{
+              await fetch('../api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                body: JSON.stringify({ scope:'cities', action:'update', data:{ id: c.id, name: c.name } })
+              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+              if (window.osNotify) window.osNotify('Обновлено','Название сохранено');
+            }catch(e){ c.name=old; renderCities(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+          }
         } else if (act==='del-city'){
           const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; renderCities();
         } else if (act==='edit-poi'){
