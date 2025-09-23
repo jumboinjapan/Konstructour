@@ -141,8 +141,8 @@
     })();
     // Простые вкладки без сторонних зависимостей
     (function(){
-      const DEBUG = /(^|[?&])debug=1(&|$)/.test(location.search) || (localStorage.getItem('debug_admin_db')==='1');
-      const dlog = (...a)=>{ if (DEBUG) try{ console.log('[DB]', ...a); }catch(_e){} };
+      window.__ADMIN_DB_DEBUG = /(^|[?&])debug=1(&|$)/.test(location.search) || (localStorage.getItem('debug_admin_db')==='1');
+      window.dlog = function(){ if (window.__ADMIN_DB_DEBUG) { try{ console.log.apply(console, ['[DB]'].concat(Array.from(arguments))); }catch(_e){} } };
       const tabs = document.querySelectorAll('.tab');
       const sections = {
         regions: document.getElementById('tab-regions'),
