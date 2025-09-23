@@ -46,7 +46,9 @@ if ($action === 'add'){
     'ctx' => $ctx,
     'ip' => $_SERVER['REMOTE_ADDR'] ?? ''
   ]);
-  respond(true, ['saved'=>1]);
+  // Вернём актуальный счётчик ошибок за последний час для мгновенного обновления UI
+  $since = time() - 3600; $events = read_events(); $cnt = 0; foreach ($events as $e){ if (($e['ts'] ?? 0) >= $since && ($e['type'] ?? '') === 'error') $cnt++; }
+  respond(true, ['saved'=>1, 'count'=>$cnt]);
 }
 
 if ($action === 'count'){
