@@ -784,7 +784,8 @@
             });
             const j = await res.json();
             if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
-            await loadCitiesForRegion(selectedRegion); renderCities();
+            if (window.osNotify){ window.osNotify('Город сохранён', (j.linked? 'Связь с регионом установлена' : 'Создан без связи: проверьте поле связи')); }
+            await loadCitiesForRegion(selectedRegion); await preloadPoisCountsForRegion(selectedRegion); renderCities();
           }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
         } else if (level==='pois'){
           const name = prompt('Название POI:'); if(!name) return;
