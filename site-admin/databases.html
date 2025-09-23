@@ -693,7 +693,10 @@
               <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
               <div class="relative bg-white rounded-lg shadow-xl p-6 w-96">\
                 <div class="text-lg text-gray-800 mb-4">'+(picked==='location'?'Новая локация':'Новый город')+'</div>\
-                <input id="nm" class="input-japanese w-full" placeholder="Название (RU)"/>\
+                <div class="space-y-3">\
+                  <input id="nm_ru" class="input-japanese w-full" placeholder="Название (RU)"/>\
+                  <input id="nm_en" class="input-japanese w-full" placeholder="Name (EN)"/>\
+                </div>\
                 <div class="mt-5 flex justify-end gap-2">\
                   <button id="c" class="btn-japanese">Отмена</button>\
                   <button id="o" class="btn-japanese accent">Сохранить</button>\
@@ -701,14 +704,14 @@
               </div>';
             document.body.appendChild(w);
             w.querySelector('#c').onclick=()=>{ try{document.body.removeChild(w);}catch{}; res(null); };
-            w.querySelector('#o').onclick=()=>{ const v=w.querySelector('#nm').value.trim(); if(!v){alert('Введите название');return;} try{document.body.removeChild(w);}catch{}; res(v); };
+            w.querySelector('#o').onclick=()=>{ const ru=w.querySelector('#nm_ru').value.trim(); const en=w.querySelector('#nm_en').value.trim(); if(!ru){alert('Введите название RU');return;} try{document.body.removeChild(w);}catch{}; res({ru,en}); };
             w.addEventListener('click',e=>{ if(e.target===w.firstChild){ try{document.body.removeChild(w);}catch{}; res(null);} });
           });
-          if (!wrap) return; const name = wrap;
+          if (!wrap) return; const name_ru = wrap.ru; const name_en = wrap.en || wrap.ru;
           try{
             const res = await fetch('/api/cities-create.php',{
               method:'POST', headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ name_ru: name, name_en: name, type: picked, region_rec_id: selectedRegion.id })
+              body: JSON.stringify({ name_ru: name_ru, name_en: name_en, type: picked, region_rec_id: selectedRegion.id })
             });
             const j = await res.json();
             if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
