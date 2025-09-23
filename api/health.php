@@ -52,9 +52,16 @@ foreach ($providers as $p){
     $pat = $cfg['airtable']['api_key'] ?? ($cfg['airtable']['token'] ?? ($cfg['airtable_pat'] ?? ''));
     $airReg = $cfg['airtable_registry'] ?? [];
     $baseId = $airReg['baseId'] ?? ($airReg['base_id'] ?? ($cfg['airtable']['base_id'] ?? ''));
-    $tableId = '';
-    if (!empty($airReg['tables']['region']['tableId'])) $tableId = $airReg['tables']['region']['tableId'];
-    elseif (!empty($cfg['airtable']['table'])) $tableId = $cfg['airtable']['table'];
+    // Соберём список всех таблиц из mapping: country, region, city, poi
+    $tablesToCheck = [];
+    if (!empty($airReg['tables']) && is_array($airReg['tables'])){
+      foreach (['country','region','city','poi'] as $k){
+        $tid = $airReg['tables'][$k]['tableId'] ?? '';
+        if ($tid) $tablesToCheck[] = $tid;
+      }
+    } elseif (!empty($cfg['airtable']['table'])) {
+      $tablesToCheck[] = $cfg['airtable']['table'];
+    }
 
     $ok = false; $text = 'Ошибка';
     if ($pat){
@@ -64,14 +71,15 @@ foreach ($providers as $p){
       $resp = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
       if ($code>=200 && $code<300){
         $ok = true; $text = 'Подключено';
-        // 2) если есть base+table — проверим доступность таблицы (1 запись)
-        if ($baseId && $tableId){
-          $url = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/'.rawurlencode($tableId).'?maxRecords=1';
-          $ch = curl_init($url);
-          curl_setopt_array($ch, [ CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$pat], CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>8 ]);
-          $resp = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-          $ok = ($code>=200 && $code<300);
-          $text = $ok ? 'Подключено' : 'Ошибка';
+        // 2) если есть baseId и таблицы — проверим каждую (1 запись)
+        if ($baseId && !empty($tablesToCheck)){
+          foreach ($tablesToCheck as $tbl){
+            $url = 'https://api.airtable.com/v0/'.rawurlencode($baseId).'/'.rawurlencode($tbl).'?maxRecords=1';
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [ CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$pat], CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>8 ]);
+            $resp = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+            if (!($code>=200 && $code<300)) { $ok=false; $text='Ошибка'; break; }
+          }
         }
       } else if ($code===401){
         $ok = false; $text = '401 Unauthorized';
