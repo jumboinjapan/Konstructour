@@ -40,6 +40,8 @@ function initializeDashboard() {
 
     // Trigger immediate health poll so sorting/labels update without delay
     try { pollHealth(); } catch(_) {}
+    // Trigger immediate errors counter update
+    try { updateErrorsCard(); } catch(_) {}
 }
 
 // Add Japanese animations
@@ -564,7 +566,7 @@ async function updateErrorsCard(){
         const cards = document.querySelectorAll('.stat-card');
         cards.forEach(card=>{
             const title = card.querySelector('p.text-sm');
-            if (title && /Ошибки за час/i.test(title.textContent || '')){
+            if (title && /Ошибки в работе сайта/i.test(title.textContent || '')){
                 const val = card.querySelector('p.text-2xl');
                 if (val) val.textContent = String(count);
             }
