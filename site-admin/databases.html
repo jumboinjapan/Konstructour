@@ -226,7 +226,7 @@
           if (!baseId || !regTbl) return false;
           const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
           const r2 = await fetch(u); if(!r2.ok) return false; const j2 = await r2.json();
-          const recs = j2.records || j2.items || [];
+          const recs = (j2 && j2.body && (j2.body.records || j2.body.items)) || j2.records || j2.items || [];
           regions = recs.map((rec, idx)=>{
             const fields = rec.fields || {};
             const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || ('Регион '+(idx+1));
@@ -478,7 +478,7 @@
             const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
             const r2 = await fetch(u);
             const j2 = await r2.json();
-            const recs = j2.records || j2.items || [];
+            const recs = (j2 && j2.body && (j2.body.records || j2.body.items)) || j2.records || j2.items || [];
             regions = recs.map((rec, idx)=>{
               const fields = rec.fields || {};
               const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || ('Регион '+(idx+1));
