@@ -602,29 +602,45 @@
       async function loadPoisForCity(city){
         try{
           const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
-          const res = await fetch('../api/db-sync.php',{
-            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({ 
-              scope:'pois', 
-              action:'list', 
-              data:{ 
-                base_id: baseId,
-                table_id: window.AIRTABLE_POI_TABLE_ID,
-                filter:{ cityId: city.id, cityName: city.name } 
-              } 
-            })
+          
+          console.log('Loading POIs for city:', {
+            cityId: city.id,
+            cityName: city.name,
+            baseId: baseId,
+            tableId: window.AIRTABLE_POI_TABLE_ID
           });
+          
+          // Временно используем прямой запрос к Airtable через test-proxy
+          const proxyUrl = '/api/test-proxy.php?provider=airtable&base_id=' + 
+            encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
+          
+          console.log('Direct Airtable request URL:', proxyUrl);
+          
+          const res = await fetch(proxyUrl);
           const j = await res.json();
-          const items = j.ok ? (j.items||[]) : [];
-          poisByCity[city.id] = items.map(it=>({ 
-            id: it.id, 
-            name: it.name || it.fields?.['POI Name (RU)'] || '—', 
-            type: (it.fields?.['POI Category (RU)']?.[0] || it.fields?.Category || ''),
-            name_en: it.fields?.['POI Name (EN)'] || '',
-            place_id: it.fields?.['Place ID'] || '',
-            published: it.fields?.['Published'] || false
+          
+          console.log('POI API response:', j);
+          
+          // test-proxy возвращает другую структуру
+          const records = j.ok ? (j.body?.records || j.records || []) : [];
+          console.log('Raw POI records:', records);
+          
+          poisByCity[city.id] = records.map(record=>({ 
+            id: record.id, 
+            name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
+            type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
+            name_en: record.fields?.['POI Name (EN)'] || '',
+            place_id: record.fields?.['Place ID'] || '',
+            published: record.fields?.['Published'] || false,
+            poi_id: record.fields?.['POI ID'] || '',
+            region: record.fields?.['Regions'] || []
           }));
-        }catch(e){ poisByCity[city.id] = []; }
+          
+          console.log('Processed POIs for city:', city.name, poisByCity[city.id]);
+        }catch(e){ 
+          console.error('Error loading POIs for city:', city.name, e);
+          poisByCity[city.id] = []; 
+        }
       }
 
       // Предзагрузка количества POI для всех городов региона
@@ -635,9 +651,18 @@
           await Promise.all(list.map(async (c)=>{
             if (Array.isArray(poisByCity[c.id])) return;
             try{
+              const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
               const res = await fetch('../api/db-sync.php',{
                 method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-                body: JSON.stringify({ scope:'pois', action:'list', data:{ filter:{ cityId: c.id, cityName: c.name } } })
+                body: JSON.stringify({ 
+                  scope:'pois', 
+                  action:'list', 
+                  data:{ 
+                    base_id: baseId,
+                    table_id: window.AIRTABLE_POI_TABLE_ID,
+                    filter:{ cityId: c.id, cityName: c.name } 
+                  } 
+                })
               });
               const j = await res.json();
               const items = j.ok ? (j.items||[]) : [];
