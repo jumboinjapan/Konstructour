@@ -118,14 +118,28 @@ if (!$created){
   exit;
 }
 
-// Проверяем, сохранился ли код региона
+// Проверяем, сохранился ли код региона, и если нет - пытаемся его добавить
 $linkedOk = false;
 if (!empty($created['id']) && $regionRid !== '') {
   $fields = $created['fields'] ?? [];
+  
+  // Сначала проверяем, есть ли уже код региона
   foreach ($regionFieldCandidates as $rf) {
     if (isset($fields[$rf]) && $fields[$rf] === $regionRid) {
       $linkedOk = true;
       break;
+    }
+  }
+  
+  // Если код региона не сохранился - пытаемся его добавить через PATCH
+  if (!$linkedOk) {
+    foreach ($regionFieldCandidates as $rf) {
+      $patch = ['fields' => [$rf => $regionRid]];
+      list($c2, $o2, $e2) = air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
+      if ($c2 < 300) {
+        $linkedOk = true;
+        break;
+      }
     }
   }
 }
