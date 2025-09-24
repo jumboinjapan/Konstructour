@@ -623,15 +623,6 @@
           const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
           
         cards.innerHTML = list.map(p=>{
-          const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-                          '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
-          
-          const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
-              (p.poi_id ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+p.poi_id+'</span>' : '')+
-              '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-              '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
-            '</div>';
-          
           // Получаем иконку для категории POI
           const categoryIcon = window.getPOICategoryIcon(p.type);
           const categoryColor = {
@@ -651,6 +642,12 @@
             'СПА': 'text-teal-600'
           }[p.type] || 'text-gray-500';
           
+          const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
+              (p.poi_id ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+p.poi_id+'</span>' : '')+
+              '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+              '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
+            '</div>';
+          
           const inner = '<div class="flex items-center justify-between">\
               <div class="flex items-center gap-2">\
                 <div class="w-5 h-5 flex items-center justify-center '+categoryColor+' flex-shrink-0">\
@@ -666,7 +663,7 @@
                 </div>\
               </div>\
             </div>';
-          return '<div class="cursor-pointer" data-go="poi-details" data-id="'+p.id+'">'+card(actions, inner)+'</div>';
+          return '<div class="cursor-pointer" data-go="poi-details" data-id="'+p.id+'">'+card('', inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
       }
 
