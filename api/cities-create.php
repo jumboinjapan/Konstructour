@@ -11,7 +11,7 @@ if (!$API_KEY) {
   $cfgFile = __DIR__.'/config.php';
   if (file_exists($cfgFile)){
     $cfg = require $cfgFile; if (is_array($cfg)){
-      $API_KEY = $cfg['airtable']['api_key'] ?? ($cfg['airtable']['token'] ?? ($cfg['airtable_pat'] ?? ($cfg['airtable_registry']['api_key'] ?? '')));
+      $API_KEY = $cfg['airtable_registry']['api_key'] ?? ($cfg['airtable']['api_key'] ?? ($cfg['airtable']['token'] ?? ($cfg['airtable_pat'] ?? '')));
     }
   }
 }
