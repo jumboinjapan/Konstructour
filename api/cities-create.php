@@ -63,32 +63,35 @@ do{
 }while($offset);
 $nextId = sprintf('%s-%04d',$prefix,$max+1);
 
-// 2) Build fields
-$nameRuCandidates = ['Name (RU)','Название (RU)','Название','Name','Title'];
-$nameEnCandidates = ['Name (EN)','Название (EN)','English Name','EN Name','Name (EN) '];
-$idCandidates     = ['ID','Идентификатор','Идентификатор ','Id'];
-$linkCandidates   = ['Region','Регион','Regions','Регионы','Region Link','Регион (ссылка)','Region → Cities','Регион → Города'];
-// Если в реестре прописано точное имя поля-ссылки — используем его в приоритете
-if (!empty($cfg['airtable_registry']['tables']['city']['linkField'])){
-  $lf = $cfg['airtable_registry']['tables']['city']['linkField'];
-  if (is_string($lf) && $lf!==''){ array_unshift($linkCandidates, $lf); }
-}
-// Кандидаты для сохранения бизнес-кода региона (RID), если он передан
-$regionCodeCandidates = ['Region Code','RegionID','Регион ID','Регион код','Region Business ID','Идентификатор региона','Регион ID (код)','Region RID','Регион RID'];
+// 2) Build fields - УПРОЩЁННАЯ ЛОГИКА
+$nameRuCandidates = ['Name (RU)','Название (RU)'];
+$nameEnCandidates = ['Name (EN)','Название (EN)'];
+$idCandidates     = ['ID','Идентификатор'];
+// Поле для записи кода региона (например REG-0002)
+$regionCodeField = $cfg['airtable_registry']['tables']['city']['regionCodeField'] ?? 'Region';
+$regionFieldCandidates = [$regionCodeField, 'Region', 'Регион', 'Region Code'];
 
-// Build candidate payloads. Сначала пробуем сразу создать с линком по recordId.
+// УПРОЩЁННАЯ ЛОГИКА: создаём город с кодом региона в простом текстовом поле
 $attempts = [];
 foreach ($idCandidates as $fid){
   foreach ($nameRuCandidates as $fru){
     foreach ($nameEnCandidates as $fen){
-      $baseFields = [ $fid=>$nextId, $fru=>$name_ru, $fen=>$name_en, 'Type'=>($type==='location'?'location':'city') ];
-      if ($regionId!==''){
-        foreach ($linkCandidates as $lf){
-          $attempts[] = ['fields'=> $baseFields + [ $lf => [ ['id'=>$regionId] ] ] ];
+      $baseFields = [ 
+        $fid => $nextId, 
+        $fru => $name_ru, 
+        $fen => $name_en, 
+        'Type' => ($type==='location' ? 'location' : 'city') 
+      ];
+      
+      // Добавляем код региона прямо в поле Region
+      if ($regionRid !== '') {
+        foreach ($regionFieldCandidates as $rf) {
+          $attempts[] = ['fields' => $baseFields + [ $rf => $regionRid ]];
         }
       }
-      // запасной вариант без ссылки
-      $attempts[] = ['fields'=>$baseFields ];
+      
+      // Запасной вариант без региона
+      $attempts[] = ['fields' => $baseFields];
     }
   }
 }
@@ -105,63 +108,17 @@ if (!$created){
   http_response_code(500); echo json_encode(['ok'=>false,'error'=>'Airtable 422','details'=>$lastResp?:['message'=>'Unprocessable Entity']], JSON_UNESCAPED_UNICODE); exit;
 }
 
-// Try to link Region after creation (best-effort)
- $linkedOk = false;
- if (!empty($created['id'])){
-   // 1) Try by recordId
-   if ($regionId!==''){
-     foreach ($linkCandidates as $lf){
-       $patch = ['fields'=>[ $lf => [ ['id'=>$regionId] ] ]];
-     list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
-       if ($c2<300){ $linkedOk=true; break; }
-     }
-   }
-   // 2) Try by region name into link field directly (some bases accept name)
-   if (!$linkedOk && $regionName!==''){
-     foreach ($linkCandidates as $lf){
-      $patch = ['fields'=>[ $lf => [ $regionName ] ]];
-      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
-       if ($c2<300){ $linkedOk=true; break; }
-     }
-   }
-  // 2b) Try by region business code (RID)
-  if (!$linkedOk && $regionRid!==''){
-    foreach ($linkCandidates as $lf){
-      $patch = ['fields'=>[ $lf => [ $regionRid ] ]];
-      list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
-      if ($c2<300){ $linkedOk=true; break; }
+// Проверяем, сохранился ли код региона
+$linkedOk = false;
+if (!empty($created['id']) && $regionRid !== '') {
+  $fields = $created['fields'] ?? [];
+  foreach ($regionFieldCandidates as $rf) {
+    if (isset($fields[$rf]) && $fields[$rf] === $regionRid) {
+      $linkedOk = true;
+      break;
     }
   }
- // 3) Fallback: resolve Region record by name via Regions table, then link by id
-   if (!$linkedOk && $regionName!=='' && !empty($REGION_TABLE_ID)){
-     $offset=null; do{
-       list($cr,$or,$er)=air_call('GET', "$BASE_ID/".rawurlencode($REGION_TABLE_ID), $API_KEY, null, ['pageSize'=>100,'offset'=>$offset]);
-       if ($cr>=300) break; $jr=json_decode($or,true);
-       foreach(($jr['records']??[]) as $rec){
-         $fields=$rec['fields']??[]; $names=[$fields['Name (RU)']??'', $fields['Название (RU)']??'', $fields['Name']??'', $fields['Название']??'', $fields['Name (EN)']??''];
-         foreach($names as $nm){ if ($nm && is_string($nm) && $nm===$regionName){ $regionId=$rec['id']; break 2; } }
-       }
-       $offset=$jr['offset']??null;
-     }while($offset);
-     if ($regionId!==''){
-       foreach ($linkCandidates as $lf){
-         $patch = ['fields'=>[ $lf => [ ['id'=>$regionId] ] ]];
-         list($c2,$o2,$e2)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
-         if ($c2<300){ $linkedOk=true; break; }
-       }
-     }
-   }
-   if (!$linkedOk){ log_err('City link-to-region failed', ['created'=>$created,'regionId'=>$regionId,'regionName'=>$regionName]); }
- }
-
- // 4) (optional) Проставим бизнес-код региона в поле города, если передан
- if (!empty($created['id']) && $regionRid!==''){
-   foreach ($regionCodeCandidates as $rf){
-     $patch = ['fields'=>[ $rf => $regionRid ]];
-     list($c3,$o3,$e3)=air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch);
-     if ($c3<300){ break; }
-   }
- }
+}
 
 echo json_encode(['ok'=>true,'record_id'=>$created['id']??null,'city_id'=>$nextId,'type'=>$type,'linked'=>$linkedOk], JSON_UNESCAPED_UNICODE);
 
