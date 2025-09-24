@@ -594,25 +594,25 @@
         // Если список пуст — показываем кнопку добавления через ту же +
         function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
         cards.innerHTML = list.map(c=>{
-            const count = (poisByCity[c.id]||[]).length;
-            const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
-                (c.code ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+c.code+'</span>' : '')+
-                '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-                '<button data-act="del-city" data-id="'+c.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
-              '</div>';
-            const inner = '<div class="flex items-center justify-between">\
-                <div class="flex items-center gap-2">\
-                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" class="text-green-600"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\
-                  <div class="text-lg text-gray-800">'+c.name+'</div>\
+          const count = (poisByCity[c.id]||[]).length;
+          const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
+              (c.code ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+c.code+'</span>' : '')+
+              '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+              '<button data-act="del-city" data-id="'+c.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
+            '</div>';
+          const inner = '<div class="flex items-center justify-between">\
+              <div class="flex items-center gap-2">\
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" class="text-green-600"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\
+                <div class="text-lg text-gray-800">'+c.name+'</div>\
+              </div>\
+              '+inlineActions+'\
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
+                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-100 shadow-sm">\
+                  <i class=\"fas fa-map-marker-alt text-green-600\"></i>\
+                  <span class=\"text-xs font-medium text-green-700\">'+count+'</span>\
                 </div>\
-                '+inlineActions+'\
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
-                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-100 shadow-sm">\
-                    <i class=\"fas fa-map-marker-alt text-green-600\"></i>\
-                    <span class=\"text-xs font-medium text-green-700\">'+count+'</span>\
-                  </div>\
-                </div>\
-              </div>';
+              </div>\
+            </div>';
           return '<div class="cursor-pointer" data-go="pois" data-id="'+c.id+'">'+card('', inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет городов. Нажмите + чтобы добавить.</div>';
       }
@@ -737,10 +737,10 @@
       }
 
         // Предзагрузка POI для региона - загружаем один раз и распределяем по городам
-        async function preloadPoisCountsForRegion(region){
-          try{
-            const list = citiesByRegion[region.id] || [];
-            if (!list.length) return;
+      async function preloadPoisCountsForRegion(region){
+        try{
+          const list = citiesByRegion[region.id] || [];
+          if (!list.length) return;
             
             // Инициализируем пустые массивы для всех городов
             list.forEach(c => {
@@ -755,7 +755,7 @@
               encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
             
             const res = await fetch(proxyUrl);
-            const j = await res.json();
+              const j = await res.json();
             const records = j.ok ? (j.body?.records || j.records || []) : [];
             
             console.log('Loading POI for region:', region.name, 'Total POI records:', records.length);
@@ -791,7 +791,7 @@
         }catch(e){
             console.error('Error preloading POI for region:', region.name, e);
           }
-        }
+      }
 
       function renderTickets(){
         level='tickets'; renderCrumbs();
@@ -839,8 +839,8 @@
             if (poi) {
               showPOIDetailsModal(poi);
             }
-            return;
-          }
+          return;
+        }
         if (to==='tickets'){
           const list = poisByCity[selectedCity.id] || [];
           selectedPoi = list.find(p=>p.id===id) || null;
@@ -1149,9 +1149,6 @@
                   <button onclick="showTicketsForPOI('${poi.id}')" class="btn-japanese text-sm py-1 px-3">
                     <i class="fas fa-ticket mr-1"></i>Билеты
                   </button>
-                  <button onclick="this.closest('.fixed').remove(); editPOI('${poi.id}')" class="btn-japanese accent text-sm py-1 px-3">
-                    <i class="fas fa-edit mr-1"></i>Редактировать
-                  </button>
                 </div>
               </div>
             </div>
@@ -1210,37 +1207,10 @@
         }
       };
 
-      // Функция для редактирования POI
-      window.editPOI = async function(poiId) {
-        const list = poisByCity[selectedCity.id] || [];
-        const poi = list.find(p=>p.id===poiId) || null;
-        if (!poi) return;
-        
-        const data = await openCreatePOIModal(poi);
-        if (!data) return;
-        
-        // Логика обновления POI (уже реализована в обработчике edit-poi)
-        Object.assign(poi, {
-          name: data.name_ru,
-          name_en: data.name_en,
-          type: data.cats_ru[0] || poi.type,
-          categories_ru: data.cats_ru,
-          categories_en: data.cats_en,
-          prefecture_ru: data.pref_ru,
-          prefecture_en: data.pref_en,
-          place_id: data.place_id,
-          website: data.website,
-          hours: data.hours,
-          description_ru: data.desc_ru,
-          description_en: data.desc_en,
-          published: data.published,
-          notes: data.notes
-        });
-        
-        renderPois();
-        if (window.osNotify) {
-          window.osNotify('POI обновлён', data.name_ru);
-        }
+      // Функция для редактирования POI отключена — редактирование только через отдельное создание/редактирование
+      window.editPOI = async function() {
+        console.log('editPOI disabled: use dedicated create/edit modal from toolbar');
+        return;
       };
 
       // Модальное окно создания/редактирования POI
@@ -1507,8 +1477,8 @@
                 if (catCheckbox) catCheckbox.checked = true;
               }
             }
-          });
-        }
+        });
+      }
 
       // Выбор типа (Город/Локация) — модалка с 2 кнопками
       function chooseCityType(){
