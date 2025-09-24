@@ -79,8 +79,7 @@ foreach ($idCandidates as $fid){
       $baseFields = [ 
         $fid => $nextId, 
         $fru => $name_ru, 
-        $fen => $name_en, 
-        'Type' => ($type==='location' ? 'location' : 'city') 
+        $fen => $name_en
       ];
       
       // Добавляем код региона прямо в поле Region
@@ -105,7 +104,18 @@ foreach ($attempts as $payload){
 
 if (!$created){
   log_err('City create failed (all attempts)',['response'=>$lastResp,'request'=>$lastReq]);
-  http_response_code(500); echo json_encode(['ok'=>false,'error'=>'Airtable 422','details'=>$lastResp?:['message'=>'Unprocessable Entity']], JSON_UNESCAPED_UNICODE); exit;
+  http_response_code(500); 
+  echo json_encode([
+    'ok'=>false,
+    'error'=>'Airtable 422',
+    'details'=>$lastResp?:['message'=>'Unprocessable Entity'],
+    'debug'=>[
+      'attempts_count'=>count($attempts),
+      'last_request'=>$lastReq,
+      'last_response'=>$lastResp
+    ]
+  ], JSON_UNESCAPED_UNICODE); 
+  exit;
 }
 
 // Проверяем, сохранился ли код региона
