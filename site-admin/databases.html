@@ -594,8 +594,7 @@
         // Если список пуст — показываем кнопку добавления через ту же +
         function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
         cards.innerHTML = list.map(c=>{
-            // Временно отключаем подсчет POI пока не настроим фильтрацию
-            // const count = (poisByCity[c.id]||[]).length;
+            const count = (poisByCity[c.id]||[]).length;
             const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
                 (c.code ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+c.code+'</span>' : '')+
                 '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
@@ -607,6 +606,12 @@
                   <div class="text-lg text-gray-800">'+c.name+'</div>\
                 </div>\
                 '+inlineActions+'\
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
+                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-100 shadow-sm">\
+                    <i class=\"fas fa-map-marker-alt text-green-600\"></i>\
+                    <span class=\"text-xs font-medium text-green-700\">'+count+'</span>\
+                  </div>\
+                </div>\
               </div>';
           return '<div class="cursor-pointer" data-go="pois" data-id="'+c.id+'">'+card('', inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет городов. Нажмите + чтобы добавить.</div>';
@@ -732,37 +737,62 @@
           }
       }
 
-      // Предзагрузка количества POI для всех городов региона
-      async function preloadPoisCountsForRegion(region){
-        try{
-          const list = citiesByRegion[region.id] || [];
-          if (!list.length) return;
-          await Promise.all(list.map(async (c)=>{
-            if (Array.isArray(poisByCity[c.id])) return;
-            try{
-                const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
+        // Предзагрузка POI для региона - загружаем один раз и распределяем по городам
+        async function preloadPoisCountsForRegion(region){
+          try{
+            const list = citiesByRegion[region.id] || [];
+            if (!list.length) return;
+            
+            // Инициализируем пустые массивы для всех городов
+            list.forEach(c => {
+              if (!Array.isArray(poisByCity[c.id])) {
+                poisByCity[c.id] = [];
+              }
+            });
+            
+            // Загружаем все POI один раз
+            const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
+            const proxyUrl = '/api/test-proxy.php?provider=airtable&base_id=' + 
+              encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
+            
+            const res = await fetch(proxyUrl);
+            const j = await res.json();
+            const records = j.ok ? (j.body?.records || j.records || []) : [];
+            
+            console.log('Loading POI for region:', region.name, 'Total POI records:', records.length);
+            
+            // Распределяем POI по городам на основе связи
+            list.forEach(city => {
+              const cityPois = records.filter(record => {
+                const regions = record.fields?.['Regions'] || [];
+                const linkedCities = Array.isArray(regions) ? regions : [];
                 
-                // Используем тот же API что и в loadPoisForCity
-                const proxyUrl = '/api/test-proxy.php?provider=airtable&base_id=' + 
-                  encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
+                // Попробуем разные варианты связи
+                const isLinkedById = linkedCities.includes(city.id);
+                const isLinkedByName = linkedCities.some(r => 
+                  typeof r === 'string' && (r === city.name || r.includes(city.name))
+                );
                 
-                const res = await fetch(proxyUrl);
-              const j = await res.json();
+                console.log(`POI ${record.fields?.['POI Name (RU)']} - regions:`, linkedCities, 
+                           'city:', city.name, 'id:', city.id, 'linked:', isLinkedById || isLinkedByName);
                 
-                // test-proxy возвращает другую структуру
-                const records = j.ok ? (j.body?.records || j.records || []) : [];
-                
-                // Показываем все POI для отладки
-                poisByCity[c.id] = records.map(record=>({ 
-                  id: record.id, 
-                  name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
-                  type: (record.fields?.['POI Category (RU)']?.[0] || ''),
-                  region: record.fields?.['Regions'] || []
-                }));
-            }catch(_e){ poisByCity[c.id] = []; }
-          }));
-        }catch(_e){ /* ignore */ }
-      }
+                return isLinkedById || isLinkedByName;
+              });
+              
+              poisByCity[city.id] = cityPois.map(record => ({
+                id: record.id, 
+                name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
+                type: (record.fields?.['POI Category (RU)']?.[0] || ''),
+                region: record.fields?.['Regions'] || []
+              }));
+              
+              console.log(`City ${city.name} has ${poisByCity[city.id].length} POI`);
+            });
+            
+          }catch(e){ 
+            console.error('Error preloading POI for region:', region.name, e);
+          }
+        }
 
       function renderTickets(){
         level='tickets'; renderCrumbs();
