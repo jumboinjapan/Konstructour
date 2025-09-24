@@ -704,10 +704,29 @@
           const records = j.ok ? (j.body?.records || j.records || []) : [];
           console.log('Raw POI records:', records);
           
-          // Временно показываем все POI для отладки (потом добавим фильтрацию)
+          // Показываем структуру данных для отладки
           console.log('All POI records for debugging:', records);
+          console.log('Current city ID we are filtering for:', city.id);
           
-          poisByCity[city.id] = records.map(record=>({ 
+          if (records.length > 0) {
+            console.log('Sample POI record structure:', {
+              id: records[0].id,
+              fields: records[0].fields,
+              regions_field: records[0].fields?.['Regions']
+            });
+          }
+          
+          // Пробуем фильтрацию но с логированием
+          const filteredRecords = records.filter(record => {
+            const regions = record.fields?.['Regions'] || [];
+            const isLinked = Array.isArray(regions) && regions.includes(city.id);
+            console.log(`POI ${record.fields?.['POI Name (RU)'] || record.id} - regions field:`, regions, 'matches city', city.id, ':', isLinked);
+            return isLinked;
+          });
+          
+          console.log('Filtered POI records for city', city.name, ':', filteredRecords);
+          
+          poisByCity[city.id] = filteredRecords.map(record=>({ 
             id: record.id, 
             name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
             type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
@@ -745,8 +764,13 @@
                 // test-proxy возвращает другую структуру
                 const records = j.ok ? (j.body?.records || j.records || []) : [];
                 
-                // Временно показываем все POI для отладки
-                poisByCity[c.id] = records.map(record=>({ 
+                // Фильтруем POI для этого города
+                const filteredRecords = records.filter(record => {
+                  const regions = record.fields?.['Regions'] || [];
+                  return Array.isArray(regions) && regions.includes(c.id);
+                });
+                
+                poisByCity[c.id] = filteredRecords.map(record=>({ 
                   id: record.id, 
                   name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
                   type: (record.fields?.['POI Category (RU)']?.[0] || ''),
