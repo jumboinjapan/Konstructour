@@ -657,9 +657,9 @@
               </div>\
               '+inlineActions+'\
               <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
-                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 shadow-sm">\
-                  <i class=\"fas fa-ticket text-blue-600\"></i>\
-                  <span class=\"text-xs font-medium text-blue-700\">'+((ticketsByPoi[p.id]||[]).length)+'</span>\
+                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full '+
+                  (categoryColor.replace('text-', 'bg-').replace('-600', '-50')+' border border-'+categoryColor.replace('text-', '').replace('-600', '-100'))+' shadow-sm">\
+                  <span class=\"text-xs font-medium '+categoryColor.replace('-600', '-700')+'\">'+p.type+'</span>\
                 </div>\
               </div>\
             </div>';
@@ -702,20 +702,27 @@
             
             console.log('POI API response:', j);
             
-            // test-proxy возвращает другую структуру
-            const records = j.ok ? (j.body?.records || j.records || []) : [];
-            console.log('Raw POI records:', records);
-            
-            poisByCity[city.id] = records.map(record=>({ 
-              id: record.id, 
-              name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
-              type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
-              name_en: record.fields?.['POI Name (EN)'] || '',
-              place_id: record.fields?.['Place ID'] || '',
-              published: record.fields?.['Published'] || false,
-              poi_id: record.fields?.['POI ID'] || '',
-              region: record.fields?.['Regions'] || []
-            }));
+          // test-proxy возвращает другую структуру
+          const records = j.ok ? (j.body?.records || j.records || []) : [];
+          console.log('Raw POI records:', records);
+          
+          // Фильтруем POI по связи с текущим городом
+          const filteredRecords = records.filter(record => {
+            const regions = record.fields?.['Regions'] || [];
+            // Проверяем, связан ли POI с текущим городом
+            return Array.isArray(regions) && regions.includes(city.id);
+          });
+          
+          poisByCity[city.id] = filteredRecords.map(record=>({ 
+            id: record.id, 
+            name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
+            type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
+            name_en: record.fields?.['POI Name (EN)'] || '',
+            place_id: record.fields?.['Place ID'] || '',
+            published: record.fields?.['Published'] || false,
+            poi_id: record.fields?.['POI ID'] || '',
+            region: record.fields?.['Regions'] || []
+          }));
             
             console.log('Processed POIs for city:', city.name, poisByCity[city.id]);
           }catch(e){ 
@@ -743,7 +750,15 @@
                 
                 // test-proxy возвращает другую структуру
                 const records = j.ok ? (j.body?.records || j.records || []) : [];
-                poisByCity[c.id] = records.map(record=>({ 
+                
+                // Фильтруем POI по связи с текущим городом
+                const filteredRecords = records.filter(record => {
+                  const regions = record.fields?.['Regions'] || [];
+                  // Проверяем, связан ли POI с текущим городом
+                  return Array.isArray(regions) && regions.includes(c.id);
+                });
+                
+                poisByCity[c.id] = filteredRecords.map(record=>({ 
                   id: record.id, 
                   name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
                   type: (record.fields?.['POI Category (RU)']?.[0] || ''),
