@@ -661,8 +661,8 @@
                 </div>\
               </div>\
             </div>';
-          // Карточки POI без кнопок - редактирование через модальное окно деталей
-          return '<div class="cursor-pointer" data-go="poi-details" data-id="'+p.id+'">'+card('', inner)+'</div>';
+          // Клик по карточке сразу открывает форму редактирования POI
+          return '<div class="cursor-pointer" data-go="poi-edit" data-id="'+p.id+'">'+card('', inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
       }
 
@@ -833,11 +833,29 @@
           renderPois();
           return;
         }
-          if (to==='poi-details'){
+          if (to==='poi-edit'){
             const list = poisByCity[selectedCity.id] || [];
             const poi = list.find(p=>p.id===id) || null;
             if (poi) {
-              showPOIDetailsModal(poi);
+              const data = await openCreatePOIModal(poi);
+              if (!data) return;
+              Object.assign(poi, {
+                name: data.name_ru,
+                name_en: data.name_en,
+                type: data.cats_ru[0] || poi.type,
+                categories_ru: data.cats_ru,
+                categories_en: data.cats_en,
+                prefecture_ru: data.pref_ru,
+                prefecture_en: data.pref_en,
+                place_id: data.place_id,
+                website: data.website,
+                hours: data.hours,
+                description_ru: data.desc_ru,
+                description_en: data.desc_en,
+                published: data.published,
+                notes: data.notes
+              });
+              renderPois();
             }
           return;
         }
@@ -1054,108 +1072,12 @@
         });
       }
         
-      // Модальное окно с полной информацией о POI
+      // Детальная карточка POI больше не используется (заменена прямым входом в форму)
       function showPOIDetailsModal(poi) {
-        const wrap = document.createElement('div');
-        wrap.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
-        wrap.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        
-        const categoryIcon = window.getPOICategoryIcon(poi.type);
-        const categoryColor = {
-          'Синтоистское святилище': 'text-red-600',
-          'Буддийский храм': 'text-orange-600', 
-          'Архитектурный объект': 'text-gray-600',
-          'Музей': 'text-blue-600',
-          'Арт-пространство / Галерея': 'text-purple-600',
-          'Смотровая площадка': 'text-green-600',
-          'Ландшафтный сад / Парк': 'text-green-500',
-          'Достопримечательность': 'text-yellow-600',
-          'Историческое место': 'text-brown-600',
-          'Японский отель': 'text-indigo-600',
-          'Развлечения': 'text-pink-600',
-          'Шоппинг': 'text-emerald-600',
-          'Термальный источник': 'text-blue-500',
-          'СПА': 'text-teal-600'
-        }[poi.type] || 'text-gray-500';
-        
-        wrap.innerHTML = `
-          <div class="absolute inset-0" onclick="this.parentElement.remove()"></div>
-          <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center ${categoryColor} shadow-sm">
-                  ${categoryIcon}
-                </div>
-                <div>
-                  <h3 class="text-xl font-medium text-gray-900">${poi.name}</h3>
-                  <p class="text-sm text-gray-600">${poi.type}</p>
-                </div>
-              </div>
-              <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            
-            <div class="space-y-4">
-              ${poi.poi_id ? `<div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-700">POI ID:</span>
-                <span class="font-mono text-sm text-gray-600">${poi.poi_id}</span>
-              </div>` : ''}
-              
-              ${poi.name_en ? `<div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-700">English Name:</span>
-                <span class="text-sm text-gray-600">${poi.name_en}</span>
-              </div>` : ''}
-              
-              ${poi.place_id ? `<div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-700">Google Place ID:</span>
-                <a href="https://www.google.com/maps/search/?api=1&query=place_id:${poi.place_id}" 
-                   target="_blank" class="text-sm text-blue-600 hover:underline font-mono">
-                  ${poi.place_id} <i class="fas fa-external-link-alt ml-1 text-xs"></i>
-                </a>
-              </div>` : ''}
-              
-              ${poi.website ? `<div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-700">Сайт:</span>
-                <a href="${poi.website}" target="_blank" class="text-sm text-blue-600 hover:underline">
-                  ${poi.website} <i class="fas fa-external-link-alt ml-1 text-xs"></i>
-                </a>
-              </div>` : ''}
-              
-              ${poi.hours ? `<div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-gray-700">Часы работы:</span>
-                <span class="text-sm text-gray-600">${poi.hours}</span>
-              </div>` : ''}
-              
-              ${poi.description_ru ? `<div>
-                <span class="text-sm font-medium text-gray-700 block mb-1">Описание:</span>
-                <p class="text-sm text-gray-600 leading-relaxed">${poi.description_ru}</p>
-              </div>` : ''}
-              
-              ${poi.description_en ? `<div>
-                <span class="text-sm font-medium text-gray-700 block mb-1">Description (EN):</span>
-                <p class="text-sm text-gray-600 leading-relaxed">${poi.description_en}</p>
-              </div>` : ''}
-              
-              <div class="flex items-center justify-between pt-4 border-t">
-                <div class="flex items-center gap-4">
-                  ${poi.published ? '<span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800"><i class="fas fa-eye mr-2"></i>Опубликовано</span>' : '<span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-600">Не опубликовано</span>'}
-                  ${((ticketsByPoi[poi.id]||[]).length > 0) ? '<span class="inline-flex items-center text-sm text-blue-600"><i class="fas fa-ticket mr-2"></i>'+((ticketsByPoi[poi.id]||[]).length)+' билетов</span>' : ''}
-                </div>
-                <div class="flex gap-2">
-                  <button onclick="savePOIRecord('${poi.id}')" class="btn-japanese text-sm py-1 px-2" title="Сохранить запись">
-                    <i class="fas fa-download"></i>
-                  </button>
-                  <button onclick="showTicketsForPOI('${poi.id}')" class="btn-japanese text-sm py-1 px-3">
-                    <i class="fas fa-ticket mr-1"></i>Билеты
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-        
-        document.body.appendChild(wrap);
+        console.warn('showPOIDetailsModal is deprecated. Opening edit modal instead.');
+        // Открываем сразу форму редактирования
+        openCreatePOIModal(poi);
+        return;
       }
       
       // Функция для показа билетов POI
