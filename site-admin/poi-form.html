@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Konstructour — Форма POI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../styles/admin-japanese.css" rel="stylesheet">
+    <style>
+        body { background: rgb(var(--color-washi)); min-height: 100vh; }
+        
+        /* Glass Panel стиль для соответствия дизайн-гайдам */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Стиль для полей формы */
+        .form-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(139, 90, 43, 0.15);
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            min-height: 44px; /* WCAG 2.2 AA */
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgb(55, 65, 81);
+        }
+        
+        .form-required {
+            color: rgb(239, 68, 68);
+            margin-left: 4px;
+        }
+        
+        .form-section {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .form-section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: rgb(31, 41, 55);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Мультиселект стиль */
+        .multiselect-tag {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 4px 12px;
+            margin: 4px;
+            font-size: 14px;
+        }
+        
+        .multiselect-tag button {
+            margin-left: 8px;
+            color: rgba(99, 102, 241, 0.8);
+            cursor: pointer;
+        }
+        
+        /* Кнопки действий */
+        .btn-primary {
+            background: linear-gradient(135deg, rgb(99, 102, 241) 0%, rgb(79, 70, 229) 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            min-height: 44px;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: rgb(55, 65, 81);
+            padding: 12px 24px;
+            border-radius: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(139, 90, 43, 0.15);
+            min-height: 44px;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.02);
+        }
+        
+        /* Drag & Drop зона */
+        .dropzone {
+            border: 2px dashed rgba(139, 90, 43, 0.3);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .dropzone:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        .dropzone.dragover {
+            border-color: rgb(99, 102, 241);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.02);
+        }
+        
+        /* Плашка с информацией о Google Place */
+        .google-place-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+            display: none;
+        }
+        
+        /* Адаптивная сетка */
+        @media (max-width: 768px) {
+            .form-section {
+                padding: 16px;
+            }
+            
+            .grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-no-redirect="true">
+    <div class="dashboard-grid">
+        <!-- Боковая панель -->
+        <aside class="sidebar texture-wood">
+            <div class="p-6">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mr-3">
+                        <svg class="w-8 h-8 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-light text-gray-800">Konstructour</h1>
+                        <p class="text-xs text-gray-600">Site Admin</p>
+                    </div>
+                </div>
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="sidebar-link">
+                        <i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор
+                    </a>
+                    <a href="api-catalog.html" class="sidebar-link">
+                        <i class="fas fa-list mr-3 text-gray-600"></i>Каталог API
+                    </a>
+                    <a href="databases.html" class="sidebar-link">
+                        <i class="fas fa-database mr-3 text-green-600"></i>Базы данных
+                    </a>
+                    <a href="poi-form.html" class="menu-item active sidebar-link">
+                        <i class="fas fa-map-marker-alt mr-3 text-blue-600"></i>Форма POI
+                    </a>
+                </nav>
+            </div>
+        </aside>
+        
+        <!-- Основной контент -->
+        <main class="p-8 max-w-6xl mx-auto">
+            <header class="mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-3xl font-light text-gray-800 mb-1">Создание / Редактирование POI</h2>
+                        <p class="text-gray-600">Заполните информацию о достопримечательности</p>
+                    </div>
+                    <button onclick="window.history.back()" class="btn-secondary">
+                        <i class="fas fa-arrow-left mr-2"></i>Назад
+                    </button>
+                </div>
+            </header>
+            
+            <form id="poiForm" class="space-y-6">
+                <!-- Основная информация -->
+                <div class="form-section glass-panel">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-info-circle text-blue-600"></i>
+                        Основная информация
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- POI ID (read-only) -->
+                        <div>
+                            <label class="form-label">POI ID</label>
+                            <input type="text" id="poi_id" name="poi_id" 
+                                   class="form-input w-full bg-gray-100" 
+                                   readonly value="POI-000001">
+                        </div>
+                        
+                        <!-- Регион -->
+                        <div>
+                            <label class="form-label">
+                                Регион / Город
+                                <span class="form-required">*</span>
+                            </label>
+                            <select id="region_ref" name="region_ref" class="form-input w-full" required>
+                                <option value="">Выберите регион</option>
+                                <option value="tokyo">Токио</option>
+                                <option value="kyoto">Киото</option>
+                                <option value="osaka">Осака</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Название (RU) -->
+                        <div>
+                            <label class="form-label">
+                                Название (RU)
+                                <span class="form-required">*</span>
+                            </label>
+                            <input type="text" id="name_ru" name="name_ru" 
+                                   class="form-input w-full" 
+                                   placeholder="Введите название на русском"
+                                   required>
+                        </div>
+                        
+                        <!-- Name (EN) -->
+                        <div>
+                            <label class="form-label">
+                                Name (EN)
+                                <span class="form-required">*</span>
+                            </label>
+                            <input type="text" id="name_en" name="name_en" 
+                                   class="form-input w-full" 
+                                   placeholder="Enter name in English"
+                                   required>
+                        </div>
+                        
+                        <!-- Префектура (RU) -->
+                        <div>
+                            <label class="form-label">
+                                Префектура (RU)
+                                <span class="form-required">*</span>
+                            </label>
+                            <select id="pref_ru" name="pref_ru" class="form-input w-full" required>
+                                <option value="">Выберите префектуру</option>
+                                <option value="tokyo">Токио</option>
+                                <option value="kyoto">Киото</option>
+                                <option value="osaka">Осака</option>
+                                <option value="kanagawa">Канагава</option>
+                                <option value="aichi">Айти</option>
+                                <option value="fukuoka">Фукуока</option>
+                                <option value="hokkaido">Хоккайдо</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Prefecture (EN) -->
+                        <div>
+                            <label class="form-label">
+                                Prefecture (EN)
+                                <span class="form-required">*</span>
+                            </label>
+                            <select id="pref_en" name="pref_en" class="form-input w-full" required>
+                                <option value="">Select prefecture</option>
+                                <option value="tokyo">Tokyo</option>
+                                <option value="kyoto">Kyoto</option>
+                                <option value="osaka">Osaka</option>
+                                <option value="kanagawa">Kanagawa</option>
+                                <option value="aichi">Aichi</option>
+                                <option value="fukuoka">Fukuoka</option>
+                                <option value="hokkaido">Hokkaido</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Категории -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <!-- Категория (RU) -->
+                        <div>
+                            <label class="form-label">
+                                Категория (RU)
+                                <span class="form-required">*</span>
+                            </label>
+                            <div class="form-input w-full min-h-[60px] cursor-pointer" id="cats_ru_container">
+                                <div class="text-gray-500 text-sm">Нажмите для выбора категорий</div>
+                            </div>
+                            <input type="hidden" id="cats_ru" name="cats_ru" required>
+                        </div>
+                        
+                        <!-- Category (EN) -->
+                        <div>
+                            <label class="form-label">
+                                Category (EN)
+                                <span class="form-required">*</span>
+                            </label>
+                            <div class="form-input w-full min-h-[60px] cursor-pointer" id="cats_en_container">
+                                <div class="text-gray-500 text-sm">Click to select categories</div>
+                            </div>
+                            <input type="hidden" id="cats_en" name="cats_en" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Google интеграция -->
+                <div class="form-section glass-panel">
+                    <h3 class="form-section-title">
+                        <i class="fab fa-google text-blue-600"></i>
+                        Google интеграция
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Google Place ID -->
+                        <div>
+                            <label class="form-label">Google Place ID</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="place_id" name="place_id" 
+                                       class="form-input flex-1" 
+                                       placeholder="Например: ChIJ-yRniZpWIpURE_YRZvj9CRQ"
+                                       pattern="^[A-Za-z0-9_-]{25,}$">
+                                <button type="button" id="checkGoogleBtn" class="btn-secondary" title="Проверить в Google">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </button>
+                            </div>
+                            <div class="google-place-info" id="googlePlaceInfo">
+                                <p class="text-sm text-blue-800">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Place ID валиден
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Официальный сайт -->
+                        <div>
+                            <label class="form-label">Официальный сайт</label>
+                            <input type="url" id="website" name="website" 
+                                   class="form-input w-full" 
+                                   placeholder="https://example.com">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Контент -->
+                <div class="form-section glass-panel">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-align-left text-purple-600"></i>
+                        Контент
+                    </h3>
+                    
+                    <!-- Часы работы -->
+                    <div class="mb-6">
+                        <label class="form-label">Часы работы</label>
+                        <input type="text" id="hours" name="hours" 
+                               class="form-input w-full" 
+                               placeholder="09:00-17:00, Mon closed">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Описание (RU) -->
+                        <div>
+                            <label class="form-label">Описание (RU)</label>
+                            <textarea id="desc_ru" name="desc_ru" 
+                                     class="form-input w-full" 
+                                     rows="4"
+                                     placeholder="Опишите достопримечательность на русском языке"></textarea>
+                        </div>
+                        
+                        <!-- Description (EN) -->
+                        <div>
+                            <label class="form-label">Description (EN)</label>
+                            <textarea id="desc_en" name="desc_en" 
+                                     class="form-input w-full" 
+                                     rows="4"
+                                     placeholder="Describe the point of interest in English"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Фотографии -->
+                    <div class="mt-6">
+                        <label class="form-label">Фотографии</label>
+                        <div class="dropzone" id="imageDropzone">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600">Перетащите изображения сюда или нажмите для выбора</p>
+                            <p class="text-sm text-gray-500 mt-2">Поддерживаются JPG, PNG, WebP (до 5 МБ)</p>
+                            <input type="file" id="images" name="images" 
+                                   accept="image/*" multiple hidden>
+                        </div>
+                        <div id="imagePreview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"></div>
+                    </div>
+                </div>
+                
+                <!-- Билеты -->
+                <div class="form-section glass-panel">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-ticket-alt text-green-600"></i>
+                        Билеты
+                    </h3>
+                    
+                    <div>
+                        <label class="form-label">Связанные билеты</label>
+                        <div class="form-input w-full min-h-[60px]">
+                            <button type="button" id="addTicketBtn" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-plus-circle mr-1"></i>
+                                Добавить билеты
+                            </button>
+                        </div>
+                        <div id="ticketsList" class="mt-4 space-y-2"></div>
+                    </div>
+                    
+                    <!-- Отображение типа и цены (lookup) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4" id="ticketLookups" style="display: none;">
+                        <div>
+                            <label class="form-label">Display Type</label>
+                            <input type="text" id="display_type" name="display_type" 
+                                   class="form-input w-full bg-gray-100" readonly>
+                        </div>
+                        <div>
+                            <label class="form-label">Display Price</label>
+                            <input type="text" id="display_price" name="display_price" 
+                                   class="form-input w-full bg-gray-100" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Публикация -->
+                <div class="form-section glass-panel">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-eye text-indigo-600"></i>
+                        Публикация
+                    </h3>
+                    
+                    <div class="mb-6">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" id="published" name="published" 
+                                   class="form-checkbox h-5 w-5 text-indigo-600 rounded">
+                            <span class="ml-2 text-gray-700">Опубликовать на сайте</span>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">Заметки (внутренние)</label>
+                        <textarea id="notes" name="notes" 
+                                 class="form-input w-full" 
+                                 rows="3"
+                                 placeholder="Любые внутренние комментарии или заметки"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Кнопки действий -->
+                <div class="flex justify-end gap-4 mt-8">
+                    <button type="button" onclick="window.history.back()" class="btn-secondary">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>
+                        Сохранить POI
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+    
+    <!-- Модальное окно выбора категорий -->
+    <div id="categoryModal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50" onclick="closeCategoryModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="glass-panel max-w-md w-full p-6 rounded-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">Выберите категории</h3>
+                    <button onclick="closeCategoryModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="categoryOptions" class="space-y-2 max-h-96 overflow-y-auto">
+                    <!-- Категории будут добавлены через JavaScript -->
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button onclick="closeCategoryModal()" class="btn-primary">
+                        Готово
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/admin-auth.js"></script>
+    <script src="poi-form.js"></script>
+</body>
+</html>

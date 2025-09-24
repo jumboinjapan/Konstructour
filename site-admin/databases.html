@@ -555,7 +555,15 @@
         level='pois'; /* keep selectedPoi */ renderCrumbs(); setMappingHeader('poi');
         const list = poisByCity[selectedCity.id] || [];
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
-        cards.innerHTML = list.map(p=>{
+        
+        // Добавляем кнопку создания POI через форму
+        const createButton = '<div class="mb-4 flex justify-end">' +
+          '<a href="poi-form.html?city=' + encodeURIComponent(selectedCity.name) + 
+          '&region=' + encodeURIComponent(selectedRegion.name) + 
+          '" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">' +
+          '<i class="fas fa-plus-circle mr-2"></i>Создать POI через форму</a></div>';
+        
+        const poiCards = list.map(p=>{
           const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
           const inner = '<div class="flex items-start gap-3">\
@@ -573,6 +581,8 @@
             </div>';
           return '<div class="cursor-pointer" data-go="tickets" data-id="'+p.id+'">'+card(actions, inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
+        
+        cards.innerHTML = createButton + poiCards;
       }
 
       // Airtable-backed loaders for each level
@@ -741,7 +751,8 @@
         } else if (act==='del-city'){
           const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; renderCities();
         } else if (act==='edit-poi'){
-          const list = poisByCity[selectedCity.id]||[]; const p=list.find(x=>x.id===id); if(!p) return; const n=prompt('Название POI:', p.name)||p.name; const t=prompt('Тип (культура/природа/гастро):', p.type||'')||p.type; p.name=n.trim(); p.type=t.trim(); renderPois();
+          // Открываем форму редактирования POI
+          window.location.href = `poi-form.html?id=${id}&city=${encodeURIComponent(selectedCity.name)}&region=${encodeURIComponent(selectedRegion.name)}`;
         } else if (act==='del-poi'){
           const list = poisByCity[selectedCity.id]||[]; poisByCity[selectedCity.id] = list.filter(x=>x.id!==id); delete ticketsByPoi[id]; renderPois();
         } else if (act==='edit-ticket'){
