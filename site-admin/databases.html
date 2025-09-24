@@ -174,6 +174,10 @@
 
       // Load saved config from server and populate fields
       let airtableReg = null; // cache for mapping header
+      
+      // Airtable table IDs
+      const AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
+      
       async function loadDbConfig(){
         try{
           const res = await fetch('/api/config-read.php', { headers: { 'X-Admin-Token': (window.ADMIN_TOKEN||'') } });
@@ -591,13 +595,29 @@
 
       async function loadPoisForCity(city){
         try{
+          const baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || 'apppwhjFN82N9zNqm';
           const res = await fetch('../api/db-sync.php',{
             method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({ scope:'pois', action:'list', data:{ filter:{ cityId: city.id, cityName: city.name } } })
+            body: JSON.stringify({ 
+              scope:'pois', 
+              action:'list', 
+              data:{ 
+                base_id: baseId,
+                table_id: AIRTABLE_POI_TABLE_ID,
+                filter:{ cityId: city.id, cityName: city.name } 
+              } 
+            })
           });
           const j = await res.json();
           const items = j.ok ? (j.items||[]) : [];
-          poisByCity[city.id] = items.map(it=>({ id: it.id, name: it.name || '—', type: (it.fields?.Category||'') }));
+          poisByCity[city.id] = items.map(it=>({ 
+            id: it.id, 
+            name: it.name || it.fields?.['POI Name (RU)'] || '—', 
+            type: (it.fields?.['POI Category (RU)']?.[0] || it.fields?.Category || ''),
+            name_en: it.fields?.['POI Name (EN)'] || '',
+            place_id: it.fields?.['Place ID'] || '',
+            published: it.fields?.['Published'] || false
+          }));
         }catch(e){ poisByCity[city.id] = []; }
       }
 
@@ -770,6 +790,28 @@
               notes: data.notes
             });
             
+            // Получаем base_id из конфигурации
+            const baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || 'apppwhjFN82N9zNqm';
+            
+            // Подготавливаем данные для Airtable
+            const airtableFields = {
+              'POI ID': poi.id,
+              'POI Name (RU)': poi.name,
+              'POI Name (EN)': poi.name_en,
+              'Regions': [selectedRegion.id], // Link to Regions table
+              'Prefecture (RU)': poi.prefecture_ru,
+              'Prefecture (EN)': poi.prefecture_en,
+              'POI Category (RU)': poi.categories_ru,
+              'POI Category (EN)': poi.categories_en,
+              'Place ID': poi.place_id,
+              'Website': poi.website,
+              'Working Hours': poi.hours,
+              'Description (RU)': poi.description_ru,
+              'Description (EN)': poi.description_en,
+              'Published': poi.published,
+              'Notes': poi.notes
+            };
+            
             // Отправляем на сервер
             const res = await fetch('/api/db-sync.php', {
               method: 'POST',
@@ -780,7 +822,13 @@
               body: JSON.stringify({
                 scope: 'pois',
                 action: 'update',
-                data: poi
+                data: {
+                  id: poi.id,
+                  base_id: baseId,
+                  table_id: AIRTABLE_POI_TABLE_ID,
+                  fields: airtableFields,
+                  localData: poi
+                }
               })
             });
             
@@ -1239,6 +1287,28 @@
             // Добавляем в локальный список
             list.push(newPoi);
             
+            // Получаем base_id из конфигурации
+            const baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || 'apppwhjFN82N9zNqm';
+            
+            // Подготавливаем данные для Airtable
+            const airtableFields = {
+              'POI ID': id,
+              'POI Name (RU)': data.name_ru,
+              'POI Name (EN)': data.name_en,
+              'Regions': [selectedRegion.id], // Link to Regions table
+              'Prefecture (RU)': data.pref_ru,
+              'Prefecture (EN)': data.pref_en,
+              'POI Category (RU)': data.cats_ru,
+              'POI Category (EN)': data.cats_en,
+              'Place ID': data.place_id,
+              'Website': data.website,
+              'Working Hours': data.hours,
+              'Description (RU)': data.desc_ru,
+              'Description (EN)': data.desc_en,
+              'Published': data.published,
+              'Notes': data.notes
+            };
+            
             // Отправляем на сервер
             const res = await fetch('/api/db-sync.php', {
               method: 'POST',
@@ -1249,7 +1319,12 @@
               body: JSON.stringify({
                 scope: 'pois',
                 action: 'create',
-                data: newPoi
+                data: {
+                  base_id: baseId,
+                  table_id: AIRTABLE_POI_TABLE_ID,
+                  fields: airtableFields,
+                  localData: newPoi
+                }
               })
             });
             
