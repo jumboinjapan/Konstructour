@@ -58,7 +58,7 @@ do{
   list($code,$out,$err)=air_call('GET', "$BASE_ID/$CITY_TABLE_ID", $API_KEY, null, ['pageSize'=>100,'offset'=>$offset]);
   if ($code>=400){ http_response_code(500); echo json_encode(['ok'=>false,'error'=>"Airtable $code on list",'details'=>json_decode($out,true)], JSON_UNESCAPED_UNICODE); exit; }
   $j=json_decode($out,true);
-  foreach(($j['records']??[]) as $rec){ $v=strval(($rec['fields']['ID']??$rec['fields']['Идентификатор']??'')); if (preg_match($re,$v,$m)) $max=max($max,intval($m[1],10)); }
+  foreach(($j['records']??[]) as $rec){ $v=strval(($rec['fields']['ID']??'')); if (preg_match($re,$v,$m)) $max=max($max,intval($m[1],10)); }
   $offset=$j['offset']??null;
 }while($offset);
 $nextId = sprintf('%s-%04d',$prefix,$max+1);
@@ -66,7 +66,7 @@ $nextId = sprintf('%s-%04d',$prefix,$max+1);
 // 2) Build fields - ПРАВИЛЬНАЯ ЛОГИКА ДЛЯ LINKED RECORDS
 $nameRuCandidates = ['Name (RU)','Название (RU)'];
 $nameEnCandidates = ['Name (EN)','Название (EN)'];
-$idCandidates     = ['ID','Идентификатор'];
+$idCandidates     = ['ID'];
 
 // Поле для связанной записи региона (Linked Record)
 $linkField = $cfg['airtable_registry']['tables']['city']['linkField'] ?? 'Regions';
