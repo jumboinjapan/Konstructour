@@ -9,6 +9,12 @@ return array (
       array (
         'tableId' => 'tblbSajWkzI8X7M4U',
       ),
+      'city' => 
+      array (
+        'tableId' => 'tblHaHc9NV0mA8bSa',
+        'linkField' => 'Regions',
+        'regionCodeField' => 'Region',
+      ),
     ),
   ),
 );
