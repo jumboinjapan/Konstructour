@@ -787,9 +787,14 @@
               }));
               
               console.log(`City ${city.name} has ${poisByCity[city.id].length} POI`);
-            });
-            
-          }catch(e){ 
+          });
+          
+          // Перерендерим города после загрузки POI чтобы обновить пилюли
+          if (level === 'cities') {
+            renderCities();
+          }
+          
+        }catch(e){
             console.error('Error preloading POI for region:', region.name, e);
           }
         }
@@ -823,7 +828,7 @@
           push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
           await loadCitiesForRegion(selectedRegion);
           await preloadPoisCountsForRegion(selectedRegion);
-          renderCities();
+          renderCities(); // рендерим ПОСЛЕ загрузки POI
           return;
         }
         if (to==='pois'){
