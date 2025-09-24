@@ -917,181 +917,165 @@
           
           wrap.innerHTML = `
             <div class="absolute inset-0" onclick="this.parentElement.querySelector('#poi_cancel').click()"></div>
-            <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-              <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-medium text-gray-800">${isEdit ? 'Редактировать POI' : 'Новый POI'}</h3>
+            <div class="relative bg-white rounded-lg shadow-xl p-4 w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-medium text-gray-800">${isEdit ? 'Редактировать POI' : 'Новый POI'}</h3>
                 <button id="poi_close" class="text-gray-400 hover:text-gray-600">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
               
-              <form id="poi_form" class="space-y-6">
-                <!-- Основная информация -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-4 flex items-center">
-                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
-                    Основная информация
-                  </h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Название (RU) <span class="text-red-500">*</span>
-                      </label>
-                      <input id="poi_name_ru" type="text" class="input-japanese w-full" 
-                             placeholder="Введите название на русском" required
-                             value="${editData ? editData.name : ''}">
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Name (EN) <span class="text-red-500">*</span>
-                      </label>
-                      <input id="poi_name_en" type="text" class="input-japanese w-full" 
-                             placeholder="Enter name in English" required
-                             value="${editData ? editData.name_en || '' : ''}">
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Префектура (RU) <span class="text-red-500">*</span>
-                      </label>
-                      <select id="poi_pref_ru" class="input-japanese w-full" required>
-                        <option value="">Выберите префектуру</option>
-                        ${prefectures.map(p => `<option value="${p.value}">${p.ru}</option>`).join('')}
-                      </select>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Prefecture (EN) <span class="text-red-500">*</span>
-                      </label>
-                      <select id="poi_pref_en" class="input-japanese w-full" required>
-                        <option value="">Select prefecture</option>
-                        ${prefectures.map(p => `<option value="${p.value}">${p.en}</option>`).join('')}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Категории -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-4">
-                    <i class="fas fa-tags mr-2 text-purple-600"></i>
-                    Категории
-                  </h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Категории (RU) <span class="text-red-500">*</span>
-                      </label>
-                      <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded p-2">
-                        ${categories_ru.map((cat, idx) => `
-                          <label class="flex items-center">
-                            <input type="checkbox" name="cats_ru" value="${cat}" 
-                                   class="mr-2 text-indigo-600">
-                            <span class="text-sm">${cat}</span>
+              <form id="poi_form" class="space-y-3">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <!-- Левая колонка -->
+                  <div class="space-y-3">
+                    <!-- Основная информация -->
+                    <div class="bg-gray-50 rounded p-3">
+                      <h4 class="text-xs font-medium text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-info-circle mr-1 text-blue-600 text-xs"></i>
+                        Основная информация
+                      </h4>
+                      <div class="grid grid-cols-1 gap-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700">
+                            Название (RU) <span class="text-red-500">*</span>
                           </label>
-                        `).join('')}
-                      </div>
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Categories (EN) <span class="text-red-500">*</span>
-                      </label>
-                      <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded p-2">
-                        ${categories_en.map((cat, idx) => `
-                          <label class="flex items-center">
-                            <input type="checkbox" name="cats_en" value="${cat}" 
-                                   class="mr-2 text-indigo-600">
-                            <span class="text-sm">${cat}</span>
+                          <input id="poi_name_ru" type="text" class="input-japanese w-full text-sm py-1" 
+                                 placeholder="На русском" required
+                                 value="${editData ? editData.name : ''}">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700">
+                            Name (EN) <span class="text-red-500">*</span>
                           </label>
-                        `).join('')}
+                          <input id="poi_name_en" type="text" class="input-japanese w-full text-sm py-1" 
+                                 placeholder="In English" required
+                                 value="${editData ? editData.name_en || '' : ''}">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700">
+                              Префектура <span class="text-red-500">*</span>
+                            </label>
+                            <select id="poi_pref_ru" class="input-japanese w-full text-sm py-1" required>
+                              <option value="">Выберите</option>
+                              ${prefectures.map(p => `<option value="${p.value}">${p.ru}</option>`).join('')}
+                            </select>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700">
+                              Prefecture <span class="text-red-500">*</span>
+                            </label>
+                            <select id="poi_pref_en" class="input-japanese w-full text-sm py-1" required>
+                              <option value="">Select</option>
+                              ${prefectures.map(p => `<option value="${p.value}">${p.en}</option>`).join('')}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Google интеграция и контент -->
+                    <div class="bg-gray-50 rounded p-3">
+                      <h4 class="text-xs font-medium text-gray-700 mb-2">
+                        <i class="fab fa-google mr-1 text-blue-600 text-xs"></i>
+                        Google & Контент
+                      </h4>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700">Google Place ID</label>
+                          <input id="poi_place_id" type="text" class="input-japanese w-full text-sm py-1" 
+                                 placeholder="ChIJ..." pattern="^[A-Za-z0-9_-]{25,}$">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700">Сайт</label>
+                          <input id="poi_website" type="url" class="input-japanese w-full text-sm py-1" 
+                                 placeholder="https://...">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700">Часы работы</label>
+                          <input id="poi_hours" type="text" class="input-japanese w-full text-sm py-1" 
+                                 placeholder="09:00-17:00">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Правая колонка -->
+                  <div class="space-y-3">
+                    <!-- Категории -->
+                    <div class="bg-gray-50 rounded p-3">
+                      <h4 class="text-xs font-medium text-gray-700 mb-2">
+                        <i class="fas fa-tags mr-1 text-purple-600 text-xs"></i>
+                        Категории <span class="text-red-500">*</span>
+                      </h4>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-600 mb-1">RU</label>
+                          <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
+                            ${categories_ru.map((cat) => `
+                              <label class="flex items-center text-xs">
+                                <input type="checkbox" name="cats_ru" value="${cat}" class="mr-1">
+                                <span>${cat}</span>
+                              </label>
+                            `).join('')}
+                          </div>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-600 mb-1">EN</label>
+                          <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
+                            ${categories_en.map((cat) => `
+                              <label class="flex items-center text-xs">
+                                <input type="checkbox" name="cats_en" value="${cat}" class="mr-1">
+                                <span>${cat}</span>
+                              </label>
+                            `).join('')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Описания -->
+                    <div class="bg-gray-50 rounded p-3">
+                      <h4 class="text-xs font-medium text-gray-700 mb-2">
+                        <i class="fas fa-align-left mr-1 text-green-600 text-xs"></i>
+                        Описания
+                      </h4>
+                      <div class="space-y-2">
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700">Описание (RU)</label>
+                          <textarea id="poi_desc_ru" class="input-japanese w-full text-sm py-1" rows="2"
+                                    placeholder="Краткое описание"></textarea>
+                        </div>
+                        <div>
+                          <label class="block text-xs font-medium text-gray-700">Description (EN)</label>
+                          <textarea id="poi_desc_en" class="input-japanese w-full text-sm py-1" rows="2"
+                                    placeholder="Brief description"></textarea>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                <!-- Google интеграция -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-4">
-                    <i class="fab fa-google mr-2 text-blue-600"></i>
-                    Google интеграция
-                  </h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Google Place ID
-                      </label>
-                      <input id="poi_place_id" type="text" class="input-japanese w-full" 
-                             placeholder="Например: ChIJ-yRniZpWIpURE_YRZvj9CRQ"
-                             pattern="^[A-Za-z0-9_-]{25,}$">
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Официальный сайт
-                      </label>
-                      <input id="poi_website" type="url" class="input-japanese w-full" 
-                             placeholder="https://example.com">
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Контент -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-4">
-                    <i class="fas fa-align-left mr-2 text-green-600"></i>
-                    Контент
-                  </h4>
-                  <div class="space-y-4">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Часы работы
-                      </label>
-                      <input id="poi_hours" type="text" class="input-japanese w-full" 
-                             placeholder="09:00-17:00, Mon closed">
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                          Описание (RU)
-                        </label>
-                        <textarea id="poi_desc_ru" class="input-japanese w-full" rows="3"
-                                  placeholder="Опишите достопримечательность"></textarea>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                          Description (EN)
-                        </label>
-                        <textarea id="poi_desc_en" class="input-japanese w-full" rows="3"
-                                  placeholder="Describe the point of interest"></textarea>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Публикация -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-4">
-                    <i class="fas fa-eye mr-2 text-indigo-600"></i>
-                    Публикация
-                  </h4>
-                  <div class="space-y-4">
+                <!-- Публикация и заметки - внизу на всю ширину -->
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="flex items-center justify-between">
                     <label class="flex items-center">
-                      <input id="poi_published" type="checkbox" class="mr-2 text-indigo-600">
-                      <span class="text-sm text-gray-700">Опубликовать на сайте</span>
+                      <input id="poi_published" type="checkbox" class="mr-2">
+                      <span class="text-sm text-gray-700">Опубликовать</span>
                     </label>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Заметки (внутренние)
-                      </label>
-                      <textarea id="poi_notes" class="input-japanese w-full" rows="2"
-                                placeholder="Любые внутренние комментарии"></textarea>
+                    <div class="flex-1 ml-4">
+                      <input id="poi_notes" type="text" class="input-japanese w-full text-sm py-1" 
+                             placeholder="Заметки (внутренние)">
                     </div>
                   </div>
                 </div>
               </form>
               
-              <div class="mt-6 flex justify-end gap-3">
-                <button id="poi_cancel" class="btn-japanese">Отмена</button>
-                <button id="poi_save" class="btn-japanese accent">
-                  <i class="fas fa-save mr-2"></i>
+              <div class="mt-4 flex justify-end gap-2">
+                <button id="poi_cancel" class="btn-japanese text-sm py-1 px-3">Отмена</button>
+                <button id="poi_save" class="btn-japanese accent text-sm py-1 px-3">
+                  <i class="fas fa-save mr-1"></i>
                   ${isEdit ? 'Обновить' : 'Создать'}
                 </button>
               </div>
