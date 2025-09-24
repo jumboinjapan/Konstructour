@@ -68,7 +68,7 @@
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
                             <span id="badgeAirtable" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span></span></span>
+                            <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span>Ожидание</span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
@@ -422,11 +422,23 @@
             const r2 = await fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
             const j2 = await r2.json();
             const ok = !!(j2 && j2.ok);
-            if (dot){ dot.classList.remove('loading'); dot.classList.toggle('ok', ok); dot.classList.toggle('err', !ok); }
+            if (dot){ 
+              dot.classList.remove('loading'); 
+              dot.classList.toggle('ok', ok); 
+              dot.classList.toggle('err', !ok); 
+            }
+            // Обновляем текст статуса
+            const statusText = status ? status.querySelector('span:last-child') : null;
+            if (statusText) {
+              statusText.textContent = ok ? 'Подключено' : 'Ошибка';
+            }
           }catch(_){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
         }
 
         loadRegistry();
+        
+        // Автоматически проверяем статус при загрузке страницы
+        refreshServerKeyBadge();
       })();
     </script>
 </body>
