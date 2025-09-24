@@ -1,499 +1,297 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Konstructour — Базы данных</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="../styles/admin-japanese.css" rel="stylesheet">
-    <style>
-      body{ background: rgb(var(--color-washi)); min-height:100vh; }
-      .tab{ padding:14px 20px; font-size:16px; border-radius:10px; cursor:pointer; flex:1 1 0%; text-align:center; }
-      .tab.active{ background:#fff; border:1px solid rgba(139,90,43,.15); }
-      .tab-content{ display:none; }
-      .tab-content.active{ display:block; }
+  <!DOCTYPE html>
+  <html lang="ru">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+      <meta http-equiv="Pragma" content="no-cache">
+      <meta http-equiv="Expires" content="0">
+      <title>Konstructour — Базы данных</title>
+      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+      <link href="../styles/admin-japanese.css" rel="stylesheet">
+      <style>
+        body{ background: rgb(var(--color-washi)); min-height:100vh; }
+        .tab{ padding:14px 20px; font-size:16px; border-radius:10px; cursor:pointer; flex:1 1 0%; text-align:center; }
+        .tab.active{ background:#fff; border:1px solid rgba(139,90,43,.15); }
+        .tab-content{ display:none; }
+        .tab-content.active{ display:block; }
       /* Fixed sizes to keep API action row stable */
       .api-select{ width: 180px; }
       .api-base-label{ display:inline-block; width: 120px; }
       .api-base-input{ width: 280px; }
       .api-table-label{ display:inline-block; width: 140px; }
       .api-table-input{ width: 220px; }
-    </style>
-  </head>
-  <body data-no-redirect="true">
-    <div class="dashboard-grid">
-      <aside class="sidebar texture-wood">
-        <div class="p-6">
-          <div class="flex items-center mb-8">
-            <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mr-3">
-              <svg class="w-8 h-8 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>
-            </div>
-            <div>
-              <h1 class="text-xl font-light text-gray-800">Konstructour</h1>
-              <p class="text-xs text-gray-600">Site Admin</p>
-            </div>
-          </div>
-          <nav class="space-y-2">
-            <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор</a>
-            <a href="api-catalog.html" class="sidebar-link"><i class="fas fa-list mr-3 text-gray-600"></i>Каталог API</a>
-            <a href="databases.html" class="menu-item active sidebar-link"><i class="fas fa-database mr-3 text-green-600"></i>Базы данных</a>
-          </nav>
-        </div>
-      </aside>
-      <main class="p-8">
-        <header class="mb-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-3xl font-light text-gray-800 mb-1">Базы данных</h2>
-              <p class="text-gray-600">Выберите базу и управляйте данными через интеграции API</p>
-            </div>
-          </div>
-        </header>
-
-        <div class="glass-panel p-8 rounded-lg mb-6">
-          <div class="flex items-center gap-3">
-            <button class="tab active" data-tab="regions"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</button>
-            <button class="tab" data-tab="tours"><i class="fas fa-route mr-2 text-green-600"></i>Туры</button>
-            <button class="tab" data-tab="templates"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</button>
-          </div>
-        </div>
-
-        <!-- Регионы (иерархия карточек) -->
-        <section id="tab-regions" class="tab-content active">
-          <div class="glass-panel p-6 rounded-lg relative">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</h3>
-            </div>
-
-            <!-- Хлебные крошки -->
-            <div class="mb-4 -mt-1">
-              <div id="db_breadcrumbs" class="flex items-center flex-wrap text-base text-gray-600"></div>
-            </div>
-
-            <!-- Контейнер карточек уровня (динамически) -->
-            <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-
-            <!-- Кнопка добавления под сеткой -->
-            <div class="mt-6 flex justify-center">
-              <button id="db_fab_add" class="btn-japanese rounded-full w-12 h-12 flex items-center justify-center shadow-lg" title="Добавить">
-                <i class="fas fa-plus"></i>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Туры -->
-        <section id="tab-tours" class="tab-content">
-          <div class="glass-panel p-6 rounded-lg">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-route mr-2 text-green-600"></i>Туры</h3>
-            </div>
-            <div id="tours_schema" class="text-sm text-gray-600">
-              Структура берётся из Project Description.md. Настройка схемы будет подключена.
-            </div>
-            <div class="mt-4">
-              <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
-              <div id="tours_preview" class="japanese-table w-full rounded-lg overflow-hidden">
-                <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+      
+      /* Дополнительные цвета для категорий POI */
+      .text-brown-600 { color: #8B4513; }
+      </style>
+    </head>
+    <body data-no-redirect="true">
+      <div class="dashboard-grid">
+        <aside class="sidebar texture-wood">
+          <div class="p-6">
+            <div class="flex items-center mb-8">
+              <div class="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center mr-3">
+                <svg class="w-8 h-8 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>
+              </div>
+              <div>
+                <h1 class="text-xl font-light text-gray-800">Konstructour</h1>
+                <p class="text-xs text-gray-600">Site Admin</p>
               </div>
             </div>
+            <nav class="space-y-2">
+              <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large mr-3 text-indigo-600"></i>Обзор</a>
+              <a href="api-catalog.html" class="sidebar-link"><i class="fas fa-list mr-3 text-gray-600"></i>Каталог API</a>
+              <a href="databases.html" class="menu-item active sidebar-link"><i class="fas fa-database mr-3 text-green-600"></i>Базы данных</a>
+            </nav>
           </div>
-        </section>
-
-        <!-- Шаблоны -->
-        <section id="tab-templates" class="tab-content">
-          <div class="glass-panel p-6 rounded-lg">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-light text-gray-800"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</h3>
-            </div>
-            <div id="templates_schema" class="text-sm text-gray-600">
-              Структура настраивается индивидуально.
-            </div>
-            <div class="mt-4">
-              <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
-              <div id="templates_preview" class="japanese-table w-full rounded-lg overflow-hidden">
-                <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+        </aside>
+        <main class="p-8">
+          <header class="mb-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-3xl font-light text-gray-800 mb-1">Базы данных</h2>
+                <p class="text-gray-600">Выберите базу и управляйте данными через интеграции API</p>
               </div>
             </div>
+          </header>
+
+          <div class="glass-panel p-8 rounded-lg mb-6">
+            <div class="flex items-center gap-3">
+              <button class="tab active" data-tab="regions"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</button>
+              <button class="tab" data-tab="tours"><i class="fas fa-route mr-2 text-green-600"></i>Туры</button>
+              <button class="tab" data-tab="templates"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</button>
+            </div>
           </div>
-        </section>
 
-      </main>
-    </div>
+          <!-- Регионы (иерархия карточек) -->
+          <section id="tab-regions" class="tab-content active">
+            <div class="glass-panel p-6 rounded-lg relative">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-lg font-light text-gray-800"><i class="fas fa-globe-asia mr-2 text-blue-600"></i>Регионы</h3>
+              </div>
 
-    <script>
-    // Airtable table IDs - определяем глобально в самом начале
-    window.AIRTABLE_BASE_ID = 'apppwhjFN82N9zNqm';
-    window.AIRTABLE_COUNTRY_TABLE_ID = 'tble0eh9mstZeBKxM';
-    window.AIRTABLE_REGIONS_TABLE_ID = 'tblbSajWkzI8X7M4U';
-    window.AIRTABLE_CITIES_TABLE_ID = 'tblHaHc9NV0mA8bSa';
-    window.AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
-    window.AIRTABLE_TICKETS_TABLE_ID = 'tblKOLhiHMihpWsVl';
-    
-    // Глобальный перехват ошибок — пишем в серверный лог
-    (function(){
-      function postError(payload){
-        try{ fetch('/api/error-log.php?action=add',{ method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }); }catch(_e){}
-      }
-      window.addEventListener('error', function(e){
-        postError({ type:'js-error', page:'databases.html', msg: String(e.message||'error'), file: e.filename||'', line: e.lineno||0, col: e.colno||0, stack: e.error && e.error.stack ? String(e.error.stack) : '' });
-      });
-      window.addEventListener('unhandledrejection', function(e){
-        const r = e && (e.reason||e.detail||{});
-        postError({ type:'js-unhandled', page:'databases.html', msg: (r && (r.message||r)) ? String(r.message||r) : 'unhandled', stack: r && r.stack ? String(r.stack) : '' });
-      });
-    })();
-    // Простые вкладки без сторонних зависимостей
-    (function(){
-      window.__ADMIN_DB_DEBUG = /(^|[?&])debug=1(&|$)/.test(location.search) || (localStorage.getItem('debug_admin_db')==='1');
-      window.dlog = function(){ if (window.__ADMIN_DB_DEBUG) { try{ console.log.apply(console, ['[DB]'].concat(Array.from(arguments))); }catch(_e){} } };
-      const tabs = document.querySelectorAll('.tab');
-      const sections = {
-        regions: document.getElementById('tab-regions'),
-        tours: document.getElementById('tab-tours'),
-        templates: document.getElementById('tab-templates')
+              <!-- Хлебные крошки -->
+              <div class="mb-4 -mt-1">
+                <div id="db_breadcrumbs" class="flex items-center flex-wrap text-base text-gray-600"></div>
+              </div>
+
+              <!-- Контейнер карточек уровня (динамически) -->
+              <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+              <!-- Кнопка добавления под сеткой -->
+              <div class="mt-6 flex justify-center">
+                <button id="db_fab_add" class="btn-japanese rounded-full w-12 h-12 flex items-center justify-center shadow-lg" title="Добавить">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Туры -->
+          <section id="tab-tours" class="tab-content">
+            <div class="glass-panel p-6 rounded-lg">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-light text-gray-800"><i class="fas fa-route mr-2 text-green-600"></i>Туры</h3>
+              </div>
+              <div id="tours_schema" class="text-sm text-gray-600">
+                Структура берётся из Project Description.md. Настройка схемы будет подключена.
+              </div>
+              <div class="mt-4">
+                <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
+                <div id="tours_preview" class="japanese-table w-full rounded-lg overflow-hidden">
+                  <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Шаблоны -->
+          <section id="tab-templates" class="tab-content">
+            <div class="glass-panel p-6 rounded-lg">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-light text-gray-800"><i class="fas fa-layer-group mr-2 text-purple-600"></i>Шаблоны</h3>
+              </div>
+              <div id="templates_schema" class="text-sm text-gray-600">
+                Структура настраивается индивидуально.
+              </div>
+              <div class="mt-4">
+                <div class="text-xs text-gray-500 mb-2">Предпросмотр данных</div>
+                <div id="templates_preview" class="japanese-table w-full rounded-lg overflow-hidden">
+                  <div class="p-4 text-gray-500">Нет данных. Нажмите «Синхронизировать».</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </main>
+      </div>
+
+      <script>
+      // Airtable table IDs - определяем глобально в самом начале
+      window.AIRTABLE_BASE_ID = 'apppwhjFN82N9zNqm';
+      window.AIRTABLE_COUNTRY_TABLE_ID = 'tble0eh9mstZeBKxM';
+      window.AIRTABLE_REGIONS_TABLE_ID = 'tblbSajWkzI8X7M4U';
+      window.AIRTABLE_CITIES_TABLE_ID = 'tblHaHc9NV0mA8bSa';
+      window.AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
+      window.AIRTABLE_TICKETS_TABLE_ID = 'tblKOLhiHMihpWsVl';
+      
+      // SVG иконки для категорий POI
+      window.POI_CATEGORY_ICONS = {
+        'Синтоистское святилище': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 2L14 6H20V8H18V20H16V8H8V20H6V8H4V6H10L12 2ZM10 10H14V12H10V10ZM10 14H14V16H10V14Z"/>
+        </svg>`,
+        'Буддийский храм': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 2L13.5 5.5H18V7H16V11H18.5L20 14H4L5.5 11H8V7H6V5.5H10.5L12 2ZM10 9H14V13H10V9Z"/>
+        </svg>`,
+        'Архитектурный объект': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M6 20V9L12 4L18 9V20H16V11.5L12 8.5L8 11.5V20H6ZM10 15H14V17H10V15Z"/>
+        </svg>`,
+        'Музей': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 1L21 6V8H3V6L12 1ZM5 10H7V18H5V10ZM9 10H11V18H9V10ZM13 10H15V18H13V10ZM17 10H19V18H17V10ZM3 20V22H21V20H3Z"/>
+        </svg>`,
+        'Арт-пространство / Галерея': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M9 10V8L7 6L9 4V2H15V4L17 6L15 8V10H9ZM12 5.5L13.5 4H10.5L12 5.5ZM4 12H20V20H4V12ZM6 14V18H18V14H6Z"/>
+        </svg>`,
+        'Смотровая площадка': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 2C15.31 2 18 4.69 18 8C18 11.54 12 22 12 22S6 11.54 6 8C6 4.69 8.69 2 12 2ZM12 6C10.9 6 10 6.9 10 8S10.9 10 12 10 14 9.1 14 8 13.1 6 12 6ZM12 9C11.45 9 11 8.55 11 8S11.45 7 12 7 13 7.45 13 8 12.55 9 12 9Z"/>
+        </svg>`,
+        'Ландшафтный сад / Парк': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22L6.66 19.7C7.14 19.87 7.64 20 8 20C8.36 20 8.86 19.87 9.34 19.7L10.29 22L12.18 21.34C10.1 16.17 8 10 17 8ZM3 3L12 2L21 3V6H3V3Z"/>
+        </svg>`,
+        'Достопримечательность': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2ZM12 6.5L11.5 8.5L9.5 9L11.5 9.5L12 11.5L12.5 9.5L14.5 9L12.5 8.5L12 6.5Z"/>
+        </svg>`,
+        'Историческое место': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 2L22 6V8H2V6L12 2ZM4 10H20V18H16V20H8V18H4V10ZM6 12V16H18V12H6ZM8 13H16V15H8V13Z"/>
+        </svg>`,
+        'Японский отель': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M7 13C7.55 13 8 12.55 8 12S7.55 11 7 11 6 11.45 6 12 6.45 13 7 13ZM12 13C12.55 13 13 12.55 13 12S12.55 11 12 11 11 11.45 11 12 11.45 13 12 13ZM17 13C17.55 13 18 12.55 18 12S17.55 11 17 11 16 11.45 16 12 16.45 13 17 13ZM19 7H5V5H19V7ZM19 9H5V19H19V9ZM21 3H3V21H21V3Z"/>
+        </svg>`,
+        'Развлечения': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"/>
+        </svg>`,
+        'Шоппинг': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M7 18C5.9 18 5 18.9 5 20S5.9 22 7 22 9 21.1 9 20 8.1 18 7 18ZM1 2V4H3L6.6 11.59L5.25 14.04C5.09 14.32 5 14.65 5 15C5 16.1 5.9 17 7 17H19V15H7.42C7.28 15 7.17 14.89 7.17 14.75L7.2 14.63L8.1 13H15.55C16.3 13 16.96 12.59 17.3 11.97L20.88 5H5.21L4.27 3H1ZM17 18C15.9 18 15 18.9 15 20S15.9 22 17 22 19 21.1 19 20 18.1 18 17 18Z"/>
+        </svg>`,
+        'Термальный источник': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M9 17C9 15.34 10.34 14 12 14S15 15.34 15 17 13.66 20 12 20 9 18.66 9 17ZM12 2C10.89 2 10 2.89 10 4S10.89 6 12 6 14 5.11 14 4 13.11 2 12 2ZM6 6C4.89 6 4 6.89 4 8S4.89 10 6 10 8 9.11 8 8 7.11 6 6 6ZM18 6C16.89 6 16 6.89 16 8S16.89 10 18 10 20 9.11 20 8 19.11 6 18 6Z"/>
+        </svg>`,
+        'СПА': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M19 12C19 8.13 15.87 5 12 5S5 8.13 5 12C5 15.87 8.13 19 12 19S19 15.87 19 12ZM12 7C14.76 7 17 9.24 17 12S14.76 17 12 17 7 14.76 7 12 9.24 7 12 7ZM12 9C10.34 9 9 10.34 9 12S10.34 15 12 15 15 13.66 15 12 13.66 9 12 9Z"/>
+        </svg>`
       };
-      tabs.forEach(btn=>{
-        btn.addEventListener('click', function(e){
-          e.preventDefault();
-          tabs.forEach(b=>b.classList.remove('active'));
-          this.classList.add('active');
-          Object.values(sections).forEach(s=> s && s.classList.remove('active'));
-          const key = this.getAttribute('data-tab');
-          if (sections[key]) sections[key].classList.add('active');
+      
+      // Функция получения иконки по категории
+      window.getPOICategoryIcon = function(category) {
+        return window.POI_CATEGORY_ICONS[category] || `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path d="M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"/>
+        </svg>`;
+      };
+      
+      // Глобальный перехват ошибок — пишем в серверный лог
+      (function(){
+        function postError(payload){
+          try{ fetch('/api/error-log.php?action=add',{ method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }); }catch(_e){}
+        }
+        window.addEventListener('error', function(e){
+          postError({ type:'js-error', page:'databases.html', msg: String(e.message||'error'), file: e.filename||'', line: e.lineno||0, col: e.colno||0, stack: e.error && e.error.stack ? String(e.error.stack) : '' });
         });
-      });
-
-      // Fake sync state toggling for icon demo (replace with real sync hooks)
-      function setSyncing(scope, isSyncing){
-        const el = document.getElementById(scope+'_sync_icon');
-        if (!el) return;
-        if (isSyncing) el.classList.add('animate-spin'); else el.classList.remove('animate-spin');
-      }
-
-      // Remove placeholder spinner handler to avoid side-effects on clicks
-
-      // Base label auto-switch for API type
-      function bindApiLabel(){ /* удалено вместе с UI */ }
-
-      // Load saved config from server and populate fields
-      window.airtableReg = null; // cache for mapping header - делаем глобальной
-      
-      
-      async function loadDbConfig(){
-        try{
-          const res = await fetch('/api/config-read.php', { headers: { 'X-Admin-Token': (window.ADMIN_TOKEN||'') } });
-          if (!res.ok) return;
-          const data = await res.json();
-          const db = (data && data.databases) || {};
-          const reg = (data && data.airtable_registry) || null;
-          window.airtableReg = reg;
-          function fill(){ /* UI удалён */ }
-          fill('regions', db.regions);
-          fill('tours', db.tours);
-          fill('templates', db.templates);
-          // Fill Airtable Mapping UI
-          if (reg){
-            const baseId = reg.baseId || reg.base_id || '';
-            const t = reg.tables || {};
-            document.getElementById('am_base_id') && (document.getElementById('am_base_id').value = baseId);
-            function setv(id, val){ const el = document.getElementById(id); if (el && typeof val==='string') el.value = val; }
-            setv('am_country_label', t.country?.label||''); setv('am_country_table', t.country?.tableId||''); setv('am_country_view', t.country?.viewId||'');
-            setv('am_region_label',  t.region?.label||'');  setv('am_region_table',  t.region?.tableId||'');  setv('am_region_view',  t.region?.viewId||'');
-            setv('am_city_label',    t.city?.label||'');    setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
-            setv('am_poi_label',     t.poi?.label||'');     setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
-            // Render mapping header for Regions
-            // initial header will be set by render functions
-          }
-        }catch(e){ console.warn('loadDbConfig failed', e); }
-      }
-      loadDbConfig();
-
-      function setMappingHeader(){ /* бейдж перенесён — здесь ничего не рендерим */ }
-      // Сделаем доступной для других модулей на странице
-      window.setMappingHeader = setMappingHeader;
-
-      // Fallback: прямой список регионов через test-proxy, читая реестр с сервера при необходимости
-      async function loadRegionsViaProxy(){
-        try{
-          let baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || '';
-          let regTbl = (window.airtableReg && window.airtableReg.tables && (window.airtableReg.tables.region?.tableId || window.airtableReg.tables.region?.table_id)) || '';
-          if (!baseId || !regTbl){
-            const cfg = await fetch('/api/config-read.php').then(r=>r.ok?r.json():null).catch(()=>null);
-            const reg = cfg && (cfg.airtable_registry||{});
-            if (reg){
-              baseId = baseId || reg.baseId || reg.base_id || '';
-              const t = reg.tables||{}; regTbl = regTbl || t.region?.tableId || t.region?.table_id || '';
-            }
-          }
-          // Жёсткие дефолты (если реестр недоступен): Regions table
-          if (!baseId) baseId = window.AIRTABLE_BASE_ID;
-          if (!regTbl) regTbl = window.AIRTABLE_REGIONS_TABLE_ID;
-          if (!baseId || !regTbl) return false;
-          const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
-          const r2 = await fetch(u); if(!r2.ok) return false; const j2 = await r2.json();
-          const recs = (j2 && j2.body && (j2.body.records || j2.body.items)) || j2.records || j2.items || [];
-          regions = recs.map((rec, idx)=>{
-            const fields = rec.fields || {};
-            const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || ('Регион '+(idx+1));
-            const rid = fields['Идентификатор'] || fields['Region ID'] || fields['ID'] || fields['Регион ID'] || '';
-            return { id: rec.id || ('REG-'+String(idx+1).padStart(3,'0')), name, rid };
-          });
-          citiesByRegion = {};
-          renderRegions();
-          return regions.length>0;
-        }catch(e){ console.warn('loadRegionsViaProxy failed', e); return false; }
-      }
-
-      // Save Airtable Mapping
-      async function saveAirtableRegistry(){
-        const reg = {
-          baseId: document.getElementById('am_base_id')?.value || '',
-          tables: {
-            country: { label: document.getElementById('am_country_label')?.value || '', tableId: document.getElementById('am_country_table')?.value || '', viewId: document.getElementById('am_country_view')?.value || '' },
-            region:  { label: document.getElementById('am_region_label')?.value  || '', tableId: document.getElementById('am_region_table')?.value  || '', viewId: document.getElementById('am_region_view')?.value  || '' },
-            city:    { label: document.getElementById('am_city_label')?.value    || '', tableId: document.getElementById('am_city_table')?.value    || '', viewId: document.getElementById('am_city_view')?.value    || '' },
-            poi:     { label: document.getElementById('am_poi_label')?.value     || '', tableId: document.getElementById('am_poi_table')?.value     || '', viewId: document.getElementById('am_poi_view')?.value     || '' }
-          }
+        window.addEventListener('unhandledrejection', function(e){
+          const r = e && (e.reason||e.detail||{});
+          postError({ type:'js-unhandled', page:'databases.html', msg: (r && (r.message||r)) ? String(r.message||r) : 'unhandled', stack: r && r.stack ? String(r.stack) : '' });
+        });
+      })();
+      // Простые вкладки без сторонних зависимостей
+      (function(){
+        window.__ADMIN_DB_DEBUG = /(^|[?&])debug=1(&|$)/.test(location.search) || (localStorage.getItem('debug_admin_db')==='1');
+        window.dlog = function(){ if (window.__ADMIN_DB_DEBUG) { try{ console.log.apply(console, ['[DB]'].concat(Array.from(arguments))); }catch(_e){} } };
+        const tabs = document.querySelectorAll('.tab');
+        const sections = {
+          regions: document.getElementById('tab-regions'),
+          tours: document.getElementById('tab-tours'),
+          templates: document.getElementById('tab-templates')
         };
-        try{
-          await fetch('/api/config-store.php',{
-            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({ airtable_registry: reg })
+        tabs.forEach(btn=>{
+          btn.addEventListener('click', function(e){
+            e.preventDefault();
+            tabs.forEach(b=>b.classList.remove('active'));
+            this.classList.add('active');
+            Object.values(sections).forEach(s=> s && s.classList.remove('active'));
+            const key = this.getAttribute('data-tab');
+            if (sections[key]) sections[key].classList.add('active');
           });
-        }catch(e){ console.warn('save registry failed', e); }
-      }
-      document.getElementById('am_save')?.addEventListener('click', saveAirtableRegistry);
-
-      // Test Base / Table
-      document.getElementById('am_test_base')?.addEventListener('click', async function(){
-        const baseId = document.getElementById('am_base_id')?.value || '';
-        const key = ''; // сервер возьмёт PAT из server keys
-        const res = await fetch('/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId));
-        const t = await res.json();
-        const label = document.getElementById('am_base_status');
-        if (label) label.textContent = t.ok ? 'OK' : ('Ошибка: '+(t.error||''));
-      });
-      document.querySelectorAll('.am_test_table').forEach(btn=>{
-        btn.addEventListener('click', async function(){
-          const entity = this.getAttribute('data-entity');
-          const baseId = document.getElementById('am_base_id')?.value || '';
-          const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
-          const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
-          const url = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(tableId)+(viewId?('&view='+encodeURIComponent(viewId)):'');
-          const res = await fetch(url);
-          const t = await res.json();
-          const label = document.getElementById('am_'+entity+'_status');
-          if (label) label.textContent = t.ok ? 'OK' : ('Ошибка: '+(t.error||''));
         });
-      });
-    })();
 
-    // Иерархия карточек: регионы → города → POI → билеты (UI, без API)
-    (function(){
-      // helper: save to server as server key
-      async function saveDbConfig(scope){
-        try{
-          // UI полей удалён — функция оставлена на будущее, сейчас no-op
-          await fetch('/api/config-store.php',{
-            method:'POST',
-            headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({})
-          }).then(r=>{
-            if (!r.ok) throw new Error('HTTP '+r.status);
-            if (window.osNotify){ window.osNotify('Сохранено','Конфигурация обновлена'); }
-          }).catch(e=>{
-            console.warn('saveDbConfig failed', e);
-            if (window.osNotify){ window.osNotify('Ошибка','Не удалось сохранить'); }
-          });
-        }catch(e){ console.warn('saveDbConfig failed', e); }
-      }
-
-      const crumbs = document.getElementById('db_breadcrumbs');
-      const cards = document.getElementById('db_cards');
-      const fab = document.getElementById('db_fab_add');
-
-      if (!crumbs || !cards) return;
-
-      const regionColors = {
-        'Хоккайдо':'bg-blue-100 text-blue-800',
-        'Тохоку':'bg-green-100 text-green-800',
-        'Канто':'bg-indigo-100 text-indigo-800',
-        'Тюбу':'bg-yellow-100 text-yellow-800',
-        'Кансай':'bg-purple-100 text-purple-800',
-        'Тюгоку':'bg-pink-100 text-pink-800',
-        'Сикоку':'bg-teal-100 text-teal-800',
-        'Кюсю':'bg-red-100 text-red-800',
-        'Окинава':'bg-cyan-100 text-cyan-800'
-      };
-
-      // State (in-memory for UI only). Источник правды — Airtable
-      let regions = [];
-      let citiesByRegion = {}; // regionId -> [ { id, name, type: 'city'|'location', parentCityId? } ]
-      let poisByCity = {};     // cityId -> [ {id,name,type} ]
-      let ticketsByPoi = {};   // poiId -> [ {id,category,price,currency,note} ]
-
-      // Persisted cache so карточки не пропадают визуально при сбоях сети/серверов
-      const LS_REGIONS_KEY = 'konstructour_regions_cache_v1';
-      function loadRegionsCache(){ try{ const s=localStorage.getItem(LS_REGIONS_KEY); return s?JSON.parse(s):[]; }catch(_e){ return []; } }
-      function saveRegionsCache(list){ try{ localStorage.setItem(LS_REGIONS_KEY, JSON.stringify(Array.isArray(list)?list:[])); }catch(_e){} }
-
-      let level = 'regions';
-      let selectedRegion = null;
-      let selectedCity = null;
-      let selectedPoi = null;
-
-      // History helpers
-      function renderFromState(state){
-        if (!state || !state.level) { renderRegions(); return; }
-        level = state.level;
-        if (level === 'regions') { renderRegions(); return; }
-        if (level === 'cities') {
-          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
-          renderCities(); return;
+        // Fake sync state toggling for icon demo (replace with real sync hooks)
+        function setSyncing(scope, isSyncing){
+          const el = document.getElementById(scope+'_sync_icon');
+          if (!el) return;
+          if (isSyncing) el.classList.add('animate-spin'); else el.classList.remove('animate-spin');
         }
-        if (level === 'pois') {
-          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
-          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
-          selectedCity = list.find(c=>c.id===state.cityId) || null;
-          renderPois(); return;
-        }
-        if (level === 'tickets') {
-          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
-          const listC = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
-          selectedCity = listC.find(c=>c.id===state.cityId) || null;
-          const listP = selectedCity ? (poisByCity[selectedCity.id]||[]) : [];
-          selectedPoi = listP.find(p=>p.id===state.poiId) || null;
-          renderTickets(); return;
-        }
-        renderRegions();
-      }
-      function push(level, ids){
-        const state = Object.assign({ level }, ids||{});
-        history.pushState(state, '');
-      }
 
-      function renderCrumbs(){
-        const parts = [];
-        // Root
-        if (level === 'regions'){
-          parts.push('<span class="text-gray-800">Регионы</span>');
-        } else {
-          parts.push('<a href="#" data-level="regions" class="text-indigo-600 hover:underline">Регионы</a>');
-        }
-        // Region
-        if (selectedRegion){
-          parts.push('<span class="mx-2">/</span>');
-          if (level === 'cities'){
-            parts.push('<span class="text-gray-800">'+selectedRegion.name+'</span>');
-          } else {
-            parts.push('<a href="#" data-level="cities" data-region-id="'+selectedRegion.id+'" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>');
-          }
-        }
-        // City
-        if (selectedCity){
-          parts.push('<span class="mx-2">/</span>');
-          if (level === 'pois'){
-            parts.push('<span class="text-gray-800">'+selectedCity.name+'</span>');
-          } else {
-            parts.push('<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+selectedCity.id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>');
-          }
-        }
-        // POI (always last visible item is plain text)
-        if (selectedPoi){
-          parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedPoi.name+'</span>');
-        }
-        crumbs.innerHTML = parts.join('');
-      }
+        // Remove placeholder spinner handler to avoid side-effects on clicks
 
-      function card(actionsHtml, innerHtml){
-        const actionsBlock = actionsHtml && actionsHtml.trim() ? '<div class="absolute top-2 right-2 flex items-center gap-2 opacity-70">'+actionsHtml+'</div>' : '';
-        return '<div class="relative bg-white rounded-lg border border-gray-200 p-4 hover:shadow transition">'+actionsBlock+innerHtml+'</div>';
-      }
+        // Base label auto-switch for API type
+        function bindApiLabel(){ /* удалено вместе с UI */ }
 
-      function renderRegions(){
-        level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs(); setMappingHeader('region');
-        if (!regions.length){
-          cards.innerHTML = '<div class="text-gray-500">Нет регионов. Нажмите + чтобы добавить.</div>';
-          return;
-        }
-        cards.innerHTML = regions.map(r=>{
-          const count = (citiesByRegion[r.id]||[]).length;
-          dlog('region-card', {id:r.id, name:r.name, count});
-          const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
-              '+(r.rid ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
-              <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
-              <button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>\
-            </div>';
-          const inner = '<div class="flex items-center justify-between">\
-              <div class="flex items-center gap-2">\
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" class="text-indigo-600"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\
-                <div class="text-lg text-gray-800">'+r.name+'</div>\
-              </div>\
-              '+inlineActions+'\
-              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
-                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 shadow-sm">\
-                  <i class=\"fas fa-map-marker-alt text-indigo-600\"></i>\
-                  <span class=\"text-xs font-medium text-indigo-700\">'+count+'</span>\
-                </div>\
-              </div>\
-            </div>';
-          return '<a href="#" role="button" class="block" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</a>';
-        }).join('');
-      }
-
-      // Загрузка регионов из Airtable и отрисовка
-      async function syncRegionsFromAirtable(){
-        try{
-          const res = await fetch('/api/db-sync.php',{
-            method:'POST', headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify({ scope:'regions', action:'list' })
-          });
-          if (!res.ok) throw new Error('HTTP '+res.status);
-          const data = await res.json();
-          if (!data.ok) throw new Error(data.error||'Airtable');
-          const items = data.items || [];
-          regions = items.map((it, idx)=>({
-            id: it.id || ('REG-'+String(idx+1).padStart(3,'0')),
-            name: (it.name || ('Регион '+(idx+1))),
-            rid: (it.fields && (it.fields['Идентификатор'] || it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || ''
-          }));
-          // Сначала быстрый рендер с нулями
-          citiesByRegion = {};
-          renderRegions();
-          saveRegionsCache(regions);
-          // Затем предзагрузим количество городов по всем регионам и перерисуем
+        // Load saved config from server and populate fields
+        window.airtableReg = null; // cache for mapping header - делаем глобальной
+        
+        
+        async function loadDbConfig(){
           try{
-            await Promise.all(regions.map(async (r)=>{
-              try{
-                const rs = await fetch('/api/db-sync.php',{
-                  method:'POST', headers:{ 'Content-Type':'application/json' },
-                  body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: r.id, regionName: r.name } } })
-                });
-                const jj = await rs.json();
-                const its = jj.ok ? (jj.items||[]) : [];
-                citiesByRegion[r.id] = its.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code:(it.fields?.['ID']||it.fields?.['Идентификатор']||''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
-              }catch(_e){ citiesByRegion[r.id] = citiesByRegion[r.id] || []; }
-            }));
-            renderRegions();
-          }catch(_e){ /* ignore */ }
-        }catch(e){
-          console.warn('syncRegionsFromAirtable failed', e);
-          // Fallback: прямой запрос через test-proxy при наличии реестра
+            const res = await fetch('/api/config-read.php', { headers: { 'X-Admin-Token': (window.ADMIN_TOKEN||'') } });
+            if (!res.ok) return;
+            const data = await res.json();
+            const db = (data && data.databases) || {};
+            const reg = (data && data.airtable_registry) || null;
+            window.airtableReg = reg;
+            function fill(){ /* UI удалён */ }
+            fill('regions', db.regions);
+            fill('tours', db.tours);
+            fill('templates', db.templates);
+            // Fill Airtable Mapping UI
+            if (reg){
+              const baseId = reg.baseId || reg.base_id || '';
+              const t = reg.tables || {};
+              document.getElementById('am_base_id') && (document.getElementById('am_base_id').value = baseId);
+              function setv(id, val){ const el = document.getElementById(id); if (el && typeof val==='string') el.value = val; }
+              setv('am_country_label', t.country?.label||''); setv('am_country_table', t.country?.tableId||''); setv('am_country_view', t.country?.viewId||'');
+              setv('am_region_label',  t.region?.label||'');  setv('am_region_table',  t.region?.tableId||'');  setv('am_region_view',  t.region?.viewId||'');
+              setv('am_city_label',    t.city?.label||'');    setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
+              setv('am_poi_label',     t.poi?.label||'');     setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
+              // Render mapping header for Regions
+              // initial header will be set by render functions
+            }
+          }catch(e){ console.warn('loadDbConfig failed', e); }
+        }
+        loadDbConfig();
+
+        function setMappingHeader(){ /* бейдж перенесён — здесь ничего не рендерим */ }
+        // Сделаем доступной для других модулей на странице
+        window.setMappingHeader = setMappingHeader;
+
+        // Fallback: прямой список регионов через test-proxy, читая реестр с сервера при необходимости
+        async function loadRegionsViaProxy(){
           try{
             let baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || '';
             let regTbl = (window.airtableReg && window.airtableReg.tables && (window.airtableReg.tables.region?.tableId || window.airtableReg.tables.region?.table_id)) || '';
-            // Жёсткие дефолты, если реестр недоступен
+            if (!baseId || !regTbl){
+              const cfg = await fetch('/api/config-read.php').then(r=>r.ok?r.json():null).catch(()=>null);
+              const reg = cfg && (cfg.airtable_registry||{});
+              if (reg){
+                baseId = baseId || reg.baseId || reg.base_id || '';
+                const t = reg.tables||{}; regTbl = regTbl || t.region?.tableId || t.region?.table_id || '';
+              }
+            }
+            // Жёсткие дефолты (если реестр недоступен): Regions table
             if (!baseId) baseId = window.AIRTABLE_BASE_ID;
             if (!regTbl) regTbl = window.AIRTABLE_REGIONS_TABLE_ID;
-            if (!baseId || !regTbl) return;
+            if (!baseId || !regTbl) return false;
             const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
-            const r2 = await fetch(u);
-            const j2 = await r2.json();
+            const r2 = await fetch(u); if(!r2.ok) return false; const j2 = await r2.json();
             const recs = (j2 && j2.body && (j2.body.records || j2.body.items)) || j2.records || j2.items || [];
             regions = recs.map((rec, idx)=>{
               const fields = rec.fields || {};
@@ -503,81 +301,366 @@
             });
             citiesByRegion = {};
             renderRegions();
-            saveRegionsCache(regions);
-          }catch(e2){ console.warn('fallback regions failed', e2); }
+            return regions.length>0;
+          }catch(e){ console.warn('loadRegionsViaProxy failed', e); return false; }
         }
-      }
 
-      async function deleteRegionOnServer(region){
-        try{
-          let recordId = region && region.id ? region.id : '';
-          if (!/^rec/i.test(recordId)){
-            // Найдём запись по полю Region ID или имени
+        // Save Airtable Mapping
+        async function saveAirtableRegistry(){
+          const reg = {
+            baseId: document.getElementById('am_base_id')?.value || '',
+            tables: {
+              country: { label: document.getElementById('am_country_label')?.value || '', tableId: document.getElementById('am_country_table')?.value || '', viewId: document.getElementById('am_country_view')?.value || '' },
+              region:  { label: document.getElementById('am_region_label')?.value  || '', tableId: document.getElementById('am_region_table')?.value  || '', viewId: document.getElementById('am_region_view')?.value  || '' },
+              city:    { label: document.getElementById('am_city_label')?.value    || '', tableId: document.getElementById('am_city_table')?.value    || '', viewId: document.getElementById('am_city_view')?.value    || '' },
+              poi:     { label: document.getElementById('am_poi_label')?.value     || '', tableId: document.getElementById('am_poi_table')?.value     || '', viewId: document.getElementById('am_poi_view')?.value     || '' }
+            }
+          };
+          try{
+            await fetch('/api/config-store.php',{
+              method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+              body: JSON.stringify({ airtable_registry: reg })
+            });
+          }catch(e){ console.warn('save registry failed', e); }
+        }
+        document.getElementById('am_save')?.addEventListener('click', saveAirtableRegistry);
+
+        // Test Base / Table
+        document.getElementById('am_test_base')?.addEventListener('click', async function(){
+          const baseId = document.getElementById('am_base_id')?.value || '';
+          const key = ''; // сервер возьмёт PAT из server keys
+          const res = await fetch('/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId));
+          const t = await res.json();
+          const label = document.getElementById('am_base_status');
+          if (label) label.textContent = t.ok ? 'OK' : ('Ошибка: '+(t.error||''));
+        });
+        document.querySelectorAll('.am_test_table').forEach(btn=>{
+          btn.addEventListener('click', async function(){
+            const entity = this.getAttribute('data-entity');
+            const baseId = document.getElementById('am_base_id')?.value || '';
+            const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
+            const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
+            const url = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(tableId)+(viewId?('&view='+encodeURIComponent(viewId)):'');
+            const res = await fetch(url);
+            const t = await res.json();
+            const label = document.getElementById('am_'+entity+'_status');
+            if (label) label.textContent = t.ok ? 'OK' : ('Ошибка: '+(t.error||''));
+          });
+        });
+      })();
+
+      // Иерархия карточек: регионы → города → POI → билеты (UI, без API)
+      (function(){
+        // helper: save to server as server key
+        async function saveDbConfig(scope){
+          try{
+            // UI полей удалён — функция оставлена на будущее, сейчас no-op
+            await fetch('/api/config-store.php',{
+              method:'POST',
+              headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+              body: JSON.stringify({})
+            }).then(r=>{
+              if (!r.ok) throw new Error('HTTP '+r.status);
+              if (window.osNotify){ window.osNotify('Сохранено','Конфигурация обновлена'); }
+            }).catch(e=>{
+              console.warn('saveDbConfig failed', e);
+              if (window.osNotify){ window.osNotify('Ошибка','Не удалось сохранить'); }
+            });
+          }catch(e){ console.warn('saveDbConfig failed', e); }
+        }
+
+        const crumbs = document.getElementById('db_breadcrumbs');
+        const cards = document.getElementById('db_cards');
+        const fab = document.getElementById('db_fab_add');
+
+        if (!crumbs || !cards) return;
+
+        const regionColors = {
+          'Хоккайдо':'bg-blue-100 text-blue-800',
+          'Тохоку':'bg-green-100 text-green-800',
+          'Канто':'bg-indigo-100 text-indigo-800',
+          'Тюбу':'bg-yellow-100 text-yellow-800',
+          'Кансай':'bg-purple-100 text-purple-800',
+          'Тюгоку':'bg-pink-100 text-pink-800',
+          'Сикоку':'bg-teal-100 text-teal-800',
+          'Кюсю':'bg-red-100 text-red-800',
+          'Окинава':'bg-cyan-100 text-cyan-800'
+        };
+
+        // State (in-memory for UI only). Источник правды — Airtable
+        let regions = [];
+        let citiesByRegion = {}; // regionId -> [ { id, name, type: 'city'|'location', parentCityId? } ]
+        let poisByCity = {};     // cityId -> [ {id,name,type} ]
+        let ticketsByPoi = {};   // poiId -> [ {id,category,price,currency,note} ]
+
+        // Persisted cache so карточки не пропадают визуально при сбоях сети/серверов
+        const LS_REGIONS_KEY = 'konstructour_regions_cache_v1';
+        function loadRegionsCache(){ try{ const s=localStorage.getItem(LS_REGIONS_KEY); return s?JSON.parse(s):[]; }catch(_e){ return []; } }
+        function saveRegionsCache(list){ try{ localStorage.setItem(LS_REGIONS_KEY, JSON.stringify(Array.isArray(list)?list:[])); }catch(_e){} }
+
+        let level = 'regions';
+        let selectedRegion = null;
+        let selectedCity = null;
+        let selectedPoi = null;
+
+        // History helpers
+        function renderFromState(state){
+          if (!state || !state.level) { renderRegions(); return; }
+          level = state.level;
+          if (level === 'regions') { renderRegions(); return; }
+          if (level === 'cities') {
+            selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+            renderCities(); return;
+          }
+          if (level === 'pois') {
+            selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+            const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
+            selectedCity = list.find(c=>c.id===state.cityId) || null;
+            renderPois(); return;
+          }
+          if (level === 'tickets') {
+            selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+            const listC = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
+            selectedCity = listC.find(c=>c.id===state.cityId) || null;
+            const listP = selectedCity ? (poisByCity[selectedCity.id]||[]) : [];
+            selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+            renderTickets(); return;
+          }
+          renderRegions();
+        }
+        function push(level, ids){
+          const state = Object.assign({ level }, ids||{});
+          history.pushState(state, '');
+        }
+
+        function renderCrumbs(){
+          const parts = [];
+          // Root
+          if (level === 'regions'){
+            parts.push('<span class="text-gray-800">Регионы</span>');
+          } else {
+            parts.push('<a href="#" data-level="regions" class="text-indigo-600 hover:underline">Регионы</a>');
+          }
+          // Region
+          if (selectedRegion){
+            parts.push('<span class="mx-2">/</span>');
+            if (level === 'cities'){
+              parts.push('<span class="text-gray-800">'+selectedRegion.name+'</span>');
+            } else {
+              parts.push('<a href="#" data-level="cities" data-region-id="'+selectedRegion.id+'" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>');
+            }
+          }
+          // City
+          if (selectedCity){
+            parts.push('<span class="mx-2">/</span>');
+            if (level === 'pois'){
+              parts.push('<span class="text-gray-800">'+selectedCity.name+'</span>');
+            } else {
+              parts.push('<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+selectedCity.id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>');
+            }
+          }
+          // POI (always last visible item is plain text)
+          if (selectedPoi){
+            parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedPoi.name+'</span>');
+          }
+          crumbs.innerHTML = parts.join('');
+        }
+
+        function card(actionsHtml, innerHtml){
+          const actionsBlock = actionsHtml && actionsHtml.trim() ? '<div class="absolute top-2 right-2 flex items-center gap-2 opacity-70">'+actionsHtml+'</div>' : '';
+          return '<div class="relative bg-white rounded-lg border border-gray-200 p-4 hover:shadow transition">'+actionsBlock+innerHtml+'</div>';
+        }
+
+        function renderRegions(){
+          level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs(); setMappingHeader('region');
+          if (!regions.length){
+            cards.innerHTML = '<div class="text-gray-500">Нет регионов. Нажмите + чтобы добавить.</div>';
+            return;
+          }
+          cards.innerHTML = regions.map(r=>{
+            const count = (citiesByRegion[r.id]||[]).length;
+            dlog('region-card', {id:r.id, name:r.name, count});
+            const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
+                '+(r.rid ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
+                <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
+                <button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>\
+              </div>';
+            const inner = '<div class="flex items-center justify-between">\
+                <div class="flex items-center gap-2">\
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" class="text-indigo-600"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\
+                  <div class="text-lg text-gray-800">'+r.name+'</div>\
+                </div>\
+                '+inlineActions+'\
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
+                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 shadow-sm">\
+                    <i class=\"fas fa-map-marker-alt text-indigo-600\"></i>\
+                    <span class=\"text-xs font-medium text-indigo-700\">'+count+'</span>\
+                  </div>\
+                </div>\
+              </div>';
+            return '<a href="#" role="button" class="block" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</a>';
+          }).join('');
+        }
+
+        // Загрузка регионов из Airtable и отрисовка
+        async function syncRegionsFromAirtable(){
+          try{
             const res = await fetch('/api/db-sync.php',{
               method:'POST', headers:{ 'Content-Type':'application/json' },
               body: JSON.stringify({ scope:'regions', action:'list' })
             });
-            const j = await res.json();
-            if (j && j.ok && Array.isArray(j.items)){
-              const found = j.items.find(it => (it.fields && (it.fields['Region ID']===region.id || it.fields['Регион ID']===region.id)) || it.name===region.name);
-              if (found && found.id) recordId = found.id;
+            if (!res.ok) throw new Error('HTTP '+res.status);
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error||'Airtable');
+            const items = data.items || [];
+            regions = items.map((it, idx)=>({
+              id: it.id || ('REG-'+String(idx+1).padStart(3,'0')),
+              name: (it.name || ('Регион '+(idx+1))),
+              rid: (it.fields && (it.fields['Идентификатор'] || it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || ''
+            }));
+            // Сначала быстрый рендер с нулями
+            citiesByRegion = {};
+            renderRegions();
+            saveRegionsCache(regions);
+            // Затем предзагрузим количество городов по всем регионам и перерисуем
+            try{
+              await Promise.all(regions.map(async (r)=>{
+                try{
+                  const rs = await fetch('/api/db-sync.php',{
+                    method:'POST', headers:{ 'Content-Type':'application/json' },
+                    body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: r.id, regionName: r.name } } })
+                  });
+                  const jj = await rs.json();
+                  const its = jj.ok ? (jj.items||[]) : [];
+                  citiesByRegion[r.id] = its.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code:(it.fields?.['ID']||it.fields?.['Идентификатор']||''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
+                }catch(_e){ citiesByRegion[r.id] = citiesByRegion[r.id] || []; }
+              }));
+              renderRegions();
+            }catch(_e){ /* ignore */ }
+          }catch(e){
+            console.warn('syncRegionsFromAirtable failed', e);
+            // Fallback: прямой запрос через test-proxy при наличии реестра
+            try{
+              let baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || '';
+              let regTbl = (window.airtableReg && window.airtableReg.tables && (window.airtableReg.tables.region?.tableId || window.airtableReg.tables.region?.table_id)) || '';
+              // Жёсткие дефолты, если реестр недоступен
+              if (!baseId) baseId = window.AIRTABLE_BASE_ID;
+              if (!regTbl) regTbl = window.AIRTABLE_REGIONS_TABLE_ID;
+              if (!baseId || !regTbl) return;
+              const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
+              const r2 = await fetch(u);
+              const j2 = await r2.json();
+              const recs = (j2 && j2.body && (j2.body.records || j2.body.items)) || j2.records || j2.items || [];
+              regions = recs.map((rec, idx)=>{
+                const fields = rec.fields || {};
+                const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || ('Регион '+(idx+1));
+                const rid = fields['Идентификатор'] || fields['Region ID'] || fields['ID'] || fields['Регион ID'] || '';
+                return { id: rec.id || ('REG-'+String(idx+1).padStart(3,'0')), name, rid };
+              });
+              citiesByRegion = {};
+              renderRegions();
+              saveRegionsCache(regions);
+            }catch(e2){ console.warn('fallback regions failed', e2); }
+          }
+        }
+
+        async function deleteRegionOnServer(region){
+          try{
+            let recordId = region && region.id ? region.id : '';
+            if (!/^rec/i.test(recordId)){
+              // Найдём запись по полю Region ID или имени
+              const res = await fetch('/api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ scope:'regions', action:'list' })
+              });
+              const j = await res.json();
+              if (j && j.ok && Array.isArray(j.items)){
+                const found = j.items.find(it => (it.fields && (it.fields['Region ID']===region.id || it.fields['Регион ID']===region.id)) || it.name===region.name);
+                if (found && found.id) recordId = found.id;
+              }
             }
-          }
-          if (recordId && /^rec/i.test(recordId)){
-            await fetch('/api/db-sync.php',{
-              method:'POST', headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ scope:'regions', action:'delete', data:{ id: recordId } })
-            });
-          }
-        }catch(e){ console.warn('deleteRegionOnServer failed', e); }
-      }
+            if (recordId && /^rec/i.test(recordId)){
+              await fetch('/api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ scope:'regions', action:'delete', data:{ id: recordId } })
+              });
+            }
+          }catch(e){ console.warn('deleteRegionOnServer failed', e); }
+        }
 
-      function renderCities(){
-        level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
-        const list = citiesByRegion[selectedRegion.id] || [];
-        // Если список пуст — показываем кнопку добавления через ту же +
-        function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
-        cards.innerHTML = list.map(c=>{
-          const count = (poisByCity[c.id]||[]).length;
-          const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
-              (c.code ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+c.code+'</span>' : '')+
-              '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-              '<button data-act="del-city" data-id="'+c.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
-            '</div>';
-          const inner = '<div class="flex items-center justify-between">\
-              <div class="flex items-center gap-2">\
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" class="text-green-600"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\
-                <div class="text-lg text-gray-800">'+c.name+'</div>\
-              </div>\
-              '+inlineActions+'\
-              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
-                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-100 shadow-sm">\
-                  <i class=\"fas fa-map-marker-alt text-green-600\"></i>\
-                  <span class=\"text-xs font-medium text-green-700\">'+count+'</span>\
+        function renderCities(){
+          level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
+          const list = citiesByRegion[selectedRegion.id] || [];
+          // Если список пуст — показываем кнопку добавления через ту же +
+          function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
+          cards.innerHTML = list.map(c=>{
+            const count = (poisByCity[c.id]||[]).length;
+            const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
+                (c.code ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+c.code+'</span>' : '')+
+                '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+                '<button data-act="del-city" data-id="'+c.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
+              '</div>';
+            const inner = '<div class="flex items-center justify-between">\
+                <div class="flex items-center gap-2">\
+                  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" class="text-green-600"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\
+                  <div class="text-lg text-gray-800">'+c.name+'</div>\
                 </div>\
-              </div>\
-            </div>';
-          return '<div class="cursor-pointer" data-go="pois" data-id="'+c.id+'">'+card('', inner)+'</div>';
-        }).join('') || '<div class="text-gray-500">Нет городов. Нажмите + чтобы добавить.</div>';
-      }
+                '+inlineActions+'\
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
+                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-100 shadow-sm">\
+                    <i class=\"fas fa-map-marker-alt text-green-600\"></i>\
+                    <span class=\"text-xs font-medium text-green-700\">'+count+'</span>\
+                  </div>\
+                </div>\
+              </div>';
+            return '<div class="cursor-pointer" data-go="pois" data-id="'+c.id+'">'+card('', inner)+'</div>';
+          }).join('') || '<div class="text-gray-500">Нет городов. Нажмите + чтобы добавить.</div>';
+        }
 
-      function renderPois(){
-        level='pois'; /* keep selectedPoi */ renderCrumbs(); setMappingHeader('poi');
-        const list = poisByCity[selectedCity.id] || [];
-        const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
-        
+        function renderPois(){
+          level='pois'; /* keep selectedPoi */ renderCrumbs(); setMappingHeader('poi');
+          const list = poisByCity[selectedCity.id] || [];
+          const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
+          
         cards.innerHTML = list.map(p=>{
           const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
-          const inner = '<div class="flex items-start gap-3">\
-              <div class="w-16 h-16 bg-gray-100 rounded overflow-hidden flex items-center justify-center"><i class="fas fa-landmark text-gray-400"></i></div>\
-              <div class="flex-1">\
-                <div class="flex items-center justify-between">\
-                  <div class="text-lg text-gray-800">'+p.name+'</div>\
-                  <div class="text-xs text-gray-500 flex items-center gap-3">\
-                    <span title=\"Родитель\"><i class=\"fas fa-map-marker-alt mr-1 text-gray-400\"></i>'+parentTypeLabel+'</span>\
-                    <span title="Тип"><i class="fas fa-tag mr-1 text-gray-400"></i>'+ (p.type||'—') +'</span>\
-                    <span title="Билеты"><i class="fas fa-ticket mr-1 text-gray-400"></i>'+((ticketsByPoi[p.id]||[]).length)+'</span>\
+          
+          // Получаем иконку для категории POI
+          const categoryIcon = window.getPOICategoryIcon(p.type);
+          const categoryColor = {
+            'Синтоистское святилище': 'text-red-600',
+            'Буддийский храм': 'text-orange-600', 
+            'Архитектурный объект': 'text-gray-600',
+            'Музей': 'text-blue-600',
+            'Арт-пространство / Галерея': 'text-purple-600',
+            'Смотровая площадка': 'text-green-600',
+            'Ландшафтный сад / Парк': 'text-green-500',
+            'Достопримечательность': 'text-yellow-600',
+            'Историческое место': 'text-brown-600',
+            'Японский отель': 'text-indigo-600',
+            'Развлечения': 'text-pink-600',
+            'Шоппинг': 'text-emerald-600',
+            'Термальный источник': 'text-blue-500',
+            'СПА': 'text-teal-600'
+          }[p.type] || 'text-gray-500';
+          
+          const inner = '<div class="flex items-start gap-4">\
+              <div class="w-14 h-14 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center '+categoryColor+' shadow-sm">\
+                '+categoryIcon+'\
+              </div>\
+              <div class="flex-1 min-w-0">\
+                <div class="flex items-start justify-between">\
+                  <div>\
+                    <div class="text-lg font-medium text-gray-900 truncate">'+p.name+'</div>\
+                    <div class="text-sm text-gray-600 mt-1">'+ (p.type||'—') +'</div>\
+                  </div>\
+                  <div class="text-xs text-gray-500 text-right ml-4">\
+                    '+(p.poi_id ? '<div class="font-mono text-xs text-gray-400 mb-1">'+p.poi_id+'</div>' : '')+'\
+                    <div class="flex items-center gap-2">\
+                      '+(p.published ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800"><i class="fas fa-eye mr-1"></i>Опубл.</span>' : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">Черновик</span>')+'\
+                    </div>\
+                    '+(((ticketsByPoi[p.id]||[]).length > 0) ? '<div class="mt-1"><span class="inline-flex items-center text-xs text-blue-600"><i class="fas fa-ticket mr-1"></i>'+((ticketsByPoi[p.id]||[]).length)+' билетов</span></div>' : '')+'\
                   </div>\
                 </div>\
               </div>\
@@ -588,1134 +671,1134 @@
 
       // Airtable-backed loaders for each level
       async function loadCitiesForRegion(region){
-        try{
-          const res = await fetch('/api/db-sync.php',{
-            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: region.id, regionName: region.name } } })
-          });
-          const j = await res.json();
-          const items = j.ok ? (j.items||[]) : [];
-          citiesByRegion[region.id] = items.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code: (it.fields?.['ID'] || it.fields?.['Идентификатор'] || ''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
-        }catch(e){ citiesByRegion[region.id] = []; }
-      }
-
-      async function loadPoisForCity(city){
-        try{
-          const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
-          
-          console.log('Loading POIs for city:', {
-            cityId: city.id,
-            cityName: city.name,
-            baseId: baseId,
-            tableId: window.AIRTABLE_POI_TABLE_ID
-          });
-          
-          // Временно используем прямой запрос к Airtable через test-proxy
-          const proxyUrl = '/api/test-proxy.php?provider=airtable&base_id=' + 
-            encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
-          
-          console.log('Direct Airtable request URL:', proxyUrl);
-          
-          const res = await fetch(proxyUrl);
-          const j = await res.json();
-          
-          console.log('POI API response:', j);
-          
-          // test-proxy возвращает другую структуру
-          const records = j.ok ? (j.body?.records || j.records || []) : [];
-          console.log('Raw POI records:', records);
-          
-          poisByCity[city.id] = records.map(record=>({ 
-            id: record.id, 
-            name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
-            type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
-            name_en: record.fields?.['POI Name (EN)'] || '',
-            place_id: record.fields?.['Place ID'] || '',
-            published: record.fields?.['Published'] || false,
-            poi_id: record.fields?.['POI ID'] || '',
-            region: record.fields?.['Regions'] || []
-          }));
-          
-          console.log('Processed POIs for city:', city.name, poisByCity[city.id]);
-        }catch(e){ 
-          console.error('Error loading POIs for city:', city.name, e);
-          poisByCity[city.id] = []; 
-        }
-      }
-
-      // Предзагрузка количества POI для всех городов региона
-      async function preloadPoisCountsForRegion(region){
-        try{
-          const list = citiesByRegion[region.id] || [];
-          if (!list.length) return;
-          await Promise.all(list.map(async (c)=>{
-            if (Array.isArray(poisByCity[c.id])) return;
-            try{
-              const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
-              const res = await fetch('../api/db-sync.php',{
-                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-                body: JSON.stringify({ 
-                  scope:'pois', 
-                  action:'list', 
-                  data:{ 
-                    base_id: baseId,
-                    table_id: window.AIRTABLE_POI_TABLE_ID,
-                    filter:{ cityId: c.id, cityName: c.name } 
-                  } 
-                })
-              });
-              const j = await res.json();
-              const items = j.ok ? (j.items||[]) : [];
-              poisByCity[c.id] = items.map(it=>({ id: it.id, name: it.name || '—', type: (it.fields?.Category||'') }));
-            }catch(_e){ poisByCity[c.id] = []; }
-          }));
-        }catch(_e){ /* ignore */ }
-      }
-
-      function renderTickets(){
-        level='tickets'; renderCrumbs();
-        const list = ticketsByPoi[selectedPoi.id] || [];
-        cards.innerHTML = list.map(t=>{
-          const actions = '<button data-act="edit-ticket" data-id="'+t.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-                          '<button data-act="del-ticket" data-id="'+t.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
-          const inner = '<div class="flex items-center justify-between">\
-              <div class="text-gray-800"><span class="text-xs bg-gray-100 text-gray-700 inline-block px-2 py-0.5 rounded mr-2">🎟</span>'+t.category+'</div>\
-              <div class="text-gray-700">'+t.price+'¥</div>\
-            </div>';
-          return card(actions, inner);
-        }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
-      }
-
-      // Навигация — один надёжный делегат на документ по селектору в пределах #db_cards
-      document.addEventListener('click', async function(e){
-        // игнорируем клики по кнопкам действий внутри карточек
-        if (e.target.closest('button[data-act]')) return;
-        const go = e.target.closest('#db_cards [data-go]');
-        if (!go) { dlog('click outside actionable', e.target); return; }
-        e.preventDefault();
-        const id = go.getAttribute('data-id');
-        const to = go.getAttribute('data-go');
-        dlog('navigate', {to,id});
-        if (to==='cities'){
-          selectedRegion = regions.find(r=>r.id===id) || null;
-          push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
-          await loadCitiesForRegion(selectedRegion);
-          await preloadPoisCountsForRegion(selectedRegion);
-          renderCities();
-          return;
-        }
-        if (to==='pois'){
-          const list = citiesByRegion[selectedRegion.id] || [];
-          selectedCity = list.find(c=>c.id===id) || null;
-          push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
-          await loadPoisForCity(selectedCity);
-          renderPois();
-          return;
-        }
-        if (to==='tickets'){
-          const list = poisByCity[selectedCity.id] || [];
-          selectedPoi = list.find(p=>p.id===id) || null;
-          push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
-          renderTickets();
-          return;
-        }
-      });
-
-      // Breadcrumbs — строго в пределах контейнера, чтобы не было конфликтов с делегатами
-      crumbs.addEventListener('click', function(e){
-        const a = e.target.closest && e.target.closest('a[data-level]');
-        if (!a) return;
-        e.preventDefault();
-        const lv = a.getAttribute('data-level');
-        if (lv==='regions'){
-          selectedRegion=null; selectedCity=null; selectedPoi=null;
-          push('regions'); renderRegions(); return;
-        }
-        if (lv==='cities'){
-          const regionId = a.getAttribute('data-region-id');
-          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
-          selectedCity=null; selectedPoi=null;
-          push('cities', { regionId: (selectedRegion?selectedRegion.id:null) });
-          renderCities(); return;
-        }
-        if (lv==='pois'){
-          const regionId = a.getAttribute('data-region-id');
-          const cityId = a.getAttribute('data-city-id');
-          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
-          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
-          selectedCity = list.find(c=>c.id===cityId) || selectedCity;
-          selectedPoi=null;
-          push('pois', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null) });
-          renderPois(); return;
-        }
-      });
-
-      // Back button
-      document.getElementById('db_back')?.addEventListener('click', function(){
-        if (level==='cities') return renderRegions();
-        if (level==='pois') return renderCities();
-        if (level==='tickets') return renderPois();
-      });
-
-      // Card action buttons
-      cards.addEventListener('click', async function(e){
-        const btn = e.target.closest('button[data-act]');
-        if (!btn) return;
-        e.stopPropagation();
-        const act = btn.getAttribute('data-act');
-        const id = btn.getAttribute('data-id');
-        if (act==='edit-region'){
-          const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){
-            const old = r.name; r.name=n.trim(); renderRegions();
-            try{
-              await fetch('/api/db-sync.php',{
-                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-                body: JSON.stringify({ scope:'regions', action:'update', data:{ id: r.id, name: r.name } })
-              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
-              if (window.osNotify) window.osNotify('Обновлено','Регион переименован');
-            }catch(e){ r.name = old; renderRegions(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
-          }
-        } else if (act==='del-region'){
-          const r = regions.find(x=>x.id===id);
-          regions = regions.filter(x=>x.id!==id); delete citiesByRegion[id]; renderRegions();
-          if (r) deleteRegionOnServer(r);
-        } else if (act==='edit-city'){
-          const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города/локации:', c.name); if(n){
-            const old=c.name; c.name=n.trim(); renderCities();
-            try{
-              await fetch('/api/db-sync.php',{
-                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-                body: JSON.stringify({ scope:'cities', action:'update', data:{ id: c.id, name: c.name } })
-              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
-              if (window.osNotify) window.osNotify('Обновлено','Название сохранено');
-            }catch(e){ c.name=old; renderCities(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
-          }
-        } else if (act==='del-city'){
-          const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; renderCities();
-        } else if (act==='edit-poi'){
-          // Находим POI для редактирования
-          const list = poisByCity[selectedCity.id]||[];
-          const poi = list.find(x=>x.id===id);
-          if (!poi) return;
-          
-          // Открываем модальное окно с данными для редактирования
-          const data = await openCreatePOIModal(poi);
-          if (!data) return;
-          
-          try {
-            // Обновляем локальные данные
-            Object.assign(poi, {
-              name: data.name_ru,
-              name_en: data.name_en,
-              type: data.cats_ru[0] || poi.type,
-              categories_ru: data.cats_ru,
-              categories_en: data.cats_en,
-              prefecture_ru: data.pref_ru,
-              prefecture_en: data.pref_en,
-              place_id: data.place_id,
-              website: data.website,
-              hours: data.hours,
-              description_ru: data.desc_ru,
-              description_en: data.desc_en,
-              published: data.published,
-              notes: data.notes
+          try{
+            const res = await fetch('/api/db-sync.php',{
+              method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+              body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: region.id, regionName: region.name } } })
             });
-            
-            // Получаем base_id из конфигурации
+            const j = await res.json();
+            const items = j.ok ? (j.items||[]) : [];
+            citiesByRegion[region.id] = items.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code: (it.fields?.['ID'] || it.fields?.['Идентификатор'] || ''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
+          }catch(e){ citiesByRegion[region.id] = []; }
+        }
+
+        async function loadPoisForCity(city){
+          try{
             const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
             
-            // Подготавливаем данные для Airtable
-            const airtableFields = {
-              'POI ID': poi.id,
-              'POI Name (RU)': poi.name,
-              'POI Name (EN)': poi.name_en,
-              'Regions': [selectedRegion.id], // Link to Regions table
-              'Prefecture (RU)': poi.prefecture_ru,
-              'Prefecture (EN)': poi.prefecture_en,
-              'POI Category (RU)': poi.categories_ru,
-              'POI Category (EN)': poi.categories_en,
-              'Place ID': poi.place_id,
-              'Website': poi.website,
-              'Working Hours': poi.hours,
-              'Description (RU)': poi.description_ru,
-              'Description (EN)': poi.description_en,
-              'Published': poi.published,
-              'Notes': poi.notes
-            };
-            
-            // Отправляем на сервер
-            const res = await fetch('/api/db-sync.php', {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'X-Admin-Token': window.ADMIN_TOKEN || ''
-              },
-              body: JSON.stringify({
-                scope: 'pois',
-                action: 'update',
-                data: {
-                  id: poi.id,
-                  base_id: baseId,
-                  table_id: window.AIRTABLE_POI_TABLE_ID,
-                  fields: airtableFields,
-                  localData: poi
-                }
-              })
+            console.log('Loading POIs for city:', {
+              cityId: city.id,
+              cityName: city.name,
+              baseId: baseId,
+              tableId: window.AIRTABLE_POI_TABLE_ID
             });
             
+            // Временно используем прямой запрос к Airtable через test-proxy
+            const proxyUrl = '/api/test-proxy.php?provider=airtable&base_id=' + 
+              encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
+            
+            console.log('Direct Airtable request URL:', proxyUrl);
+            
+            const res = await fetch(proxyUrl);
             const j = await res.json();
-            if (!res.ok || !j.ok) {
-              throw new Error((j && j.error) || 'Ошибка обновления');
-            }
             
-            if (window.osNotify) {
-              window.osNotify('POI обновлён', data.name_ru);
-            }
+            console.log('POI API response:', j);
             
-            renderPois();
-          } catch(e) {
-            alert('Не удалось обновить POI: ' + (e.message || 'Неизвестная ошибка'));
-            // Здесь можно добавить откат изменений если нужно
+            // test-proxy возвращает другую структуру
+            const records = j.ok ? (j.body?.records || j.records || []) : [];
+            console.log('Raw POI records:', records);
+            
+            poisByCity[city.id] = records.map(record=>({ 
+              id: record.id, 
+              name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
+              type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
+              name_en: record.fields?.['POI Name (EN)'] || '',
+              place_id: record.fields?.['Place ID'] || '',
+              published: record.fields?.['Published'] || false,
+              poi_id: record.fields?.['POI ID'] || '',
+              region: record.fields?.['Regions'] || []
+            }));
+            
+            console.log('Processed POIs for city:', city.name, poisByCity[city.id]);
+          }catch(e){ 
+            console.error('Error loading POIs for city:', city.name, e);
+            poisByCity[city.id] = []; 
           }
-        } else if (act==='del-poi'){
-          const list = poisByCity[selectedCity.id]||[]; poisByCity[selectedCity.id] = list.filter(x=>x.id!==id); delete ticketsByPoi[id]; renderPois();
-        } else if (act==='edit-ticket'){
-          const list = ticketsByPoi[selectedPoi.id]||[]; const t = list.find(x=>x.id===id); if(!t) return; const c=prompt('Категория:', t.category)||t.category; const p=prompt('Цена (¥):', String(t.price))||String(t.price); const n=prompt('Примечание:', t.note||'')||t.note; t.category=c.trim(); t.price=parseInt(p,10)||t.price; t.note=n.trim(); renderTickets();
-        } else if (act==='del-ticket'){
-          const list = ticketsByPoi[selectedPoi.id]||[]; ticketsByPoi[selectedPoi.id] = list.filter(x=>x.id!==id); renderTickets();
         }
-      });
 
-      // Floating add button
-      function genId(prefix, n){ return prefix+'-'+String(n).padStart(3,'0'); }
+        // Предзагрузка количества POI для всех городов региона
+        async function preloadPoisCountsForRegion(region){
+          try{
+            const list = citiesByRegion[region.id] || [];
+            if (!list.length) return;
+            await Promise.all(list.map(async (c)=>{
+              if (Array.isArray(poisByCity[c.id])) return;
+              try{
+                const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
+                const res = await fetch('../api/db-sync.php',{
+                  method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                  body: JSON.stringify({ 
+                    scope:'pois', 
+                    action:'list', 
+                    data:{ 
+                      base_id: baseId,
+                      table_id: window.AIRTABLE_POI_TABLE_ID,
+                      filter:{ cityId: c.id, cityName: c.name } 
+                    } 
+                  })
+                });
+                const j = await res.json();
+                const items = j.ok ? (j.items||[]) : [];
+                poisByCity[c.id] = items.map(it=>({ id: it.id, name: it.name || '—', type: (it.fields?.Category||'') }));
+              }catch(_e){ poisByCity[c.id] = []; }
+            }));
+          }catch(_e){ /* ignore */ }
+        }
 
-      // Модальное окно создания региона (RU/EN)
-      function openCreateRegionModal(){
-        return new Promise(resolve=>{
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
-          wrap.innerHTML = '\
-            <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
-            <div class="relative bg-white rounded-lg shadow-xl p-6 w-96">\
-              <div class="text-lg text-gray-800 mb-4">Новый регион</div>\
-              <div class="space-y-3">\
-                <input id="cr_ru" class="input-japanese w-full" placeholder="Название (RU)"/>\
-                <input id="cr_en" class="input-japanese w-full" placeholder="Название (EN)"/>\
-              </div>\
-              <div class="mt-5 flex justify-end gap-2">\
-                <button id="cr_cancel" class="btn-japanese">Отмена</button>\
-                <button id="cr_ok" class="btn-japanese accent">Сохранить</button>\
-              </div>\
-            </div>';
-          document.body.appendChild(wrap);
-          function done(val){ try{ document.body.removeChild(wrap); }catch{} resolve(val||null); }
-          wrap.addEventListener('click', e=>{ if (e.target===wrap.firstChild) done(null); });
-          wrap.querySelector('#cr_cancel').addEventListener('click', ()=>done(null));
-          wrap.querySelector('#cr_ok').addEventListener('click', ()=>{
-            const ru = wrap.querySelector('#cr_ru').value.trim();
-            const en = wrap.querySelector('#cr_en').value.trim();
-            if (!ru || !en){ alert('Заполните оба поля'); return; }
-            done({ ru, en });
-          });
-          wrap.querySelector('#cr_ru').focus();
+        function renderTickets(){
+          level='tickets'; renderCrumbs();
+          const list = ticketsByPoi[selectedPoi.id] || [];
+          cards.innerHTML = list.map(t=>{
+            const actions = '<button data-act="edit-ticket" data-id="'+t.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+                            '<button data-act="del-ticket" data-id="'+t.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
+            const inner = '<div class="flex items-center justify-between">\
+                <div class="text-gray-800"><span class="text-xs bg-gray-100 text-gray-700 inline-block px-2 py-0.5 rounded mr-2">🎟</span>'+t.category+'</div>\
+                <div class="text-gray-700">'+t.price+'¥</div>\
+              </div>';
+            return card(actions, inner);
+          }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
+        }
+
+        // Навигация — один надёжный делегат на документ по селектору в пределах #db_cards
+        document.addEventListener('click', async function(e){
+          // игнорируем клики по кнопкам действий внутри карточек
+          if (e.target.closest('button[data-act]')) return;
+          const go = e.target.closest('#db_cards [data-go]');
+          if (!go) { dlog('click outside actionable', e.target); return; }
+          e.preventDefault();
+          const id = go.getAttribute('data-id');
+          const to = go.getAttribute('data-go');
+          dlog('navigate', {to,id});
+          if (to==='cities'){
+            selectedRegion = regions.find(r=>r.id===id) || null;
+            push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
+            await loadCitiesForRegion(selectedRegion);
+            await preloadPoisCountsForRegion(selectedRegion);
+            renderCities();
+            return;
+          }
+          if (to==='pois'){
+            const list = citiesByRegion[selectedRegion.id] || [];
+            selectedCity = list.find(c=>c.id===id) || null;
+            push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
+            await loadPoisForCity(selectedCity);
+            renderPois();
+            return;
+          }
+          if (to==='tickets'){
+            const list = poisByCity[selectedCity.id] || [];
+            selectedPoi = list.find(p=>p.id===id) || null;
+            push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
+            renderTickets();
+            return;
+          }
         });
-      }
-      
-      // Модальное окно создания/редактирования POI
-      function openCreatePOIModal(editData = null){
-        return new Promise(resolve=>{
-          const isEdit = !!editData;
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto';
-          wrap.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-          
-          // Префектуры для селектов
-          const prefectures = [
-            {value: 'tokyo', ru: 'Токио', en: 'Tokyo'},
-            {value: 'kyoto', ru: 'Киото', en: 'Kyoto'},
-            {value: 'osaka', ru: 'Осака', en: 'Osaka'},
-            {value: 'kanagawa', ru: 'Канагава', en: 'Kanagawa'},
-            {value: 'aichi', ru: 'Айти', en: 'Aichi'},
-            {value: 'fukuoka', ru: 'Фукуока', en: 'Fukuoka'},
-            {value: 'hokkaido', ru: 'Хоккайдо', en: 'Hokkaido'},
-            {value: 'hiroshima', ru: 'Хиросима', en: 'Hiroshima'},
-            {value: 'nara', ru: 'Нара', en: 'Nara'},
-            {value: 'okinawa', ru: 'Окинава', en: 'Okinawa'}
-          ];
-          
-          const categories_ru = ['Синтоистское святилище', 'Буддийский храм', 'Архитектурный объект', 'Музей', 'Арт-пространство / Галерея', 'Смотровая площадка', 'Ландшафтный сад / Парк', 'Достопримечательность', 'Историческое место', 'Японский отель', 'Развлечения', 'Шоппинг', 'Термальный источник', 'СПА'];
-          const categories_en = ['Shinto Shrine', 'Buddhist Temple', 'Architectural Object', 'Museum', 'Art Venue', 'Viewing Spot', 'Park/Garden', 'City Attraction', 'Historical Location', 'Restaurant', 'Amusement', 'Shopping', 'Hot Spring', 'SPA'];
-          
-          wrap.innerHTML = `
-            <div class="absolute inset-0" onclick="this.parentElement.querySelector('#poi_cancel').click()"></div>
-            <div class="relative bg-white rounded-lg shadow-xl p-4 w-full max-w-5xl max-h-[95vh] overflow-y-auto">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-lg font-medium text-gray-800">${isEdit ? 'Редактировать POI' : 'Новый POI'}</h3>
-                <button id="poi_close" class="text-gray-400 hover:text-gray-600">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
+
+        // Breadcrumbs — строго в пределах контейнера, чтобы не было конфликтов с делегатами
+        crumbs.addEventListener('click', function(e){
+          const a = e.target.closest && e.target.closest('a[data-level]');
+          if (!a) return;
+          e.preventDefault();
+          const lv = a.getAttribute('data-level');
+          if (lv==='regions'){
+            selectedRegion=null; selectedCity=null; selectedPoi=null;
+            push('regions'); renderRegions(); return;
+          }
+          if (lv==='cities'){
+            const regionId = a.getAttribute('data-region-id');
+            selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
+            selectedCity=null; selectedPoi=null;
+            push('cities', { regionId: (selectedRegion?selectedRegion.id:null) });
+            renderCities(); return;
+          }
+          if (lv==='pois'){
+            const regionId = a.getAttribute('data-region-id');
+            const cityId = a.getAttribute('data-city-id');
+            selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
+            const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
+            selectedCity = list.find(c=>c.id===cityId) || selectedCity;
+            selectedPoi=null;
+            push('pois', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null) });
+            renderPois(); return;
+          }
+        });
+
+        // Back button
+        document.getElementById('db_back')?.addEventListener('click', function(){
+          if (level==='cities') return renderRegions();
+          if (level==='pois') return renderCities();
+          if (level==='tickets') return renderPois();
+        });
+
+        // Card action buttons
+        cards.addEventListener('click', async function(e){
+          const btn = e.target.closest('button[data-act]');
+          if (!btn) return;
+          e.stopPropagation();
+          const act = btn.getAttribute('data-act');
+          const id = btn.getAttribute('data-id');
+          if (act==='edit-region'){
+            const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){
+              const old = r.name; r.name=n.trim(); renderRegions();
+              try{
+                await fetch('/api/db-sync.php',{
+                  method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                  body: JSON.stringify({ scope:'regions', action:'update', data:{ id: r.id, name: r.name } })
+                }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+                if (window.osNotify) window.osNotify('Обновлено','Регион переименован');
+              }catch(e){ r.name = old; renderRegions(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+            }
+          } else if (act==='del-region'){
+            const r = regions.find(x=>x.id===id);
+            regions = regions.filter(x=>x.id!==id); delete citiesByRegion[id]; renderRegions();
+            if (r) deleteRegionOnServer(r);
+          } else if (act==='edit-city'){
+            const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города/локации:', c.name); if(n){
+              const old=c.name; c.name=n.trim(); renderCities();
+              try{
+                await fetch('/api/db-sync.php',{
+                  method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                  body: JSON.stringify({ scope:'cities', action:'update', data:{ id: c.id, name: c.name } })
+                }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+                if (window.osNotify) window.osNotify('Обновлено','Название сохранено');
+              }catch(e){ c.name=old; renderCities(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+            }
+          } else if (act==='del-city'){
+            const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; renderCities();
+          } else if (act==='edit-poi'){
+            // Находим POI для редактирования
+            const list = poisByCity[selectedCity.id]||[];
+            const poi = list.find(x=>x.id===id);
+            if (!poi) return;
+            
+            // Открываем модальное окно с данными для редактирования
+            const data = await openCreatePOIModal(poi);
+            if (!data) return;
+            
+            try {
+              // Обновляем локальные данные
+              Object.assign(poi, {
+                name: data.name_ru,
+                name_en: data.name_en,
+                type: data.cats_ru[0] || poi.type,
+                categories_ru: data.cats_ru,
+                categories_en: data.cats_en,
+                prefecture_ru: data.pref_ru,
+                prefecture_en: data.pref_en,
+                place_id: data.place_id,
+                website: data.website,
+                hours: data.hours,
+                description_ru: data.desc_ru,
+                description_en: data.desc_en,
+                published: data.published,
+                notes: data.notes
+              });
               
-              <form id="poi_form" class="space-y-3">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  <!-- Левая колонка -->
-                  <div class="space-y-3">
-                    <!-- Основная информация -->
-                    <div class="bg-gray-50 rounded p-3">
-                      <h4 class="text-xs font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="fas fa-info-circle mr-1 text-blue-600 text-xs"></i>
-                        Основная информация
-                      </h4>
-                      <div class="grid grid-cols-1 gap-2">
-                        <div>
-                          <label class="block text-xs font-medium text-gray-700">
-                            Название (RU) <span class="text-red-500">*</span>
-                          </label>
-                          <input id="poi_name_ru" type="text" class="input-japanese w-full text-sm py-1" 
-                                 placeholder="На русском" required
-                                 value="${editData ? editData.name : ''}">
-                        </div>
-                        <div>
-                          <label class="block text-xs font-medium text-gray-700">
-                            Name (EN) <span class="text-red-500">*</span>
-                          </label>
-                          <input id="poi_name_en" type="text" class="input-japanese w-full text-sm py-1" 
-                                 placeholder="In English" required
-                                 value="${editData ? editData.name_en || '' : ''}">
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
+              // Получаем base_id из конфигурации
+              const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
+              
+              // Подготавливаем данные для Airtable
+              const airtableFields = {
+                'POI ID': poi.id,
+                'POI Name (RU)': poi.name,
+                'POI Name (EN)': poi.name_en,
+                'Regions': [selectedRegion.id], // Link to Regions table
+                'Prefecture (RU)': poi.prefecture_ru,
+                'Prefecture (EN)': poi.prefecture_en,
+                'POI Category (RU)': poi.categories_ru,
+                'POI Category (EN)': poi.categories_en,
+                'Place ID': poi.place_id,
+                'Website': poi.website,
+                'Working Hours': poi.hours,
+                'Description (RU)': poi.description_ru,
+                'Description (EN)': poi.description_en,
+                'Published': poi.published,
+                'Notes': poi.notes
+              };
+              
+              // Отправляем на сервер
+              const res = await fetch('/api/db-sync.php', {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'X-Admin-Token': window.ADMIN_TOKEN || ''
+                },
+                body: JSON.stringify({
+                  scope: 'pois',
+                  action: 'update',
+                  data: {
+                    id: poi.id,
+                    base_id: baseId,
+                    table_id: window.AIRTABLE_POI_TABLE_ID,
+                    fields: airtableFields,
+                    localData: poi
+                  }
+                })
+              });
+              
+              const j = await res.json();
+              if (!res.ok || !j.ok) {
+                throw new Error((j && j.error) || 'Ошибка обновления');
+              }
+              
+              if (window.osNotify) {
+                window.osNotify('POI обновлён', data.name_ru);
+              }
+              
+              renderPois();
+            } catch(e) {
+              alert('Не удалось обновить POI: ' + (e.message || 'Неизвестная ошибка'));
+              // Здесь можно добавить откат изменений если нужно
+            }
+          } else if (act==='del-poi'){
+            const list = poisByCity[selectedCity.id]||[]; poisByCity[selectedCity.id] = list.filter(x=>x.id!==id); delete ticketsByPoi[id]; renderPois();
+          } else if (act==='edit-ticket'){
+            const list = ticketsByPoi[selectedPoi.id]||[]; const t = list.find(x=>x.id===id); if(!t) return; const c=prompt('Категория:', t.category)||t.category; const p=prompt('Цена (¥):', String(t.price))||String(t.price); const n=prompt('Примечание:', t.note||'')||t.note; t.category=c.trim(); t.price=parseInt(p,10)||t.price; t.note=n.trim(); renderTickets();
+          } else if (act==='del-ticket'){
+            const list = ticketsByPoi[selectedPoi.id]||[]; ticketsByPoi[selectedPoi.id] = list.filter(x=>x.id!==id); renderTickets();
+          }
+        });
+
+        // Floating add button
+        function genId(prefix, n){ return prefix+'-'+String(n).padStart(3,'0'); }
+
+        // Модальное окно создания региона (RU/EN)
+        function openCreateRegionModal(){
+          return new Promise(resolve=>{
+            const wrap = document.createElement('div');
+            wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
+            wrap.innerHTML = '\
+              <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
+              <div class="relative bg-white rounded-lg shadow-xl p-6 w-96">\
+                <div class="text-lg text-gray-800 mb-4">Новый регион</div>\
+                <div class="space-y-3">\
+                  <input id="cr_ru" class="input-japanese w-full" placeholder="Название (RU)"/>\
+                  <input id="cr_en" class="input-japanese w-full" placeholder="Название (EN)"/>\
+                </div>\
+                <div class="mt-5 flex justify-end gap-2">\
+                  <button id="cr_cancel" class="btn-japanese">Отмена</button>\
+                  <button id="cr_ok" class="btn-japanese accent">Сохранить</button>\
+                </div>\
+              </div>';
+            document.body.appendChild(wrap);
+            function done(val){ try{ document.body.removeChild(wrap); }catch{} resolve(val||null); }
+            wrap.addEventListener('click', e=>{ if (e.target===wrap.firstChild) done(null); });
+            wrap.querySelector('#cr_cancel').addEventListener('click', ()=>done(null));
+            wrap.querySelector('#cr_ok').addEventListener('click', ()=>{
+              const ru = wrap.querySelector('#cr_ru').value.trim();
+              const en = wrap.querySelector('#cr_en').value.trim();
+              if (!ru || !en){ alert('Заполните оба поля'); return; }
+              done({ ru, en });
+            });
+            wrap.querySelector('#cr_ru').focus();
+          });
+        }
+        
+        // Модальное окно создания/редактирования POI
+        function openCreatePOIModal(editData = null){
+          return new Promise(resolve=>{
+            const isEdit = !!editData;
+            const wrap = document.createElement('div');
+            wrap.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto';
+            wrap.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            
+            // Префектуры для селектов
+            const prefectures = [
+              {value: 'tokyo', ru: 'Токио', en: 'Tokyo'},
+              {value: 'kyoto', ru: 'Киото', en: 'Kyoto'},
+              {value: 'osaka', ru: 'Осака', en: 'Osaka'},
+              {value: 'kanagawa', ru: 'Канагава', en: 'Kanagawa'},
+              {value: 'aichi', ru: 'Айти', en: 'Aichi'},
+              {value: 'fukuoka', ru: 'Фукуока', en: 'Fukuoka'},
+              {value: 'hokkaido', ru: 'Хоккайдо', en: 'Hokkaido'},
+              {value: 'hiroshima', ru: 'Хиросима', en: 'Hiroshima'},
+              {value: 'nara', ru: 'Нара', en: 'Nara'},
+              {value: 'okinawa', ru: 'Окинава', en: 'Okinawa'}
+            ];
+            
+            const categories_ru = ['Синтоистское святилище', 'Буддийский храм', 'Архитектурный объект', 'Музей', 'Арт-пространство / Галерея', 'Смотровая площадка', 'Ландшафтный сад / Парк', 'Достопримечательность', 'Историческое место', 'Японский отель', 'Развлечения', 'Шоппинг', 'Термальный источник', 'СПА'];
+            const categories_en = ['Shinto Shrine', 'Buddhist Temple', 'Architectural Object', 'Museum', 'Art Venue', 'Viewing Spot', 'Park/Garden', 'City Attraction', 'Historical Location', 'Restaurant', 'Amusement', 'Shopping', 'Hot Spring', 'SPA'];
+            
+            wrap.innerHTML = `
+              <div class="absolute inset-0" onclick="this.parentElement.querySelector('#poi_cancel').click()"></div>
+              <div class="relative bg-white rounded-lg shadow-xl p-4 w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-lg font-medium text-gray-800">${isEdit ? 'Редактировать POI' : 'Новый POI'}</h3>
+                  <button id="poi_close" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                
+                <form id="poi_form" class="space-y-3">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    <!-- Левая колонка -->
+                    <div class="space-y-3">
+                      <!-- Основная информация -->
+                      <div class="bg-gray-50 rounded p-3">
+                        <h4 class="text-xs font-medium text-gray-700 mb-2 flex items-center">
+                          <i class="fas fa-info-circle mr-1 text-blue-600 text-xs"></i>
+                          Основная информация
+                        </h4>
+                        <div class="grid grid-cols-1 gap-2">
                           <div>
                             <label class="block text-xs font-medium text-gray-700">
-                              Префектура <span class="text-red-500">*</span>
+                              Название (RU) <span class="text-red-500">*</span>
                             </label>
-                            <select id="poi_pref_ru" class="input-japanese w-full text-sm py-1" required>
-                              <option value="">Выберите</option>
-                              ${prefectures.map(p => `<option value="${p.value}">${p.ru}</option>`).join('')}
-                            </select>
+                            <input id="poi_name_ru" type="text" class="input-japanese w-full text-sm py-1" 
+                                  placeholder="На русском" required
+                                  value="${editData ? editData.name : ''}">
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-700">
-                              Prefecture <span class="text-red-500">*</span>
+                              Name (EN) <span class="text-red-500">*</span>
                             </label>
-                            <select id="poi_pref_en" class="input-japanese w-full text-sm py-1" required>
-                              <option value="">Select</option>
-                              ${prefectures.map(p => `<option value="${p.value}">${p.en}</option>`).join('')}
-                            </select>
+                            <input id="poi_name_en" type="text" class="input-japanese w-full text-sm py-1" 
+                                  placeholder="In English" required
+                                  value="${editData ? editData.name_en || '' : ''}">
+                          </div>
+                          <div class="grid grid-cols-2 gap-2">
+                            <div>
+                              <label class="block text-xs font-medium text-gray-700">
+                                Префектура <span class="text-red-500">*</span>
+                              </label>
+                              <select id="poi_pref_ru" class="input-japanese w-full text-sm py-1" required>
+                                <option value="">Выберите</option>
+                                ${prefectures.map(p => `<option value="${p.value}">${p.ru}</option>`).join('')}
+                              </select>
+                            </div>
+                            <div>
+                              <label class="block text-xs font-medium text-gray-700">
+                                Prefecture <span class="text-red-500">*</span>
+                              </label>
+                              <select id="poi_pref_en" class="input-japanese w-full text-sm py-1" required>
+                                <option value="">Select</option>
+                                ${prefectures.map(p => `<option value="${p.value}">${p.en}</option>`).join('')}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Google интеграция и контент -->
+                      <div class="bg-gray-50 rounded p-3">
+                        <h4 class="text-xs font-medium text-gray-700 mb-2">
+                          <i class="fab fa-google mr-1 text-blue-600 text-xs"></i>
+                          Google & Контент
+                        </h4>
+                        <div class="space-y-2">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700">Google Place ID</label>
+                            <input id="poi_place_id" type="text" class="input-japanese w-full text-sm py-1" 
+                                  placeholder="ChIJ..." pattern="^[A-Za-z0-9_-]{25,}$">
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700">Сайт</label>
+                            <input id="poi_website" type="url" class="input-japanese w-full text-sm py-1" 
+                                  placeholder="https://...">
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700">Часы работы</label>
+                            <input id="poi_hours" type="text" class="input-japanese w-full text-sm py-1" 
+                                  placeholder="09:00-17:00">
                           </div>
                         </div>
                       </div>
                     </div>
                     
-                    <!-- Google интеграция и контент -->
-                    <div class="bg-gray-50 rounded p-3">
-                      <h4 class="text-xs font-medium text-gray-700 mb-2">
-                        <i class="fab fa-google mr-1 text-blue-600 text-xs"></i>
-                        Google & Контент
-                      </h4>
-                      <div class="space-y-2">
-                        <div>
-                          <label class="block text-xs font-medium text-gray-700">Google Place ID</label>
-                          <input id="poi_place_id" type="text" class="input-japanese w-full text-sm py-1" 
-                                 placeholder="ChIJ..." pattern="^[A-Za-z0-9_-]{25,}$">
+                    <!-- Правая колонка -->
+                    <div class="space-y-3">
+                      <!-- Категории -->
+                      <div class="bg-gray-50 rounded p-3">
+                        <h4 class="text-xs font-medium text-gray-700 mb-2">
+                          <i class="fas fa-tags mr-1 text-purple-600 text-xs"></i>
+                          Категории <span class="text-red-500">*</span>
+                        </h4>
+                        <div class="grid grid-cols-2 gap-2">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">RU</label>
+                            <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
+                              ${categories_ru.map((cat) => `
+                                <label class="flex items-center text-xs">
+                                  <input type="checkbox" name="cats_ru" value="${cat}" class="mr-1">
+                                  <span>${cat}</span>
+                                </label>
+                              `).join('')}
+                            </div>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">EN</label>
+                            <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
+                              ${categories_en.map((cat) => `
+                                <label class="flex items-center text-xs">
+                                  <input type="checkbox" name="cats_en" value="${cat}" class="mr-1">
+                                  <span>${cat}</span>
+                                </label>
+                              `).join('')}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label class="block text-xs font-medium text-gray-700">Сайт</label>
-                          <input id="poi_website" type="url" class="input-japanese w-full text-sm py-1" 
-                                 placeholder="https://...">
-                        </div>
-                        <div>
-                          <label class="block text-xs font-medium text-gray-700">Часы работы</label>
-                          <input id="poi_hours" type="text" class="input-japanese w-full text-sm py-1" 
-                                 placeholder="09:00-17:00">
+                      </div>
+                      
+                      <!-- Описания -->
+                      <div class="bg-gray-50 rounded p-3">
+                        <h4 class="text-xs font-medium text-gray-700 mb-2">
+                          <i class="fas fa-align-left mr-1 text-green-600 text-xs"></i>
+                          Описания
+                        </h4>
+                        <div class="space-y-2">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700">Описание (RU)</label>
+                            <textarea id="poi_desc_ru" class="input-japanese w-full text-sm py-1" rows="2"
+                                      placeholder="Краткое описание"></textarea>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-700">Description (EN)</label>
+                            <textarea id="poi_desc_en" class="input-japanese w-full text-sm py-1" rows="2"
+                                      placeholder="Brief description"></textarea>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                   
-                  <!-- Правая колонка -->
-                  <div class="space-y-3">
-                    <!-- Категории -->
-                    <div class="bg-gray-50 rounded p-3">
-                      <h4 class="text-xs font-medium text-gray-700 mb-2">
-                        <i class="fas fa-tags mr-1 text-purple-600 text-xs"></i>
-                        Категории <span class="text-red-500">*</span>
-                      </h4>
-                      <div class="grid grid-cols-2 gap-2">
-                        <div>
-                          <label class="block text-xs font-medium text-gray-600 mb-1">RU</label>
-                          <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
-                            ${categories_ru.map((cat) => `
-                              <label class="flex items-center text-xs">
-                                <input type="checkbox" name="cats_ru" value="${cat}" class="mr-1">
-                                <span>${cat}</span>
-                              </label>
-                            `).join('')}
-                          </div>
-                        </div>
-                        <div>
-                          <label class="block text-xs font-medium text-gray-600 mb-1">EN</label>
-                          <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
-                            ${categories_en.map((cat) => `
-                              <label class="flex items-center text-xs">
-                                <input type="checkbox" name="cats_en" value="${cat}" class="mr-1">
-                                <span>${cat}</span>
-                              </label>
-                            `).join('')}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <!-- Описания -->
-                    <div class="bg-gray-50 rounded p-3">
-                      <h4 class="text-xs font-medium text-gray-700 mb-2">
-                        <i class="fas fa-align-left mr-1 text-green-600 text-xs"></i>
-                        Описания
-                      </h4>
-                      <div class="space-y-2">
-                        <div>
-                          <label class="block text-xs font-medium text-gray-700">Описание (RU)</label>
-                          <textarea id="poi_desc_ru" class="input-japanese w-full text-sm py-1" rows="2"
-                                    placeholder="Краткое описание"></textarea>
-                        </div>
-                        <div>
-                          <label class="block text-xs font-medium text-gray-700">Description (EN)</label>
-                          <textarea id="poi_desc_en" class="input-japanese w-full text-sm py-1" rows="2"
-                                    placeholder="Brief description"></textarea>
-                        </div>
+                  <!-- Публикация и заметки - внизу на всю ширину -->
+                  <div class="bg-gray-50 rounded p-3">
+                    <div class="flex items-center justify-between">
+                      <label class="flex items-center">
+                        <input id="poi_published" type="checkbox" class="mr-2">
+                        <span class="text-sm text-gray-700">Опубликовать</span>
+                      </label>
+                      <div class="flex-1 ml-4">
+                        <input id="poi_notes" type="text" class="input-japanese w-full text-sm py-1" 
+                              placeholder="Заметки (внутренние)">
                       </div>
                     </div>
                   </div>
-                </div>
+                </form>
                 
-                <!-- Публикация и заметки - внизу на всю ширину -->
-                <div class="bg-gray-50 rounded p-3">
-                  <div class="flex items-center justify-between">
-                    <label class="flex items-center">
-                      <input id="poi_published" type="checkbox" class="mr-2">
-                      <span class="text-sm text-gray-700">Опубликовать</span>
-                    </label>
-                    <div class="flex-1 ml-4">
-                      <input id="poi_notes" type="text" class="input-japanese w-full text-sm py-1" 
-                             placeholder="Заметки (внутренние)">
-                    </div>
-                  </div>
+                <div class="mt-4 flex justify-end gap-2">
+                  <button id="poi_cancel" class="btn-japanese text-sm py-1 px-3">Отмена</button>
+                  <button id="poi_save" class="btn-japanese accent text-sm py-1 px-3">
+                    <i class="fas fa-save mr-1"></i>
+                    ${isEdit ? 'Обновить' : 'Создать'}
+                  </button>
                 </div>
-              </form>
-              
-              <div class="mt-4 flex justify-end gap-2">
-                <button id="poi_cancel" class="btn-japanese text-sm py-1 px-3">Отмена</button>
-                <button id="poi_save" class="btn-japanese accent text-sm py-1 px-3">
-                  <i class="fas fa-save mr-1"></i>
-                  ${isEdit ? 'Обновить' : 'Создать'}
-                </button>
               </div>
-            </div>
-          `;
-          
-          document.body.appendChild(wrap);
-          
-          // Синхронизация префектур
-          const prefRu = wrap.querySelector('#poi_pref_ru');
-          const prefEn = wrap.querySelector('#poi_pref_en');
-          prefRu.addEventListener('change', () => { prefEn.value = prefRu.value; });
-          prefEn.addEventListener('change', () => { prefRu.value = prefEn.value; });
-          
-          // Обработчики кнопок
-          function done(val){ 
-            try{ document.body.removeChild(wrap); }catch{} 
-            resolve(val||null); 
-          }
-          
-          wrap.querySelector('#poi_close').addEventListener('click', ()=>done(null));
-          wrap.querySelector('#poi_cancel').addEventListener('click', ()=>done(null));
-          
-          wrap.querySelector('#poi_save').addEventListener('click', ()=>{
-            const form = wrap.querySelector('#poi_form');
-            if (!form.checkValidity()) {
-              form.reportValidity();
-              return;
+            `;
+            
+            document.body.appendChild(wrap);
+            
+            // Синхронизация префектур
+            const prefRu = wrap.querySelector('#poi_pref_ru');
+            const prefEn = wrap.querySelector('#poi_pref_en');
+            prefRu.addEventListener('change', () => { prefEn.value = prefRu.value; });
+            prefEn.addEventListener('change', () => { prefRu.value = prefEn.value; });
+            
+            // Обработчики кнопок
+            function done(val){ 
+              try{ document.body.removeChild(wrap); }catch{} 
+              resolve(val||null); 
             }
             
-            const cats_ru = Array.from(wrap.querySelectorAll('input[name="cats_ru"]:checked')).map(cb => cb.value);
-            const cats_en = Array.from(wrap.querySelectorAll('input[name="cats_en"]:checked')).map(cb => cb.value);
+            wrap.querySelector('#poi_close').addEventListener('click', ()=>done(null));
+            wrap.querySelector('#poi_cancel').addEventListener('click', ()=>done(null));
             
-            if (cats_ru.length === 0 || cats_en.length === 0) {
-              alert('Выберите хотя бы одну категорию для каждого языка');
-              return;
-            }
-            
-            const data = {
-              name_ru: wrap.querySelector('#poi_name_ru').value.trim(),
-              name_en: wrap.querySelector('#poi_name_en').value.trim(),
-              pref_ru: prefRu.value,
-              pref_en: prefEn.value,
-              cats_ru: cats_ru,
-              cats_en: cats_en,
-              place_id: wrap.querySelector('#poi_place_id').value.trim(),
-              website: wrap.querySelector('#poi_website').value.trim(),
-              hours: wrap.querySelector('#poi_hours').value.trim(),
-              desc_ru: wrap.querySelector('#poi_desc_ru').value.trim(),
-              desc_en: wrap.querySelector('#poi_desc_en').value.trim(),
-              published: wrap.querySelector('#poi_published').checked,
-              notes: wrap.querySelector('#poi_notes').value.trim()
-            };
-            
-            done(data);
-          });
-          
-          // Фокус на первое поле
-          wrap.querySelector('#poi_name_ru').focus();
-          
-          // Если редактирование - заполнить данные
-          if (isEdit && editData) {
-            // Здесь можно заполнить поля данными для редактирования
-            if (editData.type) {
-              // Попытаться выбрать соответствующую категорию
-              const typeMap = {
-                'культура': 'Культура',
-                'природа': 'Природная достопримечательность',
-                'гастро': 'Гастрономия',
-                'храм': 'Храм',
-                'замок': 'Замок',
-                'музей': 'Музей'
-              };
-              const catRu = typeMap[editData.type.toLowerCase()] || editData.type;
-              const catCheckbox = wrap.querySelector(`input[name="cats_ru"][value="${catRu}"]`);
-              if (catCheckbox) catCheckbox.checked = true;
-            }
-          }
-        });
-      }
-
-      // Выбор типа (Город/Локация) — модалка с 2 кнопками
-      function chooseCityType(){
-        if (level !== 'cities') { return Promise.resolve(null); }
-        return new Promise((resolve)=>{
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
-          wrap.innerHTML = '\
-            <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
-            <div class="relative bg-white rounded-lg shadow-xl p-6 w-80">\
-              <div class="text-lg text-gray-800 mb-4">Тип записи</div>\
-              <div class="grid grid-cols-2 gap-3">\
-                <button id="btn_type_city" class="btn-japanese w-full text-center">Город</button>\
-                <button id="btn_type_location" class="btn-japanese w-full text-center">Локация</button>\
-              </div>\
-              <div class="mt-4 text-xs text-gray-500 text-center">Выберите тип записи</div>\
-            </div>';
-          document.body.appendChild(wrap);
-          function done(val){
-            document.body.removeChild(wrap);
-            resolve(val);
-          }
-          wrap.querySelector('#btn_type_city').addEventListener('click', function(){ done('city'); });
-          wrap.querySelector('#btn_type_location').addEventListener('click', function(){ done('location'); });
-          wrap.addEventListener('click', function(e){ if (e.target===wrap.firstChild) { done(null); } });
-          document.addEventListener('keydown', function onEsc(ev){ if (ev.key==='Escape'){ document.removeEventListener('keydown', onEsc); try{ document.body.removeChild(wrap); }catch{} resolve(null); } });
-        });
-      }
-
-      if (fab) fab.addEventListener('click', async function(){
-        if (level==='regions'){
-          const data = await openCreateRegionModal();
-          if (!data) return;
-          try{
-            const res = await fetch('/api/regions-create.php',{
-              method:'POST', headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ 
-                name_ru: data.ru, 
-                name_en: data.en,
-                base_id: window.AIRTABLE_BASE_ID,
-                table_id: window.AIRTABLE_REGIONS_TABLE_ID
-              })
-            });
-            const j = await res.json().catch(()=>({}));
-            if (!res.ok || !j.ok){
-              const detailsMsg = (j && (j.details?.error?.message || j.details?.message || j.error)) || ('HTTP '+res.status);
-              console.error('REGION_CREATE_ERR', j);
-              throw new Error(detailsMsg);
-            }
-            if (window.osNotify){ window.osNotify('Сохранено','ID: '+j.region_id); } else { alert('Сохранено: '+j.region_id); }
-            await syncRegionsFromAirtable();
-          }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
-        } else if (level==='cities'){
-          // модалка выбора типа + ввод названия
-          const picked = await chooseCityType(); if (!picked) return;
-          const wrap = await new Promise(res=>{
-            const w = document.createElement('div');
-            w.className='fixed inset-0 z-50 flex items-center justify-center';
-            w.innerHTML='\
-              <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
-              <div class="relative bg-white rounded-lg shadow-xl p-6 w-96">\
-                <div class="text-lg text-gray-800 mb-4">'+(picked==='location'?'Новая локация':'Новый город')+'</div>\
-                <div class="space-y-3">\
-                  <input id="nm_ru" class="input-japanese w-full" placeholder="Название (RU)"/>\
-                  <input id="nm_en" class="input-japanese w-full" placeholder="Name (EN)"/>\
-                </div>\
-                <div class="mt-5 flex justify-end gap-2">\
-                  <button id="c" class="btn-japanese">Отмена</button>\
-                  <button id="o" class="btn-japanese accent">Сохранить</button>\
-                </div>\
-              </div>';
-            document.body.appendChild(w);
-            w.querySelector('#c').onclick=()=>{ try{document.body.removeChild(w);}catch{}; res(null); };
-            w.querySelector('#o').onclick=()=>{ const ru=w.querySelector('#nm_ru').value.trim(); const en=w.querySelector('#nm_en').value.trim(); if(!ru){alert('Введите название RU');return;} try{document.body.removeChild(w);}catch{}; res({ru,en}); };
-            w.addEventListener('click',e=>{ if(e.target===w.firstChild){ try{document.body.removeChild(w);}catch{}; res(null);} });
-          });
-          if (!wrap) return; const name_ru = wrap.ru; const name_en = wrap.en || wrap.ru;
-          try{
-            const res = await fetch('/api/cities-create.php',{
-              method:'POST', headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ 
-                name_ru: name_ru, 
-                name_en: name_en, 
-                type: picked, 
-                region_rec_id: selectedRegion.id, 
-                region_name: selectedRegion.name, 
-                region_rid: (selectedRegion.rid||''),
-                base_id: window.AIRTABLE_BASE_ID,
-                table_id: window.AIRTABLE_CITIES_TABLE_ID
-              })
-            });
-            const j = await res.json();
-            if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
-            if (window.osNotify){ window.osNotify('Город сохранён', (j.linked? 'Связь с регионом установлена' : 'Создан без связи: проверьте поле связи')); }
-            await loadCitiesForRegion(selectedRegion); await preloadPoisCountsForRegion(selectedRegion); renderCities();
-          }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
-        } else if (level==='pois'){
-          const data = await openCreatePOIModal();
-          if (!data) return;
-          
-          try {
-            // Генерируем ID для нового POI в формате POI-00000x
-            const list = poisByCity[selectedCity.id] || (poisByCity[selectedCity.id]=[]);
-            const nextNumber = list.length + 1;
-            const id = 'POI-' + String(nextNumber).padStart(6, '0');
-            
-            // Создаем объект POI с полной спецификацией
-            const newPoi = {
-              id: id,
-              name: data.name_ru,
-              name_en: data.name_en,
-              type: data.cats_ru[0] || 'Другое', // Используем первую категорию как тип
-              categories_ru: data.cats_ru,
-              categories_en: data.cats_en,
-              prefecture_ru: data.pref_ru,
-              prefecture_en: data.pref_en,
-              place_id: data.place_id,
-              website: data.website,
-              hours: data.hours,
-              description_ru: data.desc_ru,
-              description_en: data.desc_en,
-              published: data.published,
-              notes: data.notes,
-              city_id: selectedCity.id,
-              region_id: selectedRegion.id
-            };
-            
-            // Добавляем в локальный список
-            list.push(newPoi);
-            
-            // Проверяем, загружен ли window.airtableReg, если нет - загружаем
-            if (!window.airtableReg) {
-              await loadDbConfig();
-            }
-            
-            // Получаем base_id из конфигурации
-            const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
-            
-            // Отладочная информация
-            console.log('Creating POI with:', {
-              baseId: baseId,
-              tableId: window.AIRTABLE_POI_TABLE_ID,
-              dataExists: !!data,
-              constants: {
-                base: window.AIRTABLE_BASE_ID,
-                poi_table: window.AIRTABLE_POI_TABLE_ID
+            wrap.querySelector('#poi_save').addEventListener('click', ()=>{
+              const form = wrap.querySelector('#poi_form');
+              if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
               }
+              
+              const cats_ru = Array.from(wrap.querySelectorAll('input[name="cats_ru"]:checked')).map(cb => cb.value);
+              const cats_en = Array.from(wrap.querySelectorAll('input[name="cats_en"]:checked')).map(cb => cb.value);
+              
+              if (cats_ru.length === 0 || cats_en.length === 0) {
+                alert('Выберите хотя бы одну категорию для каждого языка');
+                return;
+              }
+              
+              const data = {
+                name_ru: wrap.querySelector('#poi_name_ru').value.trim(),
+                name_en: wrap.querySelector('#poi_name_en').value.trim(),
+                pref_ru: prefRu.value,
+                pref_en: prefEn.value,
+                cats_ru: cats_ru,
+                cats_en: cats_en,
+                place_id: wrap.querySelector('#poi_place_id').value.trim(),
+                website: wrap.querySelector('#poi_website').value.trim(),
+                hours: wrap.querySelector('#poi_hours').value.trim(),
+                desc_ru: wrap.querySelector('#poi_desc_ru').value.trim(),
+                desc_en: wrap.querySelector('#poi_desc_en').value.trim(),
+                published: wrap.querySelector('#poi_published').checked,
+                notes: wrap.querySelector('#poi_notes').value.trim()
+              };
+              
+              done(data);
             });
             
-            // Подготавливаем данные для Airtable согласно спецификации
-            const airtableFields = {
-              'POI ID': id,
-              'POI Name (RU)': data.name_ru,
-              'POI Name (EN)': data.name_en,
-              'Regions': [selectedCity.id], // Link to parental Locations/Cities
-              'Prefecture (RU)': data.pref_ru,
-              'Prefecture (EN)': data.pref_en,
-              'Place ID': data.place_id,
-              'POI Category (RU)': data.cats_ru,
-              'POI Category (EN)': data.cats_en,
-              'Working Hours': data.hours,
-              'Website': data.website,
-              'Description (RU)': data.desc_ru,
-              'Description (EN)': data.desc_en,
-              'Published': data.published,
-              'Notes': data.notes,
-              'Tickets': [] // Билеты будут добавляться отдельно через связь с таблицей Tickets
-            };
+            // Фокус на первое поле
+            wrap.querySelector('#poi_name_ru').focus();
             
-            // Отправляем на сервер
-            const res = await fetch('/api/db-sync.php', {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'X-Admin-Token': window.ADMIN_TOKEN || ''
-              },
-              body: JSON.stringify({
-                scope: 'pois',
-                action: 'create',
-                data: {
-                  base_id: baseId,
-                  table_id: window.AIRTABLE_POI_TABLE_ID,
-                  fields: airtableFields,
-                  localData: newPoi
-                }
-              })
-            });
-            
-            const j = await res.json();
-            if (!res.ok || !j.ok) {
-              throw new Error((j && j.error) || 'Ошибка сохранения');
+            // Если редактирование - заполнить данные
+            if (isEdit && editData) {
+              // Здесь можно заполнить поля данными для редактирования
+              if (editData.type) {
+                // Попытаться выбрать соответствующую категорию
+                const typeMap = {
+                  'культура': 'Культура',
+                  'природа': 'Природная достопримечательность',
+                  'гастро': 'Гастрономия',
+                  'храм': 'Храм',
+                  'замок': 'Замок',
+                  'музей': 'Музей'
+                };
+                const catRu = typeMap[editData.type.toLowerCase()] || editData.type;
+                const catCheckbox = wrap.querySelector(`input[name="cats_ru"][value="${catRu}"]`);
+                if (catCheckbox) catCheckbox.checked = true;
+              }
             }
-            
-            if (window.osNotify) {
-              window.osNotify('POI создан', data.name_ru);
-            }
-            
-            renderPois();
-          } catch(e) {
-            alert('Не удалось сохранить POI: ' + (e.message || 'Неизвестная ошибка'));
-            // Откатываем изменения
-            const list = poisByCity[selectedCity.id] || [];
-            poisByCity[selectedCity.id] = list.filter(p => p.id !== id);
-            renderPois();
-          }
-        } else if (level==='tickets'){
-          const category = prompt('Категория (Adult/Child/Infant/Senior/Special):','Adult')||'Adult';
-          const price = parseInt(prompt('Цена (¥):','1000')||'1000',10)||0;
-          const note = prompt('Примечание:','')||'';
-          const list = ticketsByPoi[selectedPoi.id] || (ticketsByPoi[selectedPoi.id]=[]);
-          const id = genId('TKT', list.length+1);
-          list.push({ id, category, price, currency:'¥', note });
-          renderTickets();
+          });
         }
-      });
 
-      // Поля ввода и иконки синхронизации удалены, бинды не требуются
+        // Выбор типа (Город/Локация) — модалка с 2 кнопками
+        function chooseCityType(){
+          if (level !== 'cities') { return Promise.resolve(null); }
+          return new Promise((resolve)=>{
+            const wrap = document.createElement('div');
+            wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
+            wrap.innerHTML = '\
+              <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
+              <div class="relative bg-white rounded-lg shadow-xl p-6 w-80">\
+                <div class="text-lg text-gray-800 mb-4">Тип записи</div>\
+                <div class="grid grid-cols-2 gap-3">\
+                  <button id="btn_type_city" class="btn-japanese w-full text-center">Город</button>\
+                  <button id="btn_type_location" class="btn-japanese w-full text-center">Локация</button>\
+                </div>\
+                <div class="mt-4 text-xs text-gray-500 text-center">Выберите тип записи</div>\
+              </div>';
+            document.body.appendChild(wrap);
+            function done(val){
+              document.body.removeChild(wrap);
+              resolve(val);
+            }
+            wrap.querySelector('#btn_type_city').addEventListener('click', function(){ done('city'); });
+            wrap.querySelector('#btn_type_location').addEventListener('click', function(){ done('location'); });
+            wrap.addEventListener('click', function(e){ if (e.target===wrap.firstChild) { done(null); } });
+            document.addEventListener('keydown', function onEsc(ev){ if (ev.key==='Escape'){ document.removeEventListener('keydown', onEsc); try{ document.body.removeChild(wrap); }catch{} resolve(null); } });
+          });
+        }
 
-      // History: handle back/forward
-      window.addEventListener('popstate', function(ev){ renderFromState(ev.state); });
-      // Initial state
-      history.replaceState({ level: 'regions' }, '');
-      // Попробуем загрузить из Airtable, если настроено, иначе локальный список
-      (async function(){
-        await syncRegionsFromAirtable();
-        if (!regions.length){ await loadRegionsViaProxy(); }
-        if (!regions.length) renderRegions();
+        if (fab) fab.addEventListener('click', async function(){
+          if (level==='regions'){
+            const data = await openCreateRegionModal();
+            if (!data) return;
+            try{
+              const res = await fetch('/api/regions-create.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ 
+                  name_ru: data.ru, 
+                  name_en: data.en,
+                  base_id: window.AIRTABLE_BASE_ID,
+                  table_id: window.AIRTABLE_REGIONS_TABLE_ID
+                })
+              });
+              const j = await res.json().catch(()=>({}));
+              if (!res.ok || !j.ok){
+                const detailsMsg = (j && (j.details?.error?.message || j.details?.message || j.error)) || ('HTTP '+res.status);
+                console.error('REGION_CREATE_ERR', j);
+                throw new Error(detailsMsg);
+              }
+              if (window.osNotify){ window.osNotify('Сохранено','ID: '+j.region_id); } else { alert('Сохранено: '+j.region_id); }
+              await syncRegionsFromAirtable();
+            }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
+          } else if (level==='cities'){
+            // модалка выбора типа + ввод названия
+            const picked = await chooseCityType(); if (!picked) return;
+            const wrap = await new Promise(res=>{
+              const w = document.createElement('div');
+              w.className='fixed inset-0 z-50 flex items-center justify-center';
+              w.innerHTML='\
+                <div class="absolute inset-0 bg-black bg-opacity-30"></div>\
+                <div class="relative bg-white rounded-lg shadow-xl p-6 w-96">\
+                  <div class="text-lg text-gray-800 mb-4">'+(picked==='location'?'Новая локация':'Новый город')+'</div>\
+                  <div class="space-y-3">\
+                    <input id="nm_ru" class="input-japanese w-full" placeholder="Название (RU)"/>\
+                    <input id="nm_en" class="input-japanese w-full" placeholder="Name (EN)"/>\
+                  </div>\
+                  <div class="mt-5 flex justify-end gap-2">\
+                    <button id="c" class="btn-japanese">Отмена</button>\
+                    <button id="o" class="btn-japanese accent">Сохранить</button>\
+                  </div>\
+                </div>';
+              document.body.appendChild(w);
+              w.querySelector('#c').onclick=()=>{ try{document.body.removeChild(w);}catch{}; res(null); };
+              w.querySelector('#o').onclick=()=>{ const ru=w.querySelector('#nm_ru').value.trim(); const en=w.querySelector('#nm_en').value.trim(); if(!ru){alert('Введите название RU');return;} try{document.body.removeChild(w);}catch{}; res({ru,en}); };
+              w.addEventListener('click',e=>{ if(e.target===w.firstChild){ try{document.body.removeChild(w);}catch{}; res(null);} });
+            });
+            if (!wrap) return; const name_ru = wrap.ru; const name_en = wrap.en || wrap.ru;
+            try{
+              const res = await fetch('/api/cities-create.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ 
+                  name_ru: name_ru, 
+                  name_en: name_en, 
+                  type: picked, 
+                  region_rec_id: selectedRegion.id, 
+                  region_name: selectedRegion.name, 
+                  region_rid: (selectedRegion.rid||''),
+                  base_id: window.AIRTABLE_BASE_ID,
+                  table_id: window.AIRTABLE_CITIES_TABLE_ID
+                })
+              });
+              const j = await res.json();
+              if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
+              if (window.osNotify){ window.osNotify('Город сохранён', (j.linked? 'Связь с регионом установлена' : 'Создан без связи: проверьте поле связи')); }
+              await loadCitiesForRegion(selectedRegion); await preloadPoisCountsForRegion(selectedRegion); renderCities();
+            }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+          } else if (level==='pois'){
+            const data = await openCreatePOIModal();
+            if (!data) return;
+            
+            try {
+              // Генерируем ID для нового POI в формате POI-00000x
+              const list = poisByCity[selectedCity.id] || (poisByCity[selectedCity.id]=[]);
+              const nextNumber = list.length + 1;
+              const id = 'POI-' + String(nextNumber).padStart(6, '0');
+              
+              // Создаем объект POI с полной спецификацией
+              const newPoi = {
+                id: id,
+                name: data.name_ru,
+                name_en: data.name_en,
+                type: data.cats_ru[0] || 'Другое', // Используем первую категорию как тип
+                categories_ru: data.cats_ru,
+                categories_en: data.cats_en,
+                prefecture_ru: data.pref_ru,
+                prefecture_en: data.pref_en,
+                place_id: data.place_id,
+                website: data.website,
+                hours: data.hours,
+                description_ru: data.desc_ru,
+                description_en: data.desc_en,
+                published: data.published,
+                notes: data.notes,
+                city_id: selectedCity.id,
+                region_id: selectedRegion.id
+              };
+              
+              // Добавляем в локальный список
+              list.push(newPoi);
+              
+              // Проверяем, загружен ли window.airtableReg, если нет - загружаем
+              if (!window.airtableReg) {
+                await loadDbConfig();
+              }
+              
+              // Получаем base_id из конфигурации
+              const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
+              
+              // Отладочная информация
+              console.log('Creating POI with:', {
+                baseId: baseId,
+                tableId: window.AIRTABLE_POI_TABLE_ID,
+                dataExists: !!data,
+                constants: {
+                  base: window.AIRTABLE_BASE_ID,
+                  poi_table: window.AIRTABLE_POI_TABLE_ID
+                }
+              });
+              
+              // Подготавливаем данные для Airtable согласно спецификации
+              const airtableFields = {
+                'POI ID': id,
+                'POI Name (RU)': data.name_ru,
+                'POI Name (EN)': data.name_en,
+                'Regions': [selectedCity.id], // Link to parental Locations/Cities
+                'Prefecture (RU)': data.pref_ru,
+                'Prefecture (EN)': data.pref_en,
+                'Place ID': data.place_id,
+                'POI Category (RU)': data.cats_ru,
+                'POI Category (EN)': data.cats_en,
+                'Working Hours': data.hours,
+                'Website': data.website,
+                'Description (RU)': data.desc_ru,
+                'Description (EN)': data.desc_en,
+                'Published': data.published,
+                'Notes': data.notes,
+                'Tickets': [] // Билеты будут добавляться отдельно через связь с таблицей Tickets
+              };
+              
+              // Отправляем на сервер
+              const res = await fetch('/api/db-sync.php', {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'X-Admin-Token': window.ADMIN_TOKEN || ''
+                },
+                body: JSON.stringify({
+                  scope: 'pois',
+                  action: 'create',
+                  data: {
+                    base_id: baseId,
+                    table_id: window.AIRTABLE_POI_TABLE_ID,
+                    fields: airtableFields,
+                    localData: newPoi
+                  }
+                })
+              });
+              
+              const j = await res.json();
+              if (!res.ok || !j.ok) {
+                throw new Error((j && j.error) || 'Ошибка сохранения');
+              }
+              
+              if (window.osNotify) {
+                window.osNotify('POI создан', data.name_ru);
+              }
+              
+              renderPois();
+            } catch(e) {
+              alert('Не удалось сохранить POI: ' + (e.message || 'Неизвестная ошибка'));
+              // Откатываем изменения
+              const list = poisByCity[selectedCity.id] || [];
+              poisByCity[selectedCity.id] = list.filter(p => p.id !== id);
+              renderPois();
+            }
+          } else if (level==='tickets'){
+            const category = prompt('Категория (Adult/Child/Infant/Senior/Special):','Adult')||'Adult';
+            const price = parseInt(prompt('Цена (¥):','1000')||'1000',10)||0;
+            const note = prompt('Примечание:','')||'';
+            const list = ticketsByPoi[selectedPoi.id] || (ticketsByPoi[selectedPoi.id]=[]);
+            const id = genId('TKT', list.length+1);
+            list.push({ id, category, price, currency:'¥', note });
+            renderTickets();
+          }
+        });
+
+        // Поля ввода и иконки синхронизации удалены, бинды не требуются
+
+        // History: handle back/forward
+        window.addEventListener('popstate', function(ev){ renderFromState(ev.state); });
+        // Initial state
+        history.replaceState({ level: 'regions' }, '');
+        // Попробуем загрузить из Airtable, если настроено, иначе локальный список
+        (async function(){
+          await syncRegionsFromAirtable();
+          if (!regions.length){ await loadRegionsViaProxy(); }
+          if (!regions.length) renderRegions();
+        })();
+
+        // Deploy button placeholder removed per requirements
+      })();
+        // Удалён legacy-список «Каталог регионов» (табличный)
+
+      // Каталог городов/локаций — UI-заглушка без обращений к реальным API
+      (function(){
+        const table = document.getElementById('cities_table');
+        if (!table) return;
+        const tbody = table.querySelector('tbody');
+        const addBtn = document.getElementById('cities_add');
+
+        // Используем регионы из раздела выше как справочник
+        function getRegionList(){
+          const rows = document.querySelectorAll('#regions_table tbody tr');
+          const list = [];
+          rows.forEach(r=>{
+            const id = r.querySelector('td:nth-child(1)')?.textContent?.trim();
+            const name = r.querySelector('td:nth-child(2)')?.textContent?.trim();
+            if (id && name && !id.startsWith('Нет данных')) list.push({id,name});
+          });
+          return list;
+        }
+
+        let items = [];
+
+        function generateId(){
+          const n = items.length + 1;
+          return 'CL-' + String(n).padStart(4, '0');
+        }
+
+        function render(){
+          tbody.innerHTML = '';
+          if (items.length === 0){
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 7;
+            td.className = 'px-4 py-4 text-gray-500';
+            td.textContent = 'Нет данных. Добавьте запись.';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+          }
+          items.forEach((it, idx)=>{
+            const tr = document.createElement('tr');
+            tr.className = idx % 2 ? 'bg-gray-50' : '';
+            tr.innerHTML = `
+              <td class="px-4 py-2 text-gray-800">${it.id}</td>
+              <td class="px-4 py-2 text-gray-800">${it.name}</td>
+              <td class="px-4 py-2 text-gray-800">${it.regionName || ''}</td>
+              <td class="px-4 py-2 text-gray-800">${it.type}</td>
+              <td class="px-4 py-2 text-gray-800">${it.coords || ''}</td>
+              <td class="px-4 py-2 text-gray-800">${it.parentCity || ''}</td>
+              <td class="px-4 py-2 text-right">
+                <button data-action="edit" data-id="${it.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
+                <button data-action="delete" data-id="${it.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
+              </td>`;
+            tbody.appendChild(tr);
+          });
+        }
+
+        function addOne(){
+          const name = prompt('Название (город/локация):');
+          if (!name) return;
+          const type = prompt('Тип записи (Город|Локация):', 'Город');
+          if (!type) return;
+          let parentCity = '';
+          if (type.trim().toLowerCase() === 'локация'){
+            parentCity = prompt('Родительский город:') || '';
+          }
+          const coords = prompt('Координаты (опционально, например: 35.6895,139.6917):') || '';
+          const r = getRegionList();
+          let regionName = '';
+          if (r.length){
+            const names = r.map(x=>x.name).join(', ');
+            const picked = prompt('Регион ('+names+'):') || '';
+            const found = r.find(x=>x.name===picked.trim());
+            regionName = found ? found.name : (r[0]?.name || '');
+          }
+          items.push({ id: generateId(), name: name.trim(), type: (type||'').trim(), parentCity: parentCity.trim(), coords: coords.trim(), regionName });
+          render();
+        }
+
+        tbody.addEventListener('click', function(e){
+          const btn = e.target.closest('button');
+          if (!btn) return;
+          const id = btn.getAttribute('data-id');
+          const action = btn.getAttribute('data-action');
+          if (action === 'delete'){
+            items = items.filter(r=>r.id !== id);
+            render();
+          } else if (action === 'edit'){
+            const it = items.find(x=>x.id===id);
+            if (!it) return;
+            const newName = prompt('Новое название:', it.name) || it.name;
+            const newType = prompt('Тип записи (Город|Локация):', it.type) || it.type;
+            const newCoords = prompt('Координаты:', it.coords) || it.coords;
+            let newParent = it.parentCity;
+            if ((newType||'').trim().toLowerCase()==='локация'){
+              newParent = prompt('Родительский город:', it.parentCity||'') || it.parentCity || '';
+            } else {
+              newParent = '';
+            }
+            it.name = newName.trim();
+            it.type = newType.trim();
+            it.coords = newCoords.trim();
+            it.parentCity = newParent.trim();
+            render();
+          }
+        });
+
+        addBtn && addBtn.addEventListener('click', addOne);
+
+        render();
       })();
 
-      // Deploy button placeholder removed per requirements
-    })();
-      // Удалён legacy-список «Каталог регионов» (табличный)
+      // POIs — UI-заглушка (с билеты внутри блока)
+      (function(){
+        const table = document.getElementById('pois_table');
+        if (!table) return;
+        const tbody = table.querySelector('tbody');
+        const addBtn = document.getElementById('pois_add');
+        const ticketsTitle = document.getElementById('poi_tickets_title');
+        const ticketsTable = document.getElementById('tickets_table');
+        const ticketsTbody = ticketsTable ? ticketsTable.querySelector('tbody') : null;
+        const ticketsAddBtn = document.getElementById('tickets_add');
 
-    // Каталог городов/локаций — UI-заглушка без обращений к реальным API
-    (function(){
-      const table = document.getElementById('cities_table');
-      if (!table) return;
-      const tbody = table.querySelector('tbody');
-      const addBtn = document.getElementById('cities_add');
-
-      // Используем регионы из раздела выше как справочник
-      function getRegionList(){
-        const rows = document.querySelectorAll('#regions_table tbody tr');
-        const list = [];
-        rows.forEach(r=>{
-          const id = r.querySelector('td:nth-child(1)')?.textContent?.trim();
-          const name = r.querySelector('td:nth-child(2)')?.textContent?.trim();
-          if (id && name && !id.startsWith('Нет данных')) list.push({id,name});
-        });
-        return list;
-      }
-
-      let items = [];
-
-      function generateId(){
-        const n = items.length + 1;
-        return 'CL-' + String(n).padStart(4, '0');
-      }
-
-      function render(){
-        tbody.innerHTML = '';
-        if (items.length === 0){
-          const tr = document.createElement('tr');
-          const td = document.createElement('td');
-          td.colSpan = 7;
-          td.className = 'px-4 py-4 text-gray-500';
-          td.textContent = 'Нет данных. Добавьте запись.';
-          tr.appendChild(td);
-          tbody.appendChild(tr);
-          return;
+        function getCities(){
+          const rows = document.querySelectorAll('#cities_table tbody tr');
+          const list = [];
+          rows.forEach(r=>{
+            const id = r.querySelector('td:nth-child(1)')?.textContent?.trim();
+            const name = r.querySelector('td:nth-child(2)')?.textContent?.trim();
+            const region = r.querySelector('td:nth-child(3)')?.textContent?.trim();
+            if (id && name && !id.startsWith('Нет данных')) list.push({id,name,region});
+          });
+          return list;
         }
-        items.forEach((it, idx)=>{
-          const tr = document.createElement('tr');
-          tr.className = idx % 2 ? 'bg-gray-50' : '';
-          tr.innerHTML = `
-            <td class="px-4 py-2 text-gray-800">${it.id}</td>
-            <td class="px-4 py-2 text-gray-800">${it.name}</td>
-            <td class="px-4 py-2 text-gray-800">${it.regionName || ''}</td>
-            <td class="px-4 py-2 text-gray-800">${it.type}</td>
-            <td class="px-4 py-2 text-gray-800">${it.coords || ''}</td>
-            <td class="px-4 py-2 text-gray-800">${it.parentCity || ''}</td>
-            <td class="px-4 py-2 text-right">
-              <button data-action="edit" data-id="${it.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
-              <button data-action="delete" data-id="${it.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
-            </td>`;
-          tbody.appendChild(tr);
-        });
-      }
 
-      function addOne(){
-        const name = prompt('Название (город/локация):');
-        if (!name) return;
-        const type = prompt('Тип записи (Город|Локация):', 'Город');
-        if (!type) return;
-        let parentCity = '';
-        if (type.trim().toLowerCase() === 'локация'){
-          parentCity = prompt('Родительский город:') || '';
-        }
-        const coords = prompt('Координаты (опционально, например: 35.6895,139.6917):') || '';
-        const r = getRegionList();
-        let regionName = '';
-        if (r.length){
-          const names = r.map(x=>x.name).join(', ');
-          const picked = prompt('Регион ('+names+'):') || '';
-          const found = r.find(x=>x.name===picked.trim());
-          regionName = found ? found.name : (r[0]?.name || '');
-        }
-        items.push({ id: generateId(), name: name.trim(), type: (type||'').trim(), parentCity: parentCity.trim(), coords: coords.trim(), regionName });
-        render();
-      }
+        let items = [];
+        let selectedPoiId = '';
 
-      tbody.addEventListener('click', function(e){
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        const id = btn.getAttribute('data-id');
-        const action = btn.getAttribute('data-action');
-        if (action === 'delete'){
-          items = items.filter(r=>r.id !== id);
-          render();
-        } else if (action === 'edit'){
-          const it = items.find(x=>x.id===id);
-          if (!it) return;
-          const newName = prompt('Новое название:', it.name) || it.name;
-          const newType = prompt('Тип записи (Город|Локация):', it.type) || it.type;
-          const newCoords = prompt('Координаты:', it.coords) || it.coords;
-          let newParent = it.parentCity;
-          if ((newType||'').trim().toLowerCase()==='локация'){
-            newParent = prompt('Родительский город:', it.parentCity||'') || it.parentCity || '';
-          } else {
-            newParent = '';
+        function genId(){ return 'POI-' + String(items.length+1).padStart(4,'0'); }
+
+        function render(){
+          tbody.innerHTML = '';
+          if (items.length === 0){
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 7;
+            td.className = 'px-4 py-4 text-gray-500';
+            td.textContent = 'Нет данных. Добавьте POI.';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            updateTicketsPanel();
+            return;
           }
-          it.name = newName.trim();
-          it.type = newType.trim();
-          it.coords = newCoords.trim();
-          it.parentCity = newParent.trim();
+          items.forEach((it, idx)=>{
+            const tr = document.createElement('tr');
+            tr.className = idx % 2 ? 'bg-gray-50' : '';
+            tr.innerHTML = `
+              <td class="px-4 py-2 text-gray-800">${it.id}</td>
+              <td class="px-4 py-2 text-gray-800">${it.name}</td>
+              <td class="px-4 py-2 text-gray-800">${it.cityName || ''}</td>
+              <td class="px-4 py-2 text-gray-800">${it.regionName || ''}</td>
+              <td class="px-4 py-2 text-gray-800">${it.type || ''}</td>
+              <td class="px-4 py-2 text-gray-800">${(it.tickets||[]).length}</td>
+              <td class="px-4 py-2 text-right">
+                <button data-action="tickets" data-id="${it.id}" class="text-xs text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-ticket mr-1"></i>Билеты</button>
+                <button data-action="edit" data-id="${it.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
+                <button data-action="delete" data-id="${it.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
+              </td>`;
+            tbody.appendChild(tr);
+          });
+          updateTicketsPanel();
+        }
+
+        function addOne(){
+          const name = prompt('Название POI:');
+          if (!name) return;
+          const type = prompt('Тип объекта (культура, природа, гастро, …):', 'культура') || '';
+          const cities = getCities();
+          let cityName = '';
+          let regionName = '';
+          if (cities.length){
+            const names = cities.map(x=>x.name).join(', ');
+            const picked = prompt('Город/Локация ('+names+'):') || '';
+            const found = cities.find(x=>x.name===picked.trim());
+            cityName = found ? found.name : (cities[0]?.name || '');
+            regionName = found ? (found.region || '') : (cities[0]?.region || '');
+          }
+          items.push({ id: genId(), name: name.trim(), type: type.trim(), cityName, regionName, tickets: []});
           render();
         }
-      });
 
-      addBtn && addBtn.addEventListener('click', addOne);
-
-      render();
-    })();
-
-    // POIs — UI-заглушка (с билеты внутри блока)
-    (function(){
-      const table = document.getElementById('pois_table');
-      if (!table) return;
-      const tbody = table.querySelector('tbody');
-      const addBtn = document.getElementById('pois_add');
-      const ticketsTitle = document.getElementById('poi_tickets_title');
-      const ticketsTable = document.getElementById('tickets_table');
-      const ticketsTbody = ticketsTable ? ticketsTable.querySelector('tbody') : null;
-      const ticketsAddBtn = document.getElementById('tickets_add');
-
-      function getCities(){
-        const rows = document.querySelectorAll('#cities_table tbody tr');
-        const list = [];
-        rows.forEach(r=>{
-          const id = r.querySelector('td:nth-child(1)')?.textContent?.trim();
-          const name = r.querySelector('td:nth-child(2)')?.textContent?.trim();
-          const region = r.querySelector('td:nth-child(3)')?.textContent?.trim();
-          if (id && name && !id.startsWith('Нет данных')) list.push({id,name,region});
+        tbody.addEventListener('click', function(e){
+          const btn = e.target.closest('button');
+          if (!btn) return;
+          const id = btn.getAttribute('data-id');
+          const action = btn.getAttribute('data-action');
+          if (action === 'delete'){
+            items = items.filter(r=>r.id !== id);
+            if (selectedPoiId === id) selectedPoiId = '';
+            render();
+          } else if (action === 'edit'){
+            const it = items.find(x=>x.id===id);
+            if (!it) return;
+            const newName = prompt('Новое название:', it.name) || it.name;
+            const newType = prompt('Тип объекта:', it.type) || it.type;
+            it.name = newName.trim();
+            it.type = newType.trim();
+            render();
+          } else if (action === 'tickets'){
+            selectedPoiId = id;
+            updateTicketsPanel();
+          }
         });
-        return list;
-      }
 
-      let items = [];
-      let selectedPoiId = '';
+        addBtn && addBtn.addEventListener('click', addOne);
 
-      function genId(){ return 'POI-' + String(items.length+1).padStart(4,'0'); }
+        // Билеты внутри POI
+        let tickets = {};// { poiId: [ {id,category,price,currency,note} ] }
+        function ensureArr(poiId){ if (!tickets[poiId]) tickets[poiId] = []; return tickets[poiId]; }
 
-      function render(){
-        tbody.innerHTML = '';
-        if (items.length === 0){
-          const tr = document.createElement('tr');
-          const td = document.createElement('td');
-          td.colSpan = 7;
-          td.className = 'px-4 py-4 text-gray-500';
-          td.textContent = 'Нет данных. Добавьте POI.';
-          tr.appendChild(td);
-          tbody.appendChild(tr);
+        function updateTicketsPanel(){
+          if (!ticketsTbody || !ticketsTitle) return;
+          const poi = items.find(x=>x.id===selectedPoiId);
+          ticketsTitle.textContent = poi ? poi.name : '— не выбран —';
+          const list = poi ? ensureArr(poi.id) : [];
+          ticketsTbody.innerHTML = '';
+          if (!poi){
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 6; td.className='px-4 py-4 text-gray-500';
+            td.textContent = 'Выберите POI (кнопка «Билеты»)';
+            tr.appendChild(td); ticketsTbody.appendChild(tr); return;
+          }
+          if (list.length===0){
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 6; td.className='px-4 py-4 text-gray-500';
+            td.textContent = 'Нет билетов. Добавьте билет.';
+            tr.appendChild(td); ticketsTbody.appendChild(tr); return;
+          }
+          list.forEach((t, idx)=>{
+            const tr = document.createElement('tr');
+            tr.className = idx % 2 ? 'bg-gray-50' : '';
+            tr.innerHTML = `
+              <td class=\"px-4 py-2 text-gray-800\">${t.id}</td>
+              <td class=\"px-4 py-2 text-gray-800\">${t.category}</td>
+              <td class=\"px-4 py-2 text-gray-800\">${t.price}</td>
+              <td class=\"px-4 py-2 text-gray-800\">${t.currency}</td>
+              <td class=\"px-4 py-2 text-gray-800\">${t.note||''}</td>
+              <td class=\"px-4 py-2 text-right\">\n              <button data-action=\"t-edit\" data-id=\"${t.id}\" class=\"text-xs text-gray-700 hover:text-gray-900 mr-3\"><i class=\"fas fa-pen mr-1\"></i>Редактировать</button>\n              <button data-action=\"t-delete\" data-id=\"${t.id}\" class=\"text-xs text-red-600 hover:text-red-800\"><i class="fas fa-trash mr-1"></i>Удалить</button>
+              </td>`;
+            ticketsTbody.appendChild(tr);
+          });
+        }
+
+        function genTicketId(poiId){
+          const n = ensureArr(poiId).length + 1;
+          return poiId.replace('POI-','TKT-') + '-' + String(n).padStart(2,'0');
+          }
+
+        ticketsAddBtn && ticketsAddBtn.addEventListener('click', function(){
+          if (!selectedPoiId) { alert('Сначала выберите POI (кнопка «Билеты»).'); return; }
+          const category = prompt('Категория (Adult / Child / Infant / Senior / Special):', 'Adult') || 'Adult';
+          const priceStr = prompt('Цена (¥):', '1000') || '0';
+          const price = parseInt(priceStr, 10) || 0;
+          const currency = '¥';
+          const note = prompt('Примечание:', '') || '';
+          const arr = ensureArr(selectedPoiId);
+          arr.push({ id: genTicketId(selectedPoiId), category, price, currency, note });
           updateTicketsPanel();
-          return;
-        }
-        items.forEach((it, idx)=>{
-          const tr = document.createElement('tr');
-          tr.className = idx % 2 ? 'bg-gray-50' : '';
-          tr.innerHTML = `
-            <td class="px-4 py-2 text-gray-800">${it.id}</td>
-            <td class="px-4 py-2 text-gray-800">${it.name}</td>
-            <td class="px-4 py-2 text-gray-800">${it.cityName || ''}</td>
-            <td class="px-4 py-2 text-gray-800">${it.regionName || ''}</td>
-            <td class="px-4 py-2 text-gray-800">${it.type || ''}</td>
-            <td class="px-4 py-2 text-gray-800">${(it.tickets||[]).length}</td>
-            <td class="px-4 py-2 text-right">
-              <button data-action="tickets" data-id="${it.id}" class="text-xs text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-ticket mr-1"></i>Билеты</button>
-              <button data-action="edit" data-id="${it.id}" class="text-xs text-gray-700 hover:text-gray-900 mr-3"><i class="fas fa-pen mr-1"></i>Редактировать</button>
-              <button data-action="delete" data-id="${it.id}" class="text-xs text-red-600 hover:text-red-800"><i class="fas fa-trash mr-1"></i>Удалить</button>
-            </td>`;
-          tbody.appendChild(tr);
         });
-        updateTicketsPanel();
-      }
 
-      function addOne(){
-        const name = prompt('Название POI:');
-        if (!name) return;
-        const type = prompt('Тип объекта (культура, природа, гастро, …):', 'культура') || '';
-        const cities = getCities();
-        let cityName = '';
-        let regionName = '';
-        if (cities.length){
-          const names = cities.map(x=>x.name).join(', ');
-          const picked = prompt('Город/Локация ('+names+'):') || '';
-          const found = cities.find(x=>x.name===picked.trim());
-          cityName = found ? found.name : (cities[0]?.name || '');
-          regionName = found ? (found.region || '') : (cities[0]?.region || '');
-        }
-        items.push({ id: genId(), name: name.trim(), type: type.trim(), cityName, regionName, tickets: []});
+        ticketsTbody && ticketsTbody.addEventListener('click', function(e){
+          const btn = e.target.closest('button');
+          if (!btn || !selectedPoiId) return;
+          const action = btn.getAttribute('data-action');
+          const id = btn.getAttribute('data-id');
+          const arr = ensureArr(selectedPoiId);
+          if (action==='t-delete'){
+            const idx = arr.findIndex(x=>x.id===id);
+            if (idx>=0){ arr.splice(idx,1); updateTicketsPanel(); }
+          } else if (action==='t-edit'){
+            const t = arr.find(x=>x.id===id); if (!t) return;
+            const newCategory = prompt('Категория:', t.category) || t.category;
+            const newPriceStr = prompt('Цена (¥):', String(t.price)) || String(t.price);
+            const newNote = prompt('Примечание:', t.note||'') || t.note;
+            t.category = newCategory.trim();
+            t.price = parseInt(newPriceStr, 10) || t.price;
+            t.note = newNote.trim();
+            updateTicketsPanel();
+          }
+        });
+
         render();
-      }
-
-      tbody.addEventListener('click', function(e){
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        const id = btn.getAttribute('data-id');
-        const action = btn.getAttribute('data-action');
-        if (action === 'delete'){
-          items = items.filter(r=>r.id !== id);
-          if (selectedPoiId === id) selectedPoiId = '';
-          render();
-        } else if (action === 'edit'){
-          const it = items.find(x=>x.id===id);
-          if (!it) return;
-          const newName = prompt('Новое название:', it.name) || it.name;
-          const newType = prompt('Тип объекта:', it.type) || it.type;
-          it.name = newName.trim();
-          it.type = newType.trim();
-          render();
-        } else if (action === 'tickets'){
-          selectedPoiId = id;
-          updateTicketsPanel();
-        }
-      });
-
-      addBtn && addBtn.addEventListener('click', addOne);
-
-      // Билеты внутри POI
-      let tickets = {};// { poiId: [ {id,category,price,currency,note} ] }
-      function ensureArr(poiId){ if (!tickets[poiId]) tickets[poiId] = []; return tickets[poiId]; }
-
-      function updateTicketsPanel(){
-        if (!ticketsTbody || !ticketsTitle) return;
-        const poi = items.find(x=>x.id===selectedPoiId);
-        ticketsTitle.textContent = poi ? poi.name : '— не выбран —';
-        const list = poi ? ensureArr(poi.id) : [];
-        ticketsTbody.innerHTML = '';
-        if (!poi){
-          const tr = document.createElement('tr');
-          const td = document.createElement('td');
-          td.colSpan = 6; td.className='px-4 py-4 text-gray-500';
-          td.textContent = 'Выберите POI (кнопка «Билеты»)';
-          tr.appendChild(td); ticketsTbody.appendChild(tr); return;
-        }
-        if (list.length===0){
-          const tr = document.createElement('tr');
-          const td = document.createElement('td');
-          td.colSpan = 6; td.className='px-4 py-4 text-gray-500';
-          td.textContent = 'Нет билетов. Добавьте билет.';
-          tr.appendChild(td); ticketsTbody.appendChild(tr); return;
-        }
-        list.forEach((t, idx)=>{
-          const tr = document.createElement('tr');
-          tr.className = idx % 2 ? 'bg-gray-50' : '';
-          tr.innerHTML = `
-            <td class=\"px-4 py-2 text-gray-800\">${t.id}</td>
-            <td class=\"px-4 py-2 text-gray-800\">${t.category}</td>
-            <td class=\"px-4 py-2 text-gray-800\">${t.price}</td>
-            <td class=\"px-4 py-2 text-gray-800\">${t.currency}</td>
-            <td class=\"px-4 py-2 text-gray-800\">${t.note||''}</td>
-            <td class=\"px-4 py-2 text-right\">\n              <button data-action=\"t-edit\" data-id=\"${t.id}\" class=\"text-xs text-gray-700 hover:text-gray-900 mr-3\"><i class=\"fas fa-pen mr-1\"></i>Редактировать</button>\n              <button data-action=\"t-delete\" data-id=\"${t.id}\" class=\"text-xs text-red-600 hover:text-red-800\"><i class="fas fa-trash mr-1"></i>Удалить</button>
-            </td>`;
-          ticketsTbody.appendChild(tr);
-        });
-      }
-
-      function genTicketId(poiId){
-        const n = ensureArr(poiId).length + 1;
-        return poiId.replace('POI-','TKT-') + '-' + String(n).padStart(2,'0');
-        }
-
-      ticketsAddBtn && ticketsAddBtn.addEventListener('click', function(){
-        if (!selectedPoiId) { alert('Сначала выберите POI (кнопка «Билеты»).'); return; }
-        const category = prompt('Категория (Adult / Child / Infant / Senior / Special):', 'Adult') || 'Adult';
-        const priceStr = prompt('Цена (¥):', '1000') || '0';
-        const price = parseInt(priceStr, 10) || 0;
-        const currency = '¥';
-        const note = prompt('Примечание:', '') || '';
-        const arr = ensureArr(selectedPoiId);
-        arr.push({ id: genTicketId(selectedPoiId), category, price, currency, note });
-        updateTicketsPanel();
-      });
-
-      ticketsTbody && ticketsTbody.addEventListener('click', function(e){
-        const btn = e.target.closest('button');
-        if (!btn || !selectedPoiId) return;
-        const action = btn.getAttribute('data-action');
-        const id = btn.getAttribute('data-id');
-        const arr = ensureArr(selectedPoiId);
-        if (action==='t-delete'){
-          const idx = arr.findIndex(x=>x.id===id);
-          if (idx>=0){ arr.splice(idx,1); updateTicketsPanel(); }
-        } else if (action==='t-edit'){
-          const t = arr.find(x=>x.id===id); if (!t) return;
-          const newCategory = prompt('Категория:', t.category) || t.category;
-          const newPriceStr = prompt('Цена (¥):', String(t.price)) || String(t.price);
-          const newNote = prompt('Примечание:', t.note||'') || t.note;
-          t.category = newCategory.trim();
-          t.price = parseInt(newPriceStr, 10) || t.price;
-          t.note = newNote.trim();
-          updateTicketsPanel();
-        }
-      });
-
-      render();
-    })();
-    </script>
-  </body>
-</html>
+      })();
+      </script>
+    </body>
+  </html>
 
 
