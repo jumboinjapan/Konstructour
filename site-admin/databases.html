@@ -924,6 +924,9 @@
         } else if (act==='del-city'){
           const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; renderCities();
         } else if (act==='edit-poi'){
+            // ОТКЛЮЧЕНО - редактирование только через модальное окно деталей
+            return;
+            
             // Находим POI для редактирования
             const list = poisByCity[selectedCity.id]||[];
             const poi = list.find(x=>x.id===id);
