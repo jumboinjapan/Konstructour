@@ -661,9 +661,7 @@
                 </div>\
               </div>\
             </div>';
-          // const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-          //                 '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
-          // Убираем кнопки действий с карточек POI - редактирование доступно из модального окна
+          // Карточки POI без кнопок - редактирование через модальное окно деталей
           return '<div class="cursor-pointer" data-go="poi-details" data-id="'+p.id+'">'+card('', inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
       }
@@ -924,7 +922,8 @@
         } else if (act==='del-city'){
           const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; renderCities();
         } else if (act==='edit-poi'){
-            // ОТКЛЮЧЕНО - редактирование только через модальное окно деталей
+            // ПОЛНОСТЬЮ ОТКЛЮЧЕНО - редактирование только через модальное окно деталей
+            console.log('edit-poi blocked - use details modal instead');
             return;
             
             // Находим POI для редактирования
