@@ -661,7 +661,9 @@
                 </div>\
               </div>\
             </div>';
-          return '<div class="cursor-pointer" data-go="poi-details" data-id="'+p.id+'">'+card('', inner)+'</div>';
+          const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+                          '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
+          return '<div class="cursor-pointer" data-go="poi-details" data-id="'+p.id+'">'+card(actions, inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
       }
 
@@ -716,17 +718,8 @@
             });
           }
           
-          // Пробуем фильтрацию но с логированием
-          const filteredRecords = records.filter(record => {
-            const regions = record.fields?.['Regions'] || [];
-            const isLinked = Array.isArray(regions) && regions.includes(city.id);
-            console.log(`POI ${record.fields?.['POI Name (RU)'] || record.id} - regions field:`, regions, 'matches city', city.id, ':', isLinked);
-            return isLinked;
-          });
-          
-          console.log('Filtered POI records for city', city.name, ':', filteredRecords);
-          
-          poisByCity[city.id] = filteredRecords.map(record=>({ 
+          // Временно показываем все POI без фильтрации для отладки
+          poisByCity[city.id] = records.map(record=>({ 
             id: record.id, 
             name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
             type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
@@ -764,13 +757,8 @@
                 // test-proxy возвращает другую структуру
                 const records = j.ok ? (j.body?.records || j.records || []) : [];
                 
-                // Фильтруем POI для этого города
-                const filteredRecords = records.filter(record => {
-                  const regions = record.fields?.['Regions'] || [];
-                  return Array.isArray(regions) && regions.includes(c.id);
-                });
-                
-                poisByCity[c.id] = filteredRecords.map(record=>({ 
+                // Временно без фильтрации для отладки
+                poisByCity[c.id] = records.map(record=>({ 
                   id: record.id, 
                   name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
                   type: (record.fields?.['POI Category (RU)']?.[0] || ''),
