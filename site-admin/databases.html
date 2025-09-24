@@ -556,14 +556,7 @@
         const list = poisByCity[selectedCity.id] || [];
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
         
-        // Добавляем кнопку создания POI через форму
-        const createButton = '<div class="mb-4 flex justify-end">' +
-          '<a href="poi-form.html?city=' + encodeURIComponent(selectedCity.name) + 
-          '&region=' + encodeURIComponent(selectedRegion.name) + 
-          '" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">' +
-          '<i class="fas fa-plus-circle mr-2"></i>Создать POI через форму</a></div>';
-        
-        const poiCards = list.map(p=>{
+        cards.innerHTML = list.map(p=>{
           const actions = '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
           const inner = '<div class="flex items-start gap-3">\
@@ -581,8 +574,6 @@
             </div>';
           return '<div class="cursor-pointer" data-go="tickets" data-id="'+p.id+'">'+card(actions, inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
-        
-        cards.innerHTML = createButton + poiCards;
       }
 
       // Airtable-backed loaders for each level
@@ -751,8 +742,62 @@
         } else if (act==='del-city'){
           const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; renderCities();
         } else if (act==='edit-poi'){
-          // Открываем форму редактирования POI
-          window.location.href = `poi-form.html?id=${id}&city=${encodeURIComponent(selectedCity.name)}&region=${encodeURIComponent(selectedRegion.name)}`;
+          // Находим POI для редактирования
+          const list = poisByCity[selectedCity.id]||[];
+          const poi = list.find(x=>x.id===id);
+          if (!poi) return;
+          
+          // Открываем модальное окно с данными для редактирования
+          const data = await openCreatePOIModal(poi);
+          if (!data) return;
+          
+          try {
+            // Обновляем локальные данные
+            Object.assign(poi, {
+              name: data.name_ru,
+              name_en: data.name_en,
+              type: data.cats_ru[0] || poi.type,
+              categories_ru: data.cats_ru,
+              categories_en: data.cats_en,
+              prefecture_ru: data.pref_ru,
+              prefecture_en: data.pref_en,
+              place_id: data.place_id,
+              website: data.website,
+              hours: data.hours,
+              description_ru: data.desc_ru,
+              description_en: data.desc_en,
+              published: data.published,
+              notes: data.notes
+            });
+            
+            // Отправляем на сервер
+            const res = await fetch('/api/db-sync.php', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'X-Admin-Token': window.ADMIN_TOKEN || ''
+              },
+              body: JSON.stringify({
+                scope: 'pois',
+                action: 'update',
+                data: poi
+              })
+            });
+            
+            const j = await res.json();
+            if (!res.ok || !j.ok) {
+              throw new Error((j && j.error) || 'Ошибка обновления');
+            }
+            
+            if (window.osNotify) {
+              window.osNotify('POI обновлён', data.name_ru);
+            }
+            
+            renderPois();
+          } catch(e) {
+            alert('Не удалось обновить POI: ' + (e.message || 'Неизвестная ошибка'));
+            // Здесь можно добавить откат изменений если нужно
+          }
         } else if (act==='del-poi'){
           const list = poisByCity[selectedCity.id]||[]; poisByCity[selectedCity.id] = list.filter(x=>x.id!==id); delete ticketsByPoi[id]; renderPois();
         } else if (act==='edit-ticket'){
@@ -794,6 +839,289 @@
             done({ ru, en });
           });
           wrap.querySelector('#cr_ru').focus();
+        });
+      }
+      
+      // Модальное окно создания/редактирования POI
+      function openCreatePOIModal(editData = null){
+        return new Promise(resolve=>{
+          const isEdit = !!editData;
+          const wrap = document.createElement('div');
+          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto';
+          wrap.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+          
+          // Префектуры для селектов
+          const prefectures = [
+            {value: 'tokyo', ru: 'Токио', en: 'Tokyo'},
+            {value: 'kyoto', ru: 'Киото', en: 'Kyoto'},
+            {value: 'osaka', ru: 'Осака', en: 'Osaka'},
+            {value: 'kanagawa', ru: 'Канагава', en: 'Kanagawa'},
+            {value: 'aichi', ru: 'Айти', en: 'Aichi'},
+            {value: 'fukuoka', ru: 'Фукуока', en: 'Fukuoka'},
+            {value: 'hokkaido', ru: 'Хоккайдо', en: 'Hokkaido'},
+            {value: 'hiroshima', ru: 'Хиросима', en: 'Hiroshima'},
+            {value: 'nara', ru: 'Нара', en: 'Nara'},
+            {value: 'okinawa', ru: 'Окинава', en: 'Okinawa'}
+          ];
+          
+          const categories_ru = ['Храм', 'Замок', 'Музей', 'Парк', 'Сад', 'Историческое место', 'Природная достопримечательность', 'Рынок', 'Развлечения', 'Гастрономия', 'Шоппинг', 'Культура', 'Архитектура'];
+          const categories_en = ['Temple', 'Castle', 'Museum', 'Park', 'Garden', 'Historical Site', 'Natural Attraction', 'Market', 'Entertainment', 'Gastronomy', 'Shopping', 'Culture', 'Architecture'];
+          
+          wrap.innerHTML = `
+            <div class="absolute inset-0" onclick="this.parentElement.querySelector('#poi_cancel').click()"></div>
+            <div class="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-medium text-gray-800">${isEdit ? 'Редактировать POI' : 'Новый POI'}</h3>
+                <button id="poi_close" class="text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <form id="poi_form" class="space-y-6">
+                <!-- Основная информация -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-4 flex items-center">
+                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                    Основная информация
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Название (RU) <span class="text-red-500">*</span>
+                      </label>
+                      <input id="poi_name_ru" type="text" class="input-japanese w-full" 
+                             placeholder="Введите название на русском" required
+                             value="${editData ? editData.name : ''}">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Name (EN) <span class="text-red-500">*</span>
+                      </label>
+                      <input id="poi_name_en" type="text" class="input-japanese w-full" 
+                             placeholder="Enter name in English" required
+                             value="${editData ? editData.name_en || '' : ''}">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Префектура (RU) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="poi_pref_ru" class="input-japanese w-full" required>
+                        <option value="">Выберите префектуру</option>
+                        ${prefectures.map(p => `<option value="${p.value}">${p.ru}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Prefecture (EN) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="poi_pref_en" class="input-japanese w-full" required>
+                        <option value="">Select prefecture</option>
+                        ${prefectures.map(p => `<option value="${p.value}">${p.en}</option>`).join('')}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Категории -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-4">
+                    <i class="fas fa-tags mr-2 text-purple-600"></i>
+                    Категории
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Категории (RU) <span class="text-red-500">*</span>
+                      </label>
+                      <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded p-2">
+                        ${categories_ru.map((cat, idx) => `
+                          <label class="flex items-center">
+                            <input type="checkbox" name="cats_ru" value="${cat}" 
+                                   class="mr-2 text-indigo-600">
+                            <span class="text-sm">${cat}</span>
+                          </label>
+                        `).join('')}
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Categories (EN) <span class="text-red-500">*</span>
+                      </label>
+                      <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded p-2">
+                        ${categories_en.map((cat, idx) => `
+                          <label class="flex items-center">
+                            <input type="checkbox" name="cats_en" value="${cat}" 
+                                   class="mr-2 text-indigo-600">
+                            <span class="text-sm">${cat}</span>
+                          </label>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Google интеграция -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-4">
+                    <i class="fab fa-google mr-2 text-blue-600"></i>
+                    Google интеграция
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Google Place ID
+                      </label>
+                      <input id="poi_place_id" type="text" class="input-japanese w-full" 
+                             placeholder="Например: ChIJ-yRniZpWIpURE_YRZvj9CRQ"
+                             pattern="^[A-Za-z0-9_-]{25,}$">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Официальный сайт
+                      </label>
+                      <input id="poi_website" type="url" class="input-japanese w-full" 
+                             placeholder="https://example.com">
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Контент -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-4">
+                    <i class="fas fa-align-left mr-2 text-green-600"></i>
+                    Контент
+                  </h4>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Часы работы
+                      </label>
+                      <input id="poi_hours" type="text" class="input-japanese w-full" 
+                             placeholder="09:00-17:00, Mon closed">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                          Описание (RU)
+                        </label>
+                        <textarea id="poi_desc_ru" class="input-japanese w-full" rows="3"
+                                  placeholder="Опишите достопримечательность"></textarea>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                          Description (EN)
+                        </label>
+                        <textarea id="poi_desc_en" class="input-japanese w-full" rows="3"
+                                  placeholder="Describe the point of interest"></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Публикация -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-4">
+                    <i class="fas fa-eye mr-2 text-indigo-600"></i>
+                    Публикация
+                  </h4>
+                  <div class="space-y-4">
+                    <label class="flex items-center">
+                      <input id="poi_published" type="checkbox" class="mr-2 text-indigo-600">
+                      <span class="text-sm text-gray-700">Опубликовать на сайте</span>
+                    </label>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Заметки (внутренние)
+                      </label>
+                      <textarea id="poi_notes" class="input-japanese w-full" rows="2"
+                                placeholder="Любые внутренние комментарии"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              
+              <div class="mt-6 flex justify-end gap-3">
+                <button id="poi_cancel" class="btn-japanese">Отмена</button>
+                <button id="poi_save" class="btn-japanese accent">
+                  <i class="fas fa-save mr-2"></i>
+                  ${isEdit ? 'Обновить' : 'Создать'}
+                </button>
+              </div>
+            </div>
+          `;
+          
+          document.body.appendChild(wrap);
+          
+          // Синхронизация префектур
+          const prefRu = wrap.querySelector('#poi_pref_ru');
+          const prefEn = wrap.querySelector('#poi_pref_en');
+          prefRu.addEventListener('change', () => { prefEn.value = prefRu.value; });
+          prefEn.addEventListener('change', () => { prefRu.value = prefEn.value; });
+          
+          // Обработчики кнопок
+          function done(val){ 
+            try{ document.body.removeChild(wrap); }catch{} 
+            resolve(val||null); 
+          }
+          
+          wrap.querySelector('#poi_close').addEventListener('click', ()=>done(null));
+          wrap.querySelector('#poi_cancel').addEventListener('click', ()=>done(null));
+          
+          wrap.querySelector('#poi_save').addEventListener('click', ()=>{
+            const form = wrap.querySelector('#poi_form');
+            if (!form.checkValidity()) {
+              form.reportValidity();
+              return;
+            }
+            
+            const cats_ru = Array.from(wrap.querySelectorAll('input[name="cats_ru"]:checked')).map(cb => cb.value);
+            const cats_en = Array.from(wrap.querySelectorAll('input[name="cats_en"]:checked')).map(cb => cb.value);
+            
+            if (cats_ru.length === 0 || cats_en.length === 0) {
+              alert('Выберите хотя бы одну категорию для каждого языка');
+              return;
+            }
+            
+            const data = {
+              name_ru: wrap.querySelector('#poi_name_ru').value.trim(),
+              name_en: wrap.querySelector('#poi_name_en').value.trim(),
+              pref_ru: prefRu.value,
+              pref_en: prefEn.value,
+              cats_ru: cats_ru,
+              cats_en: cats_en,
+              place_id: wrap.querySelector('#poi_place_id').value.trim(),
+              website: wrap.querySelector('#poi_website').value.trim(),
+              hours: wrap.querySelector('#poi_hours').value.trim(),
+              desc_ru: wrap.querySelector('#poi_desc_ru').value.trim(),
+              desc_en: wrap.querySelector('#poi_desc_en').value.trim(),
+              published: wrap.querySelector('#poi_published').checked,
+              notes: wrap.querySelector('#poi_notes').value.trim()
+            };
+            
+            done(data);
+          });
+          
+          // Фокус на первое поле
+          wrap.querySelector('#poi_name_ru').focus();
+          
+          // Если редактирование - заполнить данные
+          if (isEdit && editData) {
+            // Здесь можно заполнить поля данными для редактирования
+            if (editData.type) {
+              // Попытаться выбрать соответствующую категорию
+              const typeMap = {
+                'культура': 'Культура',
+                'природа': 'Природная достопримечательность',
+                'гастро': 'Гастрономия',
+                'храм': 'Храм',
+                'замок': 'Замок',
+                'музей': 'Музей'
+              };
+              const catRu = typeMap[editData.type.toLowerCase()] || editData.type;
+              const catCheckbox = wrap.querySelector(`input[name="cats_ru"][value="${catRu}"]`);
+              if (catCheckbox) catCheckbox.checked = true;
+            }
+          }
         });
       }
 
@@ -879,12 +1207,69 @@
             await loadCitiesForRegion(selectedRegion); await preloadPoisCountsForRegion(selectedRegion); renderCities();
           }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
         } else if (level==='pois'){
-          const name = prompt('Название POI:'); if(!name) return;
-          const type = prompt('Тип (культура/природа/гастро):','культура')||'';
-          const list = poisByCity[selectedCity.id] || (poisByCity[selectedCity.id]=[]);
-          const id = genId('POI', list.length+1);
-          list.push({ id, name:name.trim(), type:type.trim() });
-          renderPois();
+          const data = await openCreatePOIModal();
+          if (!data) return;
+          
+          try {
+            // Генерируем ID для нового POI
+            const list = poisByCity[selectedCity.id] || (poisByCity[selectedCity.id]=[]);
+            const id = 'POI-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5);
+            
+            // Создаем объект POI с полной спецификацией
+            const newPoi = {
+              id: id,
+              name: data.name_ru,
+              name_en: data.name_en,
+              type: data.cats_ru[0] || 'Другое', // Используем первую категорию как тип
+              categories_ru: data.cats_ru,
+              categories_en: data.cats_en,
+              prefecture_ru: data.pref_ru,
+              prefecture_en: data.pref_en,
+              place_id: data.place_id,
+              website: data.website,
+              hours: data.hours,
+              description_ru: data.desc_ru,
+              description_en: data.desc_en,
+              published: data.published,
+              notes: data.notes,
+              city_id: selectedCity.id,
+              region_id: selectedRegion.id
+            };
+            
+            // Добавляем в локальный список
+            list.push(newPoi);
+            
+            // Отправляем на сервер
+            const res = await fetch('/api/db-sync.php', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'X-Admin-Token': window.ADMIN_TOKEN || ''
+              },
+              body: JSON.stringify({
+                scope: 'pois',
+                action: 'create',
+                data: newPoi
+              })
+            });
+            
+            const j = await res.json();
+            if (!res.ok || !j.ok) {
+              throw new Error((j && j.error) || 'Ошибка сохранения');
+            }
+            
+            if (window.osNotify) {
+              window.osNotify('POI создан', data.name_ru);
+            }
+            
+            renderPois();
+          } catch(e) {
+            alert('Не удалось сохранить POI: ' + (e.message || 'Неизвестная ошибка'));
+            // Откатываем изменения
+            const list = poisByCity[selectedCity.id] || [];
+            poisByCity[selectedCity.id] = list.filter(p => p.id !== id);
+            renderPois();
+          }
         } else if (level==='tickets'){
           const category = prompt('Категория (Adult/Child/Infant/Senior/Special):','Adult')||'Adult';
           const price = parseInt(prompt('Цена (¥):','1000')||'1000',10)||0;
