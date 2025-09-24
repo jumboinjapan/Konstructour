@@ -173,10 +173,15 @@
       function bindApiLabel(){ /* удалено вместе с UI */ }
 
       // Load saved config from server and populate fields
-      let airtableReg = null; // cache for mapping header
+      window.airtableReg = null; // cache for mapping header - делаем глобальной
       
       // Airtable table IDs
+      const AIRTABLE_BASE_ID = 'apppwhjFN82N9zNqm';
+      const AIRTABLE_COUNTRY_TABLE_ID = 'tble0eh9mstZeBKxM';
+      const AIRTABLE_REGIONS_TABLE_ID = 'tblbSajWkzI8X7M4U';
+      const AIRTABLE_CITIES_TABLE_ID = 'tblHaHc9NV0mA8bSa';
       const AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
+      const AIRTABLE_TICKETS_TABLE_ID = 'tblKOLhiHMihpWsVl';
       
       async function loadDbConfig(){
         try{
@@ -185,7 +190,7 @@
           const data = await res.json();
           const db = (data && data.databases) || {};
           const reg = (data && data.airtable_registry) || null;
-          airtableReg = reg;
+          window.airtableReg = reg;
           function fill(){ /* UI удалён */ }
           fill('regions', db.regions);
           fill('tours', db.tours);
@@ -214,8 +219,8 @@
       // Fallback: прямой список регионов через test-proxy, читая реестр с сервера при необходимости
       async function loadRegionsViaProxy(){
         try{
-          let baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || '';
-          let regTbl = (airtableReg && airtableReg.tables && (airtableReg.tables.region?.tableId || airtableReg.tables.region?.table_id)) || '';
+          let baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || '';
+          let regTbl = (window.airtableReg && window.airtableReg.tables && (window.airtableReg.tables.region?.tableId || window.airtableReg.tables.region?.table_id)) || '';
           if (!baseId || !regTbl){
             const cfg = await fetch('/api/config-read.php').then(r=>r.ok?r.json():null).catch(()=>null);
             const reg = cfg && (cfg.airtable_registry||{});
@@ -225,8 +230,8 @@
             }
           }
           // Жёсткие дефолты (если реестр недоступен): Regions table
-          if (!baseId) baseId = 'apppwhjFN82N9zNqm';
-          if (!regTbl) regTbl = 'tblbSajWkzI8X7M4U';
+          if (!baseId) baseId = AIRTABLE_BASE_ID;
+          if (!regTbl) regTbl = AIRTABLE_REGIONS_TABLE_ID;
           if (!baseId || !regTbl) return false;
           const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
           const r2 = await fetch(u); if(!r2.ok) return false; const j2 = await r2.json();
@@ -479,11 +484,11 @@
           console.warn('syncRegionsFromAirtable failed', e);
           // Fallback: прямой запрос через test-proxy при наличии реестра
           try{
-            let baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || '';
-            let regTbl = (airtableReg && airtableReg.tables && (airtableReg.tables.region?.tableId || airtableReg.tables.region?.table_id)) || '';
+            let baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || '';
+            let regTbl = (window.airtableReg && window.airtableReg.tables && (window.airtableReg.tables.region?.tableId || window.airtableReg.tables.region?.table_id)) || '';
             // Жёсткие дефолты, если реестр недоступен
-            if (!baseId) baseId = 'apppwhjFN82N9zNqm';
-            if (!regTbl) regTbl = 'tblbSajWkzI8X7M4U';
+            if (!baseId) baseId = AIRTABLE_BASE_ID;
+            if (!regTbl) regTbl = AIRTABLE_REGIONS_TABLE_ID;
             if (!baseId || !regTbl) return;
             const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
             const r2 = await fetch(u);
@@ -595,7 +600,7 @@
 
       async function loadPoisForCity(city){
         try{
-          const baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || 'apppwhjFN82N9zNqm';
+          const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || AIRTABLE_BASE_ID;
           const res = await fetch('../api/db-sync.php',{
             method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
             body: JSON.stringify({ 
@@ -791,7 +796,7 @@
             });
             
             // Получаем base_id из конфигурации
-            const baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || 'apppwhjFN82N9zNqm';
+            const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || AIRTABLE_BASE_ID;
             
             // Подготавливаем данные для Airtable
             const airtableFields = {
@@ -912,8 +917,8 @@
             {value: 'okinawa', ru: 'Окинава', en: 'Okinawa'}
           ];
           
-          const categories_ru = ['Храм', 'Замок', 'Музей', 'Парк', 'Сад', 'Историческое место', 'Природная достопримечательность', 'Рынок', 'Развлечения', 'Гастрономия', 'Шоппинг', 'Культура', 'Архитектура'];
-          const categories_en = ['Temple', 'Castle', 'Museum', 'Park', 'Garden', 'Historical Site', 'Natural Attraction', 'Market', 'Entertainment', 'Gastronomy', 'Shopping', 'Culture', 'Architecture'];
+          const categories_ru = ['Синтоистское святилище', 'Буддийский храм', 'Архитектурный объект', 'Музей', 'Арт-пространство / Галерея', 'Смотровая площадка', 'Ландшафтный сад / Парк', 'Достопримечательность', 'Историческое место', 'Японский отель', 'Развлечения', 'Шоппинг', 'Термальный источник', 'СПА'];
+          const categories_en = ['Shinto Shrine', 'Buddhist Temple', 'Architectural Object', 'Museum', 'Art Venue', 'Viewing Spot', 'Park/Garden', 'City Attraction', 'Historical Location', 'Restaurant', 'Amusement', 'Shopping', 'Hot Spring', 'SPA'];
           
           wrap.innerHTML = `
             <div class="absolute inset-0" onclick="this.parentElement.querySelector('#poi_cancel').click()"></div>
@@ -1192,7 +1197,12 @@
           try{
             const res = await fetch('/api/regions-create.php',{
               method:'POST', headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ name_ru: data.ru, name_en: data.en })
+              body: JSON.stringify({ 
+                name_ru: data.ru, 
+                name_en: data.en,
+                base_id: AIRTABLE_BASE_ID,
+                table_id: AIRTABLE_REGIONS_TABLE_ID
+              })
             });
             const j = await res.json().catch(()=>({}));
             if (!res.ok || !j.ok){
@@ -1231,7 +1241,16 @@
           try{
             const res = await fetch('/api/cities-create.php',{
               method:'POST', headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ name_ru: name_ru, name_en: name_en, type: picked, region_rec_id: selectedRegion.id, region_name: selectedRegion.name, region_rid: (selectedRegion.rid||'') })
+              body: JSON.stringify({ 
+                name_ru: name_ru, 
+                name_en: name_en, 
+                type: picked, 
+                region_rec_id: selectedRegion.id, 
+                region_name: selectedRegion.name, 
+                region_rid: (selectedRegion.rid||''),
+                base_id: AIRTABLE_BASE_ID,
+                table_id: AIRTABLE_CITIES_TABLE_ID
+              })
             });
             const j = await res.json();
             if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
@@ -1243,9 +1262,10 @@
           if (!data) return;
           
           try {
-            // Генерируем ID для нового POI
+            // Генерируем ID для нового POI в формате POI-00000x
             const list = poisByCity[selectedCity.id] || (poisByCity[selectedCity.id]=[]);
-            const id = 'POI-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5);
+            const nextNumber = list.length + 1;
+            const id = 'POI-' + String(nextNumber).padStart(6, '0');
             
             // Создаем объект POI с полной спецификацией
             const newPoi = {
@@ -1271,26 +1291,32 @@
             // Добавляем в локальный список
             list.push(newPoi);
             
-            // Получаем base_id из конфигурации
-            const baseId = (airtableReg && (airtableReg.baseId || airtableReg.base_id)) || 'apppwhjFN82N9zNqm';
+            // Проверяем, загружен ли window.airtableReg, если нет - загружаем
+            if (!window.airtableReg) {
+              await loadDbConfig();
+            }
             
-            // Подготавливаем данные для Airtable
+            // Получаем base_id из конфигурации
+            const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || AIRTABLE_BASE_ID;
+            
+            // Подготавливаем данные для Airtable согласно спецификации
             const airtableFields = {
               'POI ID': id,
               'POI Name (RU)': data.name_ru,
               'POI Name (EN)': data.name_en,
-              'Regions': [selectedRegion.id], // Link to Regions table
+              'Regions': [selectedCity.id], // Link to parental Locations/Cities
               'Prefecture (RU)': data.pref_ru,
               'Prefecture (EN)': data.pref_en,
+              'Place ID': data.place_id,
               'POI Category (RU)': data.cats_ru,
               'POI Category (EN)': data.cats_en,
-              'Place ID': data.place_id,
-              'Website': data.website,
               'Working Hours': data.hours,
+              'Website': data.website,
               'Description (RU)': data.desc_ru,
               'Description (EN)': data.desc_en,
               'Published': data.published,
-              'Notes': data.notes
+              'Notes': data.notes,
+              'Tickets': [] // Билеты будут добавляться отдельно через связь с таблицей Tickets
             };
             
             // Отправляем на сервер
