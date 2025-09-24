@@ -718,7 +718,7 @@
             });
           }
           
-          // Временно показываем все POI без фильтрации для отладки
+          // Показываем все POI для всех городов (без фильтрации)
           poisByCity[city.id] = records.map(record=>({ 
             id: record.id, 
             name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
@@ -757,7 +757,7 @@
                 // test-proxy возвращает другую структуру
                 const records = j.ok ? (j.body?.records || j.records || []) : [];
                 
-                // Временно без фильтрации для отладки
+                // Показываем все POI для отладки
                 poisByCity[c.id] = records.map(record=>({ 
                   id: record.id, 
                   name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
