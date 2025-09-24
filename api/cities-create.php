@@ -87,7 +87,7 @@ foreach ($idCandidates as $fid){
       
       // Добавляем связанную запись региона (Linked Record)
       if ($regionId !== '') {
-        $baseFields[$linkField] = [['id' => $regionId]];
+        $baseFields[$linkField] = [$regionId];
       }
       
       // Поле Region не существует в таблице - убираем
@@ -135,8 +135,12 @@ if (!empty($created['id'])) {
   // Проверяем связанную запись региона
   $regionLinked = false;
   if ($regionId !== '' && isset($fields[$linkField])) {
+    // Airtable возвращает массив ID или объектов с id
     foreach ($fields[$linkField] as $linkedRec) {
-      if (isset($linkedRec['id']) && $linkedRec['id'] === $regionId) {
+      if (is_string($linkedRec) && $linkedRec === $regionId) {
+        $regionLinked = true;
+        break;
+      } elseif (is_array($linkedRec) && isset($linkedRec['id']) && $linkedRec['id'] === $regionId) {
         $regionLinked = true;
         break;
       }
