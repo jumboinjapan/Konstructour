@@ -3,6 +3,7 @@ return array (
   'airtable_registry' => 
   array (
     'baseId' => 'apppwhjFN82N9zNqm',
+    'api_key' => 'PLACEHOLDER_FOR_REAL_API_KEY',
     'tables' => 
     array (
       'region' => 
