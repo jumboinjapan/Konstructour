@@ -116,7 +116,11 @@ if (!$created){
     'debug'=>[
       'attempts_count'=>count($attempts),
       'last_request'=>$lastReq,
-      'last_response'=>$lastResp
+      'last_response'=>$lastResp,
+      'region_id'=>$regionId,
+      'region_rid'=>$regionRid,
+      'link_field'=>$linkField,
+      'region_code_field'=>$regionCodeField
     ]
   ], JSON_UNESCAPED_UNICODE); 
   exit;
