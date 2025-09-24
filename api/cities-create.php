@@ -63,15 +63,17 @@ do{
 }while($offset);
 $nextId = sprintf('%s-%04d',$prefix,$max+1);
 
-// 2) Build fields - УПРОЩЁННАЯ ЛОГИКА
+// 2) Build fields - ПРАВИЛЬНАЯ ЛОГИКА ДЛЯ LINKED RECORDS
 $nameRuCandidates = ['Name (RU)','Название (RU)'];
 $nameEnCandidates = ['Name (EN)','Название (EN)'];
 $idCandidates     = ['ID','Идентификатор'];
-// Поле для записи кода региона (например REG-0002)
-$regionCodeField = $cfg['airtable_registry']['tables']['city']['regionCodeField'] ?? 'Region';
-$regionFieldCandidates = [$regionCodeField, 'Region', 'Регион', 'Region Code'];
 
-// УПРОЩЁННАЯ ЛОГИКА: создаём город с кодом региона в простом текстовом поле
+// Поле для связанной записи региона (Linked Record)
+$linkField = $cfg['airtable_registry']['tables']['city']['linkField'] ?? 'Regions';
+// Поле для кода региона (текстовое)
+$regionCodeField = $cfg['airtable_registry']['tables']['city']['regionCodeField'] ?? 'Region';
+
+// ПРАВИЛЬНАЯ ЛОГИКА: создаём город с Linked Record и текстовым кодом региона
 $attempts = [];
 foreach ($idCandidates as $fid){
   foreach ($nameRuCandidates as $fru){
@@ -82,14 +84,16 @@ foreach ($idCandidates as $fid){
         $fen => $name_en
       ];
       
-      // Добавляем код региона прямо в поле Region
-      if ($regionRid !== '') {
-        foreach ($regionFieldCandidates as $rf) {
-          $attempts[] = ['fields' => $baseFields + [ $rf => $regionRid ]];
-        }
+      // Добавляем связанную запись региона (Linked Record)
+      if ($regionId !== '') {
+        $baseFields[$linkField] = [['id' => $regionId]];
       }
       
-      // Запасной вариант без региона
+      // Добавляем код региона (текстовое поле)
+      if ($regionRid !== '') {
+        $baseFields[$regionCodeField] = $regionRid;
+      }
+      
       $attempts[] = ['fields' => $baseFields];
     }
   }
@@ -118,30 +122,30 @@ if (!$created){
   exit;
 }
 
-// Проверяем, сохранился ли код региона, и если нет - пытаемся его добавить
+// Проверяем, сохранились ли связанная запись и код региона
 $linkedOk = false;
-if (!empty($created['id']) && $regionRid !== '') {
+if (!empty($created['id'])) {
   $fields = $created['fields'] ?? [];
   
-  // Сначала проверяем, есть ли уже код региона
-  foreach ($regionFieldCandidates as $rf) {
-    if (isset($fields[$rf]) && $fields[$rf] === $regionRid) {
-      $linkedOk = true;
-      break;
-    }
-  }
-  
-  // Если код региона не сохранился - пытаемся его добавить через PATCH
-  if (!$linkedOk) {
-    foreach ($regionFieldCandidates as $rf) {
-      $patch = ['fields' => [$rf => $regionRid]];
-      list($c2, $o2, $e2) = air_call('PATCH', "$BASE_ID/$CITY_TABLE_ID/".rawurlencode($created['id']), $API_KEY, $patch, ['typecast'=>'true']);
-      if ($c2 < 300) {
-        $linkedOk = true;
+  // Проверяем связанную запись региона
+  $regionLinked = false;
+  if ($regionId !== '' && isset($fields[$linkField])) {
+    foreach ($fields[$linkField] as $linkedRec) {
+      if (isset($linkedRec['id']) && $linkedRec['id'] === $regionId) {
+        $regionLinked = true;
         break;
       }
     }
   }
+  
+  // Проверяем код региона
+  $regionCodeSaved = false;
+  if ($regionRid !== '' && isset($fields[$regionCodeField]) && $fields[$regionCodeField] === $regionRid) {
+    $regionCodeSaved = true;
+  }
+  
+  // Считаем успешным если есть хотя бы одна из связей
+  $linkedOk = $regionLinked || $regionCodeSaved;
 }
 
 echo json_encode(['ok'=>true,'record_id'=>$created['id']??null,'city_id'=>$nextId,'type'=>$type,'linked'=>$linkedOk], JSON_UNESCAPED_UNICODE);
