@@ -126,6 +126,14 @@
     </div>
 
     <script>
+    // Airtable table IDs - определяем глобально в самом начале
+    window.AIRTABLE_BASE_ID = 'apppwhjFN82N9zNqm';
+    window.AIRTABLE_COUNTRY_TABLE_ID = 'tble0eh9mstZeBKxM';
+    window.AIRTABLE_REGIONS_TABLE_ID = 'tblbSajWkzI8X7M4U';
+    window.AIRTABLE_CITIES_TABLE_ID = 'tblHaHc9NV0mA8bSa';
+    window.AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
+    window.AIRTABLE_TICKETS_TABLE_ID = 'tblKOLhiHMihpWsVl';
+    
     // Глобальный перехват ошибок — пишем в серверный лог
     (function(){
       function postError(payload){
@@ -175,13 +183,6 @@
       // Load saved config from server and populate fields
       window.airtableReg = null; // cache for mapping header - делаем глобальной
       
-      // Airtable table IDs - делаем глобальными
-      window.AIRTABLE_BASE_ID = 'apppwhjFN82N9zNqm';
-      window.AIRTABLE_COUNTRY_TABLE_ID = 'tble0eh9mstZeBKxM';
-      window.AIRTABLE_REGIONS_TABLE_ID = 'tblbSajWkzI8X7M4U';
-      window.AIRTABLE_CITIES_TABLE_ID = 'tblHaHc9NV0mA8bSa';
-      window.AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
-      window.AIRTABLE_TICKETS_TABLE_ID = 'tblKOLhiHMihpWsVl';
       
       async function loadDbConfig(){
         try{
@@ -1298,6 +1299,17 @@
             
             // Получаем base_id из конфигурации
             const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
+            
+            // Отладочная информация
+            console.log('Creating POI with:', {
+              baseId: baseId,
+              tableId: window.AIRTABLE_POI_TABLE_ID,
+              dataExists: !!data,
+              constants: {
+                base: window.AIRTABLE_BASE_ID,
+                poi_table: window.AIRTABLE_POI_TABLE_ID
+              }
+            });
             
             // Подготавливаем данные для Airtable согласно спецификации
             const airtableFields = {
