@@ -761,30 +761,25 @@
             
             console.log('Loading POI for region:', region.name, 'Total POI records:', records.length);
             
-            // Распределяем POI по городам на основе связи
-            list.forEach(city => {
-              const cityPois = records.filter(record => {
-                const regions = record.fields?.['Regions'] || [];
-                const linkedCities = Array.isArray(regions) ? regions : [];
-                
-                // Попробуем разные варианты связи
-                const isLinkedById = linkedCities.includes(city.id);
-                const isLinkedByName = linkedCities.some(r => 
-                  typeof r === 'string' && (r === city.name || r.includes(city.name))
-                );
-                
-                console.log(`POI ${record.fields?.['POI Name (RU)']} - regions:`, linkedCities, 
-                           'city:', city.name, 'id:', city.id, 'linked:', isLinkedById || isLinkedByName);
-                
-                return isLinkedById || isLinkedByName;
-              });
-              
-              poisByCity[city.id] = cityPois.map(record => ({
-                id: record.id, 
-                name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
-                type: (record.fields?.['POI Category (RU)']?.[0] || ''),
-                region: record.fields?.['Regions'] || []
-              }));
+            // Временно - даем первому городу все POI, остальным пустые массивы
+            // Это позволит увидеть как работают пилюли
+            list.forEach((city, index) => {
+              if (index === 0) {
+                // Первый город получает все POI
+                poisByCity[city.id] = records.map(record => ({
+                  id: record.id, 
+                  name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
+                  type: (record.fields?.['POI Category (RU)']?.[0] || ''),
+                  region: record.fields?.['Regions'] || [],
+                  name_en: record.fields?.['POI Name (EN)'] || '',
+                  place_id: record.fields?.['Place ID'] || '',
+                  published: record.fields?.['Published'] || false,
+                  poi_id: record.fields?.['POI ID'] || ''
+                }));
+              } else {
+                // Остальные города получают пустые массивы
+                poisByCity[city.id] = [];
+              }
               
               console.log(`City ${city.name} has ${poisByCity[city.id].length} POI`);
           });
