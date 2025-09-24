@@ -64,8 +64,8 @@ do{
 $nextId = sprintf('%s-%04d',$prefix,$max+1);
 
 // 2) Build fields - ПРАВИЛЬНАЯ ЛОГИКА ДЛЯ LINKED RECORDS
-$nameRuCandidates = ['Name (RU)','Название (RU)'];
-$nameEnCandidates = ['Name (EN)','Название (EN)'];
+$nameRuCandidates = ['Name (RU)'];
+$nameEnCandidates = ['Name (EN)'];
 $idCandidates     = ['ID'];
 
 // Поле для связанной записи региона (Linked Record)
