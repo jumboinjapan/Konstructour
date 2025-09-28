@@ -50,9 +50,19 @@
       <main class="p-8">
         <header class="mb-6">
           <div class="flex items-center justify-between">
-            <div>
+            <div class="flex-1">
               <h2 class="text-3xl font-light text-gray-800 mb-1">Базы данных</h2>
               <p class="text-gray-600">Выберите базу и управляйте данными через интеграции API</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button id="refresh-data-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2" title="Обновить данные из Airtable">
+                <i class="fas fa-sync-alt"></i>
+                <span>Обновить</span>
+              </button>
+              <button id="clear-cache-btn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2" title="Очистить кэш">
+                <i class="fas fa-trash"></i>
+                <span>Очистить кэш</span>
+              </button>
             </div>
           </div>
         </header>
@@ -388,6 +398,196 @@
         console.log('=== КОНЕЦ СПИСКА ID ===');
       };
 
+      // Система локального кэширования ID
+      const CACHE_KEYS = {
+        regions: 'konstructour_regions_cache_v2',
+        cities: 'konstructour_cities_cache_v2', 
+        pois: 'konstructour_pois_cache_v2'
+      };
+
+      // Сохранение ID в localStorage
+      window.saveIdsToCache = function(scope, data) {
+        try {
+          const key = CACHE_KEYS[scope];
+          if (key && data) {
+            localStorage.setItem(key, JSON.stringify({
+              timestamp: Date.now(),
+              data: data
+            }));
+            console.log(`Сохранено в кэш ${scope}:`, data.length, 'записей');
+          }
+        } catch (e) {
+          console.warn('Ошибка сохранения в кэш:', e);
+        }
+      };
+
+      // Загрузка ID из localStorage
+      window.loadIdsFromCache = function(scope) {
+        try {
+          const key = CACHE_KEYS[scope];
+          if (!key) return null;
+          
+          const cached = localStorage.getItem(key);
+          if (!cached) return null;
+          
+          const parsed = JSON.parse(cached);
+          const age = Date.now() - parsed.timestamp;
+          
+          // Кэш действителен 24 часа
+          if (age > 24 * 60 * 60 * 1000) {
+            localStorage.removeItem(key);
+            return null;
+          }
+          
+          console.log(`Загружено из кэша ${scope}:`, parsed.data.length, 'записей');
+          return parsed.data;
+        } catch (e) {
+          console.warn('Ошибка загрузки из кэша:', e);
+          return null;
+        }
+      };
+
+      // Проверка необходимости обновления
+      window.shouldRefreshData = function() {
+        const lastRefresh = localStorage.getItem('konstructour_last_refresh');
+        if (!lastRefresh) return true;
+        
+        const age = Date.now() - parseInt(lastRefresh);
+        const maxAge = 6 * 60 * 60 * 1000; // 6 часов
+        
+        return age > maxAge;
+      };
+
+      // Автоматическое обновление при необходимости
+      window.autoRefreshIfNeeded = async function() {
+        if (shouldRefreshData()) {
+          console.log('Автоматическое обновление данных...');
+          await refreshAllData();
+          localStorage.setItem('konstructour_last_refresh', Date.now().toString());
+        }
+      };
+
+      // Очистка всего кэша
+      window.clearAllCache = function() {
+        Object.values(CACHE_KEYS).forEach(key => {
+          localStorage.removeItem(key);
+        });
+        console.log('Весь кэш очищен');
+      };
+
+      // Принудительное обновление кэша (игнорирует кэш)
+      window.forceRefreshCache = async function() {
+        console.log('Принудительное обновление кэша...');
+        clearAllCache();
+        await syncRegionsFromAirtable();
+        console.log('Кэш обновлен');
+      };
+
+      // Обновление конкретного региона
+      window.refreshRegionData = async function(regionId) {
+        console.log('Обновление данных региона:', regionId);
+        const region = regions.find(r => r.id === regionId);
+        if (!region) return;
+        
+        // Очищаем кэш для этого региона
+        localStorage.removeItem(`cities_${regionId}`);
+        localStorage.removeItem(`pois_${regionId}`);
+        
+        // Перезагружаем данные
+        await loadCitiesForRegion(region);
+        console.log('Данные региона обновлены');
+      };
+
+      // Обновление конкретного города
+      window.refreshCityData = async function(cityId) {
+        console.log('Обновление данных города:', cityId);
+        const city = Object.values(citiesByRegion).flat().find(c => c.id === cityId);
+        if (!city) return;
+        
+        // Очищаем кэш для этого города
+        localStorage.removeItem(`pois_${cityId}`);
+        
+        // Перезагружаем данные
+        await loadPoisForCity(city);
+        console.log('Данные города обновлены');
+      };
+
+      // Полное обновление всех данных
+      window.refreshAllData = async function() {
+        console.log('Полное обновление всех данных...');
+        clearAllCache();
+        
+        // Перезагружаем регионы
+        await syncRegionsFromAirtable();
+        
+        // Перезагружаем города для всех регионов
+        for (const region of regions) {
+          await loadCitiesForRegion(region);
+        }
+        
+        // Перезагружаем POI для всех городов
+        for (const region of regions) {
+          const cities = citiesByRegion[region.id] || [];
+          for (const city of cities) {
+            await loadPoisForCity(city);
+          }
+        }
+        
+        console.log('Все данные обновлены');
+      };
+
+      // Показать статус кэша
+      window.showCacheStatus = function() {
+        console.log('=== СТАТУС КЭША ===');
+        Object.entries(CACHE_KEYS).forEach(([scope, key]) => {
+          const cached = localStorage.getItem(key);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              const age = Math.round((Date.now() - parsed.timestamp) / 1000 / 60); // минуты
+              console.log(`${scope}: ${parsed.data.length} записей, возраст: ${age} мин`);
+            } catch (e) {
+              console.log(`${scope}: поврежден`);
+            }
+          } else {
+            console.log(`${scope}: пуст`);
+          }
+        });
+      };
+
+      // Обработчики кнопок обновления
+      document.addEventListener('DOMContentLoaded', function() {
+        const refreshBtn = document.getElementById('refresh-data-btn');
+        const clearCacheBtn = document.getElementById('clear-cache-btn');
+        
+        if (refreshBtn) {
+          refreshBtn.addEventListener('click', async function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Обновление...</span>';
+            
+            try {
+              await refreshAllData();
+              alert('Данные успешно обновлены!');
+            } catch (error) {
+              console.error('Ошибка обновления:', error);
+              alert('Ошибка при обновлении данных');
+            } finally {
+              this.disabled = false;
+              this.innerHTML = '<i class="fas fa-sync-alt"></i> <span>Обновить</span>';
+            }
+          });
+        }
+        
+        if (clearCacheBtn) {
+          clearCacheBtn.addEventListener('click', function() {
+            if (confirm('Очистить весь кэш? Это заставит загрузить все данные заново.')) {
+              clearAllCache();
+              alert('Кэш очищен!');
+            }
+          });
+        }
+      });
+
       // Функция для отображения реальных ID из массива regions
       window.showRealRegionIds = function() {
         console.log('=== РЕАЛЬНЫЕ ID РЕГИОНОВ ИЗ МАССИВА ===');
@@ -617,10 +817,12 @@
             const fields = rec.fields || {};
             const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || ('Регион '+(idx+1));
             const rid = fields['Идентификатор'] || fields['Region ID'] || fields['ID'] || fields['Регион ID'] || '';
+            // Генерируем правильный код региона если в Airtable неправильный
+            const correctRid = rid && rid.match(/^REG-\d{3}$/) ? rid : ('REG-'+String(idx+1).padStart(3,'0'));
             return { 
               id: rec.id || ('REG-'+String(idx+1).padStart(3,'0')), 
               name, 
-              rid: rid || ''
+              rid: correctRid
             };
           });
           console.log('Final regions array:', regions);
@@ -815,7 +1017,7 @@
           const count = (citiesByRegion[r.id]||[]).length;
           dlog('region-card', {id:r.id, name:r.name, count});
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
-              '+(r.rid ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
+              '+(r.rid ? '<span class="ml-2 px-3 py-1 text-sm rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
               <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
               <button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>\
             </div>';
@@ -846,6 +1048,17 @@
       // Загрузка регионов из Airtable и отрисовка
       async function syncRegionsFromAirtable(){
         try{
+          // Сначала пытаемся загрузить из кэша
+          const cachedRegions = loadIdsFromCache('regions');
+          if (cachedRegions && cachedRegions.length > 0) {
+            console.log('Загружаем регионы из кэша');
+            regions = cachedRegions;
+            citiesByRegion = {};
+            renderRegions();
+            return;
+          }
+          
+          console.log('Загружаем регионы из Airtable');
           const res = await fetch('/api/db-sync.php',{
             method:'POST', headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify({ scope:'regions', action:'list' })
@@ -854,11 +1067,19 @@
           const data = await res.json();
           if (!data.ok) throw new Error(data.error||'Airtable');
           const items = data.items || [];
-          regions = items.map((it, idx)=>({
+          regions = items.map((it, idx)=>{
+            const rid = (it.fields && (it.fields['Идентификатор'] || it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || '';
+            // Генерируем правильный код региона если в Airtable неправильный
+            const correctRid = rid && rid.match(/^REG-\d{3}$/) ? rid : ('REG-'+String(idx+1).padStart(3,'0'));
+            return {
             id: it.id || ('REG-'+String(idx+1).padStart(3,'0')),
             name: (it.name || ('Регион '+(idx+1))),
-            rid: (it.fields && (it.fields['Идентификатор'] || it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || ''
-          }));
+              rid: correctRid
+            };
+          });
+          
+          // Сохраняем регионы в кэш
+          saveIdsToCache('regions', regions);
           // Сначала быстрый рендер с нулями
           citiesByRegion = {};
           renderRegions();
@@ -1118,14 +1339,44 @@
       // Airtable-backed loaders for each level
       async function loadCitiesForRegion(region){
         try{
+          // Проверяем кэш для этого региона
+          const cacheKey = `cities_${region.id}`;
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              const age = Date.now() - parsed.timestamp;
+              if (age < 24 * 60 * 60 * 1000) { // 24 часа
+                console.log(`Загружаем города для ${region.name} из кэша`);
+                citiesByRegion[region.id] = parsed.data;
+                return;
+              }
+            } catch (e) {
+              console.warn('Ошибка загрузки кэша городов:', e);
+            }
+          }
+          
+          console.log(`Загружаем города для ${region.name} из Airtable`);
           const res = await fetch('/api/db-sync.php',{
             method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
             body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: region.id, regionName: region.name } } })
           });
           const j = await res.json();
           const items = j.ok ? (j.items||[]) : [];
-          citiesByRegion[region.id] = items.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code: (it.fields?.['ID'] || it.fields?.['Идентификатор'] || ''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
-        }catch(e){ citiesByRegion[region.id] = []; }
+          const cities = items.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code: (it.fields?.['ID'] || it.fields?.['Идентификатор'] || ''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
+          
+          citiesByRegion[region.id] = cities;
+          
+          // Сохраняем в кэш
+          localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: cities
+          }));
+          console.log(`Сохранено в кэш города для ${region.name}:`, cities.length, 'записей');
+        }catch(e){ 
+          citiesByRegion[region.id] = []; 
+          console.warn('Ошибка загрузки городов:', e);
+        }
       }
 
       async function loadPoisForCity(city){
@@ -1133,6 +1384,23 @@
         if (poisByCity[city.id] && poisByCity[city.id].length > 0) {
           console.log('POI already loaded for city:', city.name, 'count:', poisByCity[city.id].length);
           return;
+        }
+        
+        // Проверяем кэш для этого города
+        const cacheKey = `pois_${city.id}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            const age = Date.now() - parsed.timestamp;
+            if (age < 24 * 60 * 60 * 1000) { // 24 часа
+              console.log(`Загружаем POI для ${city.name} из кэша`);
+              poisByCity[city.id] = parsed.data;
+              return;
+            }
+          } catch (e) {
+            console.warn('Ошибка загрузки кэша POI:', e);
+          }
         }
         
         try{
@@ -1236,7 +1504,7 @@
           
           console.log(`Found ${cityLinkedRecords.length} POI for city ${city.name} out of ${records.length} total POI`);
           
-          poisByCity[city.id] = cityLinkedRecords.map(record=>({ 
+          const pois = cityLinkedRecords.map(record=>({ 
             id: record.id, 
             name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
             type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
@@ -1246,6 +1514,15 @@
             poi_id: record.fields?.['POI ID'] || '',
             region: record.fields?.['Regions'] || []
           }));
+          
+          poisByCity[city.id] = pois;
+          
+          // Сохраняем в кэш
+          localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: pois
+          }));
+          console.log(`Сохранено в кэш POI для ${city.name}:`, pois.length, 'записей');
             
             console.log('Processed POIs for city:', city.name, 'city.id:', city.id, 'poisByCity[city.id]:', poisByCity[city.id]);
             console.log('poisByCity after update:', Object.keys(poisByCity).map(k => ({ key: k, count: poisByCity[k].length })));
