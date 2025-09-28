@@ -836,6 +836,24 @@
           console.log('All POI records for debugging:', records);
           console.log('Current city ID we are filtering for:', city.id);
           
+          // Логируем все POI и их связи для отладки в loadPoisForCity
+          console.log('=== LOAD POIS FOR CITY DEBUG ===');
+          console.log('City:', city.name, 'ID:', city.id);
+          console.log('Selected Region:', selectedRegion?.name, 'ID:', selectedRegion?.id);
+          records.forEach((record, index) => {
+            const poiName = record.fields?.['POI Name (RU)'] || record.fields?.['POI Name (EN)'] || `POI-${index}`;
+            const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
+            const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
+            console.log(`POI ${poiName}:`, {
+              id: record.id,
+              regionField: regionField,
+              cityField: cityField,
+              isInCurrentRegion: Array.isArray(regionField) && regionField.includes(selectedRegion?.id),
+              isLinkedToCity: Array.isArray(cityField) && cityField.includes(city.id)
+            });
+          });
+          console.log('=== END LOAD POIS FOR CITY DEBUG ===');
+          
           if (records.length > 0) {
             console.log('Sample POI record structure:', {
               id: records[0].id,
@@ -937,6 +955,21 @@
               console.log('Sample POI record fields:', Object.keys(records[0].fields || {}));
               console.log('Sample POI record:', records[0]);
             }
+            
+            // Логируем все POI и их связи для отладки
+            console.log('=== ALL POI RECORDS DEBUG ===');
+            records.forEach((record, index) => {
+              const poiName = record.fields?.['POI Name (RU)'] || record.fields?.['POI Name (EN)'] || `POI-${index}`;
+              const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
+              const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
+              console.log(`POI ${poiName}:`, {
+                id: record.id,
+                regionField: regionField,
+                cityField: cityField,
+                isInCurrentRegion: Array.isArray(regionField) && regionField.includes(region.id)
+              });
+            });
+            console.log('=== END POI RECORDS DEBUG ===');
             
             // Распределяем POI по городам: сначала прямые связи, потом POI без связей - первому городу
             list.forEach((city, cityIndex) => {
