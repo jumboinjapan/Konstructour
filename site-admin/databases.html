@@ -1075,14 +1075,14 @@
           return;
         }
         
-        // Сортируем регионы по ID в порядке возрастания (создаем новый массив)
+        // Сортируем регионы по business_id (rid) в порядке возрастания (создаем новый массив)
         const sortedRegions = [...regions].sort((a, b) => {
-          // Извлекаем числовую часть из ID (например, REG-001 -> 1)
+          // Извлекаем числовую часть из business_id (например, REG-001 -> 1)
           const getNumericId = (id) => {
             const match = id.match(/(\d+)$/);
             return match ? parseInt(match[1], 10) : 0;
           };
-          return getNumericId(a.id) - getNumericId(b.id);
+          return getNumericId(a.rid) - getNumericId(b.rid);
         });
         
         // Рендерим регионы с нулевыми счетчиками для мгновенного отображения
@@ -1236,14 +1236,14 @@
           });
         }
         
-        // Сортируем города по ID в порядке возрастания (создаем новый массив)
+        // Сортируем города по business_id (code) в порядке возрастания (создаем новый массив)
         const sortedCities = [...list].sort((a, b) => {
-          // Извлекаем числовую часть из ID (например, CTY-001 -> 1)
+          // Извлекаем числовую часть из business_id (например, CTY-001 -> 1)
           const getNumericId = (id) => {
             const match = id.match(/(\d+)$/);
             return match ? parseInt(match[1], 10) : 0;
           };
-          return getNumericId(a.id) - getNumericId(b.id);
+          return getNumericId(a.code) - getNumericId(b.code);
         });
         
         // Если список пуст — показываем кнопку добавления через ту же +
@@ -1296,14 +1296,14 @@
         console.log('POI list for city:', list);
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
         
-        // Сортируем POI по ID в порядке возрастания (создаем новый массив)
+        // Сортируем POI по business_id (poi_id) в порядке возрастания (создаем новый массив)
         const sortedPois = [...list].sort((a, b) => {
-          // Извлекаем числовую часть из ID (например, POI-001 -> 1)
+          // Извлекаем числовую часть из business_id (например, POI-001 -> 1)
           const getNumericId = (id) => {
             const match = id.match(/(\d+)$/);
             return match ? parseInt(match[1], 10) : 0;
           };
-          return getNumericId(a.id) - getNumericId(b.id);
+          return getNumericId(a.poi_id) - getNumericId(b.poi_id);
         });
           
         cards.innerHTML = sortedPois.map(p=>{
