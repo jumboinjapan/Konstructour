@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #e8f5e8; }
+        .error { background: #ffe8e8; }
+    </style>
+</head>
+<body>
+    <h1>Тест API</h1>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const results = document.getElementById('results');
+            let html = '';
+            
+            // Test stats
+            try {
+                const res = await fetch('/api/data-api.php?action=stats');
+                const data = await res.json();
+                
+                if (data.ok) {
+                    html += `<div class="test success">
+                        <h3>✅ Статистика API работает</h3>
+                        <p>Регионы: ${data.regions}</p>
+                        <p>Города: ${data.cities}</p>
+                        <p>POI: ${data.pois}</p>
+                    </div>`;
+                } else {
+                    html += `<div class="test error">
+                        <h3>❌ Ошибка API</h3>
+                        <p>${data.error || 'Неизвестная ошибка'}</p>
+                    </div>`;
+                }
+            } catch (e) {
+                html += `<div class="test error">
+                    <h3>❌ Ошибка подключения</h3>
+                    <p>${e.message}</p>
+                </div>`;
+            }
+            
+            // Test regions
+            try {
+                const res = await fetch('/api/data-api.php?action=regions');
+                const data = await res.json();
+                
+                if (data.ok) {
+                    html += `<div class="test success">
+                        <h3>✅ Регионы API работает</h3>
+                        <p>Загружено регионов: ${data.items.length}</p>
+                        <ul>
+                            ${data.items.slice(0, 5).map(r => `<li>${r.name_ru}</li>`).join('')}
+                        </ul>
+                    </div>`;
+                } else {
+                    html += `<div class="test error">
+                        <h3>❌ Ошибка регионов API</h3>
+                        <p>${data.error || 'Неизвестная ошибка'}</p>
+                    </div>`;
+                }
+            } catch (e) {
+                html += `<div class="test error">
+                    <h3>❌ Ошибка подключения к регионам</h3>
+                    <p>${e.message}</p>
+                </div>`;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        // Run test on page load
+        testAPI();
+    </script>
+</body>
+</html>
