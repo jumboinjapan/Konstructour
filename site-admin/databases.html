@@ -1025,61 +1025,39 @@
         console.log('Rendered region cards with data-go="cities":', renderedCards.length);
       }
 
-      // Загрузка регионов из Airtable и отрисовка
+      // Загрузка регионов из серверной БД
       async function syncRegionsFromAirtable(){
         try{
-          // Сначала пытаемся загрузить из кэша
-          const cachedRegions = loadIdsFromCache('regions');
-          if (cachedRegions && cachedRegions.length > 0) {
-            console.log('Загружаем регионы из кэша');
-            regions = cachedRegions;
-            citiesByRegion = {};
-            renderRegions();
-            return;
-          }
-          
-          console.log('Загружаем регионы из Airtable');
-          const res = await fetch('/api/db-sync.php',{
-            method:'POST', headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify({ scope:'regions', action:'list' })
+          console.log('Загружаем регионы из серверной БД');
+          const res = await fetch('/api/data-api.php?action=regions', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
           });
-          if (!res.ok) throw new Error('HTTP '+res.status);
-          const data = await res.json();
-          if (!data.ok) throw new Error(data.error||'Airtable');
-          const items = data.items || [];
-          regions = items.map((it, idx)=>{
-            const rid = (it.fields && (it.fields['Идентификатор'] || it.fields['Region ID'] || it.fields['ID'] || it.fields['Регион ID'])) || '';
-            // Генерируем правильный код региона если в Airtable неправильный
-            const correctRid = rid && rid.match(/^REG-\d{3}$/) ? rid : ('REG-'+String(idx+1).padStart(3,'0'));
-            return {
-            id: it.id || ('REG-'+String(idx+1).padStart(3,'0')),
-            name: (it.name || ('Регион '+(idx+1))),
-              rid: correctRid
-            };
-          });
+          const j = await res.json();
+          const items = j.ok ? (j.items || []) : [];
           
-          // Сохраняем регионы в кэш
-          saveIdsToCache('regions', regions);
+          regions = items.map((it, idx) => ({
+            id: it.id,
+            name: it.name_ru || ('Регион ' + (idx + 1)),
+            rid: it.business_id || ('REG-' + String(idx + 1).padStart(3, '0'))
+          }));
+          
           // Сначала быстрый рендер с нулями
           citiesByRegion = {};
           renderRegions();
-          saveRegionsCache(regions);
+          
           // Затем предзагрузим количество городов по всем регионам и перерисуем
-          try{
-            await Promise.all(regions.map(async (r)=>{
-              try{
-                const rs = await fetch('/api/db-sync.php',{
-                  method:'POST', headers:{ 'Content-Type':'application/json' },
-                  body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: r.id, regionName: r.name } } })
-                });
-                const jj = await rs.json();
-                const its = jj.ok ? (jj.items||[]) : [];
-                citiesByRegion[r.id] = its.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code:(it.fields?.['ID']||it.fields?.['Идентификатор']||''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
-              }catch(_e){ citiesByRegion[r.id] = citiesByRegion[r.id] || []; }
+          try {
+            await Promise.all(regions.map(async (r) => {
+              try {
+                await loadCitiesForRegion(r);
+              } catch (_e) { 
+                citiesByRegion[r.id] = citiesByRegion[r.id] || []; 
+              }
             }));
             renderRegions();
-          }catch(_e){ /* ignore */ }
-        }catch(e){
+          } catch (_e) { /* ignore */ }
+        } catch(e){
           console.warn('syncRegionsFromAirtable failed', e);
           // Fallback: прямой запрос через test-proxy при наличии реестра
           try{
@@ -1337,45 +1315,25 @@
         cards.innerHTML = details;
       }
 
-      // Airtable-backed loaders for each level
+      // Server database loaders for each level
       async function loadCitiesForRegion(region, forceRefresh = false){
         try{
-          // Проверяем кэш для этого региона (если не принудительное обновление)
-          if (!forceRefresh) {
-            const cacheKey = `cities_${region.id}`;
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-              try {
-                const parsed = JSON.parse(cached);
-                const age = Date.now() - parsed.timestamp;
-                if (age < 24 * 60 * 60 * 1000) { // 24 часа
-                  console.log(`Загружаем города для ${region.name} из кэша`);
-                  citiesByRegion[region.id] = parsed.data;
-                  return;
-                }
-              } catch (e) {
-                console.warn('Ошибка загрузки кэша городов:', e);
-              }
-            }
-          }
-          
-          console.log(`Загружаем города для ${region.name} из Airtable`);
-          const res = await fetch('/api/db-sync.php',{
-            method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
-            body: JSON.stringify({ scope:'cities', action:'list', data:{ filter:{ regionId: region.id, regionName: region.name } } })
+          console.log(`Загружаем города для ${region.name} из серверной БД`);
+          const res = await fetch(`/api/data-api.php?action=cities&region_id=${region.id}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
           });
           const j = await res.json();
           const items = j.ok ? (j.items||[]) : [];
-          const cities = items.map(it=>({ id: it.id, name: it.name || it.fields?.['Name (RU)'] || it.fields?.['Название (RU)'] || '—', code: (it.fields?.['ID'] || it.fields?.['Идентификатор'] || ''), type: (it.fields?.Type||'city').toLowerCase()==='location'?'location':'city' }));
+          const cities = items.map(it=>({ 
+            id: it.id, 
+            name: it.name_ru || '—', 
+            code: it.business_id || '', 
+            type: it.type === 'location' ? 'location' : 'city' 
+          }));
           
           citiesByRegion[region.id] = cities;
-          
-          // Сохраняем в кэш
-          localStorage.setItem(cacheKey, JSON.stringify({
-            timestamp: Date.now(),
-            data: cities
-          }));
-          console.log(`Сохранено в кэш города для ${region.name}:`, cities.length, 'записей');
+          console.log(`Загружено городов для ${region.name}:`, cities.length);
         }catch(e){ 
           citiesByRegion[region.id] = []; 
           console.warn('Ошибка загрузки городов:', e);
@@ -1394,152 +1352,32 @@
           return;
         }
         
-        // Проверяем кэш для этого города (если не принудительное обновление)
-        if (!forceRefresh) {
-          const cacheKey = `pois_${city.id}`;
-          const cached = localStorage.getItem(cacheKey);
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              const age = Date.now() - parsed.timestamp;
-              if (age < 24 * 60 * 60 * 1000) { // 24 часа
-                console.log(`Загружаем POI для ${city.name} из кэша`);
-                poisByCity[city.id] = parsed.data;
-                return;
-              }
-            } catch (e) {
-              console.warn('Ошибка загрузки кэша POI:', e);
-            }
-          }
-        }
-        
         try{
-            const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
-            
-            console.log('Loading POIs for city:', {
-              cityId: city.id,
-              cityName: city.name,
-              baseId: baseId,
-              tableId: window.AIRTABLE_POI_TABLE_ID
-            });
-            
-            // Загружаем POI через db-sync.php с фильтрацией по городу
-            console.log('Loading POI via db-sync.php for city:', city.name, 'ID:', city.id);
-            const res = await fetch('/api/db-sync.php?v=' + Date.now(), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                scope: 'pois', 
-                action: 'list', 
-                data: { 
-                  filter: { 
-                    cityId: city.id, 
-                    cityName: city.name,
-                    regionId: selectedRegion?.id,
-                    regionName: selectedRegion?.name
-                  } 
-                } 
-              })
+          console.log(`Загружаем POI для ${city.name} из серверной БД`);
+          const res = await fetch(`/api/data-api.php?action=pois&city_id=${city.id}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
           });
           const j = await res.json();
-            
-            console.log('POI API response:', j);
-            
-          // db-sync возвращает структуру с items
-          const records = j.ok ? (j.items || []) : [];
-          console.log('Raw POI records:', records);
+          const items = j.ok ? (j.items || []) : [];
           
-          // Показываем структуру данных для отладки
-          console.log('All POI records for debugging:', records);
-          console.log('Current city ID we are filtering for:', city.id);
-          
-          // Логируем все POI и их связи для отладки в loadPoisForCity
-          console.log('=== LOAD POIS FOR CITY DEBUG ===');
-          console.log('City:', city.name, 'ID:', city.id);
-          console.log('Selected Region:', selectedRegion?.name, 'ID:', selectedRegion?.id);
-          records.forEach((record, index) => {
-            const poiName = record.fields?.['POI Name (RU)'] || record.fields?.['POI Name (EN)'] || `POI-${index}`;
-            const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
-            const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
-            console.log(`POI ${poiName}:`, {
-              id: record.id,
-              regionField: regionField,
-              cityField: cityField,
-              isInCurrentRegion: Array.isArray(regionField) && regionField.includes(selectedRegion?.id),
-              isLinkedToCity: Array.isArray(cityField) && cityField.includes(city.id)
-            });
-          });
-          console.log('=== END LOAD POIS FOR CITY DEBUG ===');
-          
-          if (records.length > 0) {
-            console.log('Sample POI record structure:', {
-              id: records[0].id,
-              fields: records[0].fields,
-              regions_field: records[0].fields?.['Regions']
-            });
-          }
-          
-          // Отладочное логирование структуры POI записи
-          if (records.length > 0) {
-            console.log('Sample POI record fields for city filtering:', Object.keys(records[0].fields || {}));
-            console.log('Sample POI record for city filtering:', records[0]);
-          }
-          
-          // Фильтруем POI по городу: прямые связи + POI без связей для первого города
-          const cityLinkedRecords = records.filter(record => {
-            // Проверяем, что POI принадлежит текущему региону
-            const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
-            const isInCurrentRegion = Array.isArray(regionField) && regionField.includes(selectedRegion?.id);
-            
-            if (!isInCurrentRegion) {
-              console.log(`POI ${record.fields?.['POI Name (RU)']} belongs to different region, skipping`);
-              return false;
-            }
-            
-            // Ищем поле связи с городом - может быть City, Cities, Location, Locations
-            const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
-            console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField, 'looking for city ID:', city.id);
-            
-            // Прямая связь: POI связан с городом
-            const isDirectlyLinked = Array.isArray(cityField) && cityField.includes(city.id);
-            
-            if (isDirectlyLinked) {
-              console.log(`POI ${record.fields?.['POI Name (RU)']} directly linked to city ${city.name} (${city.id})`);
-              return true;
-            }
-            
-            console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
-            return false;
-          });
-          
-          console.log(`Found ${cityLinkedRecords.length} POI for city ${city.name} out of ${records.length} total POI`);
-          
-          const pois = cityLinkedRecords.map(record=>({ 
-            id: record.id, 
-            name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
-            type: (record.fields?.['POI Category (RU)']?.[0] || record.fields?.Category || ''),
-            name_en: record.fields?.['POI Name (EN)'] || '',
-            place_id: record.fields?.['Place ID'] || '',
-            published: record.fields?.['Published'] || false,
-            poi_id: record.fields?.['POI ID'] || '',
-            region: record.fields?.['Regions'] || []
+          const pois = items.map(record => ({
+            id: record.id,
+            name: record.name_ru || '—',
+            type: record.category || '',
+            name_en: record.name_en || '',
+            place_id: record.place_id || '',
+            published: record.published || false,
+            poi_id: record.business_id || '',
+            region: record.region_id ? [record.region_id] : []
           }));
           
           poisByCity[city.id] = pois;
-          
-          // Сохраняем в кэш
-          localStorage.setItem(cacheKey, JSON.stringify({
-            timestamp: Date.now(),
-            data: pois
-          }));
-          console.log(`Сохранено в кэш POI для ${city.name}:`, pois.length, 'записей');
-            
-            console.log('Processed POIs for city:', city.name, 'city.id:', city.id, 'poisByCity[city.id]:', poisByCity[city.id]);
-            console.log('poisByCity after update:', Object.keys(poisByCity).map(k => ({ key: k, count: poisByCity[k].length })));
-          }catch(e){ 
-            console.error('Error loading POIs for city:', city.name, e);
-            poisByCity[city.id] = []; 
-          }
+          console.log(`Загружено POI для ${city.name}:`, pois.length);
+        } catch(e){ 
+          console.error('Error loading POIs for city:', city.name, e);
+          poisByCity[city.id] = []; 
+        }
       }
 
         // Предзагрузка POI для региона - загружаем один раз и распределяем по городам
@@ -2518,18 +2356,18 @@
             const currentRegion = selectedRegion;
             const currentCity = selectedCity;
             
-            // Принудительно сбрасываем время синхронизации для обхода кэша
-            localStorage.setItem('konstructour_last_sync', '0');
+            // Запускаем синхронизацию с Airtable
+            const syncRes = await fetch('/api/sync-airtable.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const syncData = await syncRes.json();
+            console.log('Результат синхронизации:', syncData);
             
             if (currentLevel === 'cities' && currentRegion) {
-              console.log(`📍 Синхронизация городов для региона: ${currentRegion.name}`);
+              console.log(`📍 Обновляем города для региона: ${currentRegion.name}`);
               
-              // Очищаем кэш городов для текущего региона
-              const cacheKey = `cities_${currentRegion.id}`;
-              localStorage.removeItem(cacheKey);
-              citiesByRegion[currentRegion.id] = [];
-              
-              // Перезагружаем города из Airtable
+              // Перезагружаем города из серверной БД
               await loadCitiesForRegion(currentRegion, true);
               
               // Предзагружаем POI для подсчета в пилюлях
@@ -2541,17 +2379,12 @@
               // Восстанавливаем состояние
               selectedRegion = currentRegion;
               await renderCities();
-              console.log(`✅ Синхронизация городов завершена: ${cities.length} городов`);
+              console.log(`✅ Обновление городов завершено: ${cities.length} городов`);
               
             } else if (currentLevel === 'pois' && currentCity) {
-              console.log(`📍 Синхронизация POI для города: ${currentCity.name}`);
+              console.log(`📍 Обновляем POI для города: ${currentCity.name}`);
               
-              // Очищаем кэш POI для текущего города
-              const cacheKey = `pois_${currentCity.id}`;
-              localStorage.removeItem(cacheKey);
-              poisByCity[currentCity.id] = [];
-              
-              // Перезагружаем POI из Airtable
+              // Перезагружаем POI из серверной БД
               await loadPoisForCity(currentCity, true);
               
               // Восстанавливаем состояние
@@ -2560,15 +2393,12 @@
               await renderPois();
               
               const poiCount = poisByCity[currentCity.id]?.length || 0;
-              console.log(`✅ Синхронизация POI завершена: ${poiCount} POI`);
+              console.log(`✅ Обновление POI завершено: ${poiCount} POI`);
               
             } else {
               console.log('🌍 Полная синхронизация всех данных...');
               
-              // Очищаем весь кэш
-              clearAllCache();
-              
-              // Перезагружаем регионы
+              // Перезагружаем все данные из серверной БД
               await syncRegionsFromAirtable();
               console.log(`✅ Регионы загружены: ${regions.length}`);
               
