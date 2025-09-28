@@ -1383,6 +1383,11 @@
       }
 
       async function loadPoisForCity(city){
+        console.log('=== LOAD POIS FOR CITY DEBUG ===');
+        console.log('City:', city.name, 'ID:', city.id);
+        console.log('Current poisByCity keys:', Object.keys(poisByCity));
+        console.log('Current poisByCity[city.id]:', poisByCity[city.id]);
+        
         // Если POI уже загружены для этого города, не перезагружаем
         if (poisByCity[city.id] && poisByCity[city.id].length > 0) {
           console.log('POI already loaded for city:', city.name, 'count:', poisByCity[city.id].length);
@@ -2506,6 +2511,11 @@
           try {
             console.log('Синхронизация с Airtable...');
             
+            // Сохраняем текущее состояние
+            const currentLevel = level;
+            const currentRegion = selectedRegion;
+            const currentCity = selectedCity;
+            
             // Очищаем кэш
             clearAllCache();
             
@@ -2525,13 +2535,17 @@
               }
             }
             
-            // Обновляем отображение в зависимости от текущего уровня
-            if (level === 'regions') {
-              renderRegions();
-            } else if (level === 'cities' && selectedRegion) {
+            // Восстанавливаем состояние
+            if (currentLevel === 'cities' && currentRegion) {
+              selectedRegion = regions.find(r => r.id === currentRegion.id) || currentRegion;
               await renderCities();
-            } else if (level === 'pois' && selectedCity) {
+            } else if (currentLevel === 'pois' && currentCity && currentRegion) {
+              selectedRegion = regions.find(r => r.id === currentRegion.id) || currentRegion;
+              const regionCities = citiesByRegion[selectedRegion.id] || [];
+              selectedCity = regionCities.find(c => c.id === currentCity.id) || currentCity;
               renderPois();
+            } else {
+              renderRegions();
             }
             
             console.log('Синхронизация завершена');
