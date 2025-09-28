@@ -2568,6 +2568,88 @@
         });
       }
 
+      // Функция для принудительного обновления POI для конкретного города
+      window.forceRefreshCityPOI = async function(cityId) {
+        console.log('Принудительное обновление POI для города:', cityId);
+        
+        // Очищаем кэш POI для этого города
+        const cacheKey = `pois_${cityId}`;
+        localStorage.removeItem(cacheKey);
+        poisByCity[cityId] = [];
+        
+        // Находим город по ID
+        let city = null;
+        for (const region of regions) {
+          const cities = citiesByRegion[region.id] || [];
+          city = cities.find(c => c.id === cityId);
+          if (city) break;
+        }
+        
+        if (city) {
+          console.log('Найден город для обновления:', city.name);
+          await loadPoisForCity(city);
+          console.log('POI обновлены для города:', city.name, 'количество:', poisByCity[cityId]?.length || 0);
+        } else {
+          console.error('Город не найден для ID:', cityId);
+        }
+      };
+
+      // Функция для отладки POI в Airtable
+      window.debugPOIInAirtable = async function() {
+        console.log('=== ОТЛАДКА POI В AIRTABLE ===');
+        
+        try {
+          const res = await fetch('/api/db-sync.php?v=' + Date.now(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              scope: 'pois', 
+              action: 'list', 
+              data: { 
+                filter: {} // Без фильтров - получаем все POI
+              } 
+            })
+          });
+          
+          const j = await res.json();
+          console.log('Все POI из Airtable:', j);
+          
+          if (j.ok && j.items) {
+            console.log('Количество POI в Airtable:', j.items.length);
+            
+            // Ищем POI связанные с Киото
+            const kyotoPOIs = j.items.filter(record => {
+              const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
+              const poiName = record.fields?.['POI Name (RU)'] || record.fields?.['POI Name (EN)'] || 'Unknown';
+              
+              // Проверяем, содержит ли поле города слово "Киото" или ID Киото
+              const hasKyoto = Array.isArray(cityField) ? 
+                cityField.some(city => 
+                  (typeof city === 'string' && city.toLowerCase().includes('kyoto')) ||
+                  (typeof city === 'object' && city.fields && city.fields['Name (RU)'] && city.fields['Name (RU)'].toLowerCase().includes('киото'))
+                ) : false;
+              
+              if (hasKyoto) {
+                console.log('Найден POI связанный с Киото:', {
+                  name: poiName,
+                  cityField: cityField,
+                  id: record.id
+                });
+              }
+              
+              return hasKyoto;
+            });
+            
+            console.log('POI связанные с Киото:', kyotoPOIs.length);
+            kyotoPOIs.forEach(poi => {
+              console.log('POI Киото:', poi.fields?.['POI Name (RU)'], 'ID:', poi.id);
+            });
+          }
+        } catch (error) {
+          console.error('Ошибка отладки POI:', error);
+        }
+      };
+
       // Поля ввода и иконки синхронизации удалены, бинды не требуются
 
       // History: handle back/forward
