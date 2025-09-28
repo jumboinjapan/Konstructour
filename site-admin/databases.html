@@ -402,6 +402,7 @@
       let selectedRegion = null;
       let selectedCity = null;
       let selectedPoi = null;
+      let preloadInProgress = false; // Флаг для предотвращения повторных загрузок
 
       // History helpers
       async function renderFromState(state){
@@ -600,11 +601,16 @@
         const list = citiesByRegion[selectedRegion.id] || [];
         
         // Предзагружаем POI для всех городов региона, если еще не загружены
-        if (list.length > 0) {
+        if (list.length > 0 && !preloadInProgress) {
           const needsPreload = list.some(city => !poisByCity[city.id] || poisByCity[city.id].length === 0);
           if (needsPreload) {
             console.log('Preloading POI for cities in region:', selectedRegion.name);
-            await preloadPoisCountsForRegion(selectedRegion);
+            preloadInProgress = true;
+            try {
+              await preloadPoisCountsForRegion(selectedRegion);
+            } finally {
+              preloadInProgress = false;
+            }
           }
         }
         
@@ -808,7 +814,7 @@
             }
             
             // Правильно распределяем POI по городам через строгую иерархию POI → City
-            list.forEach(city => {
+            list.forEach((city, cityIndex) => {
               console.log(`Processing city: ${city.name} (${city.id})`);
               const cityLinkedRecords = records.filter(record => {
                 // Ищем поле связи с городом - может быть City, Cities, Location, Locations
@@ -820,10 +826,18 @@
                 
                 if (isLinked) {
                   console.log(`POI ${record.fields?.['POI Name (RU)']} linked to city ${city.name} (${city.id})`);
+                  return true;
                 } else {
                   console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
+                  
+                  // Временное решение: если POI не связан ни с каким городом, 
+                  // но есть в регионе, присваиваем его первому городу
+                  if (cityField.length === 0 && cityIndex === 0) {
+                    console.log(`POI ${record.fields?.['POI Name (RU)']} has no city link, assigning to first city ${city.name}`);
+                    return true;
+                  }
+                  return false;
                 }
-                return isLinked;
               });
               
               console.log(`City ${city.name} (${city.id}) has ${cityLinkedRecords.length} POI out of ${records.length} total`);
