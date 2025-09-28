@@ -56,13 +56,24 @@ function syncFromAirtable() {
         // Sync POI
         $pois = fetchAirtableData($baseId, 'tblVCmFcHRpXUT24y', $pat);
         foreach ($pois as $record) {
-            $regionId = extractLinkedRecordId($record['fields'], ['Regions', 'Регионы', 'Region', 'Регион']);
+            // Получаем Airtable Record ID региона из поля Regions
+            $regionAirtableId = null;
+            if (isset($record['fields']['Regions'])) {
+                $regions = $record['fields']['Regions'];
+                if (is_array($regions) && !empty($regions)) {
+                    $regionAirtableId = $regions[0];
+                } elseif (is_string($regions)) {
+                    $regionAirtableId = $regions;
+                }
+            }
             
-            // Найдем город по префектуре
+            // Найдем регион по Airtable Record ID
+            $regionId = $regionAirtableId; // Используем Airtable Record ID напрямую
+            
+            // Найдем город по префектуре в найденном регионе
             $cityId = null;
-            if (isset($record['fields']['Prefecture (RU)'])) {
+            if ($regionId && isset($record['fields']['Prefecture (RU)'])) {
                 $prefecture = $record['fields']['Prefecture (RU)'];
-                // Найдем город с таким же названием в регионе
                 $cities = $db->getCitiesByRegion($regionId);
                 foreach ($cities as $city) {
                     if (strpos($city['name_ru'], $prefecture) !== false || strpos($prefecture, $city['name_ru']) !== false) {
@@ -74,9 +85,10 @@ function syncFromAirtable() {
             
             // Debug: log POI data
             error_log("POI: " . ($record['fields']['POI Name (RU)'] ?? 'Unknown') . 
+                     " | Region Airtable ID: " . ($regionAirtableId ?? 'NULL') . 
+                     " | Region ID: " . ($regionId ?? 'NULL') . 
                      " | Prefecture: " . ($record['fields']['Prefecture (RU)'] ?? 'NULL') . 
-                     " | City ID: " . ($cityId ?? 'NULL') . 
-                     " | Region ID: " . ($regionId ?? 'NULL'));
+                     " | City ID: " . ($cityId ?? 'NULL'));
             
             $data = [
                 'id' => $record['id'],
