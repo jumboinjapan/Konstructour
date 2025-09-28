@@ -61,51 +61,49 @@ function syncFromAirtable() {
         // Sync POI - СТРОГО ТОЛЬКО ПО BUSINESS ID
         $pois = fetchAirtableData($baseId, 'tblVCmFcHRpXUT24y', $pat);
         foreach ($pois as $record) {
-            // СТРОГО: Получаем Airtable Record ID региона из поля Regions
-            $regionAirtableId = null;
+            // СТРОГО: Получаем business ID региона из поля Regions (REG-XXXX)
+            $regionBusinessId = null;
             if (isset($record['fields']['Regions'])) {
                 $regions = $record['fields']['Regions'];
                 if (is_array($regions) && !empty($regions)) {
-                    $regionAirtableId = $regions[0];
+                    $regionBusinessId = $regions[0];
                 } elseif (is_string($regions)) {
-                    $regionAirtableId = $regions;
+                    $regionBusinessId = $regions;
                 }
             }
             
-            // СТРОГО: Найдем регион по Airtable Record ID и получим его business ID
+            // СТРОГО: Найдем регион по business ID (REG-XXXX)
             $regionId = null;
-            $regionBusinessId = null;
-            if ($regionAirtableId) {
+            if ($regionBusinessId && preg_match('/^REG-\d+$/', $regionBusinessId)) {
                 $regions = $db->getRegions();
                 foreach ($regions as $region) {
-                    if ($region['id'] === $regionAirtableId) {
+                    if ($region['business_id'] === $regionBusinessId) {
                         $regionId = $region['id'];
-                        $regionBusinessId = $region['business_id'];
                         break;
                     }
                 }
             }
             
-            // СТРОГО: Найдем город по префектуре в найденном регионе
+            // СТРОГО: Найдем город по business ID из поля A ID (CTY-XXXX или LOC-XXXX)
             $cityId = null;
-            if ($regionId && isset($record['fields']['Prefecture (RU)'])) {
-                $prefecture = $record['fields']['Prefecture (RU)'];
-                $cities = $db->getCitiesByRegion($regionId);
-                foreach ($cities as $city) {
-                    // СТРОГО: Точное совпадение по названию префектуры
-                    if ($city['name_ru'] === $prefecture) {
-                        $cityId = $city['id'];
-                        break;
+            if (isset($record['fields']['A ID']) && preg_match('/^(CTY|LOC)-\d+$/', $record['fields']['A ID'])) {
+                $cityBusinessId = $record['fields']['A ID'];
+                if ($regionId) {
+                    $cities = $db->getCitiesByRegion($regionId);
+                    foreach ($cities as $city) {
+                        if ($city['business_id'] === $cityBusinessId) {
+                            $cityId = $city['id'];
+                            break;
+                        }
                     }
                 }
             }
             
             // Debug: log POI data
             error_log("POI: " . ($record['fields']['POI Name (RU)'] ?? 'Unknown') . 
-                     " | Region Airtable ID: " . ($regionAirtableId ?? 'NULL') . 
                      " | Region Business ID: " . ($regionBusinessId ?? 'NULL') . 
                      " | Region ID: " . ($regionId ?? 'NULL') . 
-                     " | City Business ID: " . ($record['fields']['City ID'] ?? 'NULL') . 
+                     " | City Business ID: " . ($record['fields']['A ID'] ?? 'NULL') . 
                      " | City ID: " . ($cityId ?? 'NULL'));
             
             $data = [
