@@ -137,6 +137,196 @@
       window.AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
       window.AIRTABLE_TICKETS_TABLE_ID = 'tblKOLhiHMihpWsVl';
       
+      
+      // Локальная фильтрация по DOM карточкам
+      window.getLocalRegionIds = function() {
+        const regionCards = document.querySelectorAll('[data-go="cities"]');
+        const regions = [];
+        
+        // Правильные названия регионов из кода
+        const regionNames = ['Хоккайдо', 'Тохоку', 'Канто', 'Тюбу', 'Кансай', 'Тюгоку', 'Сикоку', 'Кюсю', 'Окинава'];
+        
+        regionCards.forEach((card, idx) => {
+          const id = card.getAttribute('data-id');
+          const nameElement = card.querySelector('.text-lg');
+          const ridElement = card.querySelector('.text-xs');
+          
+          // Используем правильное название региона
+          const correctName = regionNames[idx] || `Регион ${idx+1}`;
+          
+          regions.push({
+            id: id || `recREG${String(idx+1).padStart(3,'0')}`,
+            name: nameElement ? nameElement.textContent.trim() : correctName,
+            rid: ridElement ? ridElement.textContent.trim() : `REG-${String(idx+1).padStart(3,'0')}`,
+            element: card
+          });
+        });
+        
+        console.log('Локальные ID регионов:', regions);
+        return regions;
+      };
+
+      window.getLocalCityIds = function(regionId) {
+        // Находим все карточки городов для конкретного региона
+        const cityCards = document.querySelectorAll('[data-go="pois"]');
+        const cities = [];
+        
+        cityCards.forEach((card, idx) => {
+          const id = card.getAttribute('data-id');
+          const nameElement = card.querySelector('.text-lg');
+          const codeElement = card.querySelector('.text-xs');
+          
+          cities.push({
+            id: id || `recCITY${String(idx+1).padStart(3,'0')}`,
+            name: nameElement ? nameElement.textContent.trim() : `Город ${idx+1}`,
+            code: codeElement ? codeElement.textContent.trim() : `CTY-${String(idx+1).padStart(3,'0')}`,
+            element: card
+          });
+        });
+        
+        console.log(`Локальные ID городов для региона ${regionId}:`, cities);
+        return cities;
+      };
+
+      window.getLocalPoiIds = function(cityId) {
+        // Находим все карточки POI для конкретного города
+        const poiCards = document.querySelectorAll('[data-go="poi-details"]');
+        const pois = [];
+        
+        poiCards.forEach((card, idx) => {
+          const id = card.getAttribute('data-id');
+          const nameElement = card.querySelector('.text-lg');
+          const poiIdElement = card.querySelector('.text-xs');
+          
+          pois.push({
+            id: id || `recPOI${String(idx+1).padStart(3,'0')}`,
+            name: nameElement ? nameElement.textContent.trim() : `POI ${idx+1}`,
+            poi_id: poiIdElement ? poiIdElement.textContent.trim() : `POI-${String(idx+1).padStart(3,'0')}`,
+            element: card
+          });
+        });
+        
+        console.log(`Локальные ID POI для города ${cityId}:`, pois);
+        return pois;
+      };
+
+      // Функция для получения ID регионов из Airtable
+      window.getRegionIds = async function() {
+        try {
+          const baseId = window.AIRTABLE_BASE_ID;
+          const regTbl = window.AIRTABLE_REGIONS_TABLE_ID;
+          const url = `/api/test-proxy.php?provider=airtable&base_id=${encodeURIComponent(baseId)}&table=${encodeURIComponent(regTbl)}`;
+          
+          console.log('Загружаем ID регионов из Airtable...');
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          if (data.ok && data.body && data.body.records) {
+            console.log('=== ID РЕГИОНОВ ИЗ AIRTABLE ===');
+            data.body.records.forEach((record, idx) => {
+              const fields = record.fields || {};
+              const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || `Регион ${idx + 1}`;
+              const rid = fields['Идентификатор'] || fields['Region ID'] || fields['ID'] || fields['Регион ID'] || '';
+              
+              console.log(`${name}:`, {
+                id: record.id,
+                name: name,
+                rid: rid || 'нет',
+                fields: Object.keys(fields)
+              });
+            });
+            console.log('=== КОНЕЦ СПИСКА ID РЕГИОНОВ ===');
+            return data.body.records;
+          } else {
+            console.error('Ошибка загрузки регионов:', data);
+            return [];
+          }
+        } catch (error) {
+          console.error('Ошибка при загрузке ID регионов:', error);
+          return [];
+        }
+      };
+
+      // Функция для получения ID городов из Airtable
+      window.getCityIds = async function(regionId) {
+        try {
+          const baseId = window.AIRTABLE_BASE_ID;
+          const cityTbl = window.AIRTABLE_CITIES_TABLE_ID;
+          const url = `/api/test-proxy.php?provider=airtable&base_id=${encodeURIComponent(baseId)}&table=${encodeURIComponent(cityTbl)}`;
+          
+          console.log(`Загружаем ID городов для региона ${regionId}...`);
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          if (data.ok && data.body && data.body.records) {
+            console.log('=== ID ГОРОДОВ ИЗ AIRTABLE ===');
+            data.body.records.forEach((record, idx) => {
+              const fields = record.fields || {};
+              const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || `Город ${idx + 1}`;
+              const rid = fields['Идентификатор'] || fields['City ID'] || fields['ID'] || fields['Город ID'] || '';
+              const regions = fields['Regions'] || fields['Регионы'] || fields['Region'] || fields['Регион'] || [];
+              
+              console.log(`${name}:`, {
+                id: record.id,
+                name: name,
+                rid: rid || 'нет',
+                regions: regions,
+                fields: Object.keys(fields)
+              });
+            });
+            console.log('=== КОНЕЦ СПИСКА ID ГОРОДОВ ===');
+            return data.body.records;
+          } else {
+            console.error('Ошибка загрузки городов:', data);
+            return [];
+          }
+        } catch (error) {
+          console.error('Ошибка при загрузке ID городов:', error);
+          return [];
+        }
+      };
+
+      // Функция для получения ID POI из Airtable
+      window.getPoiIds = async function() {
+        try {
+          const baseId = window.AIRTABLE_BASE_ID;
+          const poiTbl = window.AIRTABLE_POI_TABLE_ID;
+          const url = `/api/test-proxy.php?provider=airtable&base_id=${encodeURIComponent(baseId)}&table=${encodeURIComponent(poiTbl)}`;
+          
+          console.log('Загружаем ID POI из Airtable...');
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          if (data.ok && data.body && data.body.records) {
+            console.log('=== ID POI ИЗ AIRTABLE ===');
+            data.body.records.forEach((record, idx) => {
+              const fields = record.fields || {};
+              const name = fields['POI Name (RU)'] || fields['Название (RU)'] || fields['POI Name (EN)'] || fields['Name'] || `POI ${idx + 1}`;
+              const rid = fields['Идентификатор'] || fields['POI ID'] || fields['ID'] || fields['POI ID'] || '';
+              const cities = fields['City'] || fields['Город'] || fields['Cities'] || fields['Города'] || [];
+              const regions = fields['Regions'] || fields['Регионы'] || fields['Region'] || fields['Регион'] || [];
+              
+              console.log(`${name}:`, {
+                id: record.id,
+                name: name,
+                rid: rid || 'нет',
+                cities: cities,
+                regions: regions,
+                fields: Object.keys(fields)
+              });
+            });
+            console.log('=== КОНЕЦ СПИСКА ID POI ===');
+            return data.body.records;
+          } else {
+            console.error('Ошибка загрузки POI:', data);
+            return [];
+          }
+        } catch (error) {
+          console.error('Ошибка при загрузке ID POI:', error);
+          return [];
+        }
+      };
+
       // Функция для отображения всех ID в системе
       window.showAllIds = function() {
         console.log('=== ВСЕ ID В СИСТЕМЕ ===');
@@ -196,6 +386,56 @@
         }
         
         console.log('=== КОНЕЦ СПИСКА ID ===');
+      };
+
+      // Функция для отображения реальных ID из DOM карточек
+      window.showRealIdsFromCards = function() {
+        console.log('=== РЕАЛЬНЫЕ ID ИЗ DOM КАРТОЧЕК ===');
+        
+        // Регионы
+        const regionCards = document.querySelectorAll('[data-go="cities"]');
+        console.log('\n=== РЕГИОНЫ (из DOM) ===');
+        regionCards.forEach((card, idx) => {
+          const id = card.getAttribute('data-id');
+          const nameElement = card.querySelector('.text-lg');
+          const ridElement = card.querySelector('.text-xs');
+          
+          console.log(`Регион ${idx + 1}:`, {
+            id: id || 'НЕТ ID',
+            name: nameElement ? nameElement.textContent.trim() : 'НЕТ НАЗВАНИЯ',
+            rid: ridElement ? ridElement.textContent.trim() : 'НЕТ RID'
+          });
+        });
+        
+        // Города
+        const cityCards = document.querySelectorAll('[data-go="pois"]');
+        console.log('\n=== ГОРОДА (из DOM) ===');
+        cityCards.forEach((card, idx) => {
+          const id = card.getAttribute('data-id');
+          const nameElement = card.querySelector('.text-lg');
+          const codeElement = card.querySelector('.text-xs');
+          
+          console.log(`Город ${idx + 1}:`, {
+            id: id || 'НЕТ ID',
+            name: nameElement ? nameElement.textContent.trim() : 'НЕТ НАЗВАНИЯ',
+            code: codeElement ? codeElement.textContent.trim() : 'НЕТ CODE'
+          });
+        });
+        
+        // POI
+        const poiCards = document.querySelectorAll('[data-go="poi-details"]');
+        console.log('\n=== POI (из DOM) ===');
+        poiCards.forEach((card, idx) => {
+          const id = card.getAttribute('data-id');
+          const nameElement = card.querySelector('.text-lg');
+          const poiIdElement = card.querySelector('.text-xs');
+          
+          console.log(`POI ${idx + 1}:`, {
+            id: id || 'НЕТ ID',
+            name: nameElement ? nameElement.textContent.trim() : 'НЕТ НАЗВАНИЯ',
+            poi_id: poiIdElement ? poiIdElement.textContent.trim() : 'НЕТ POI_ID'
+          });
+        });
       };
       
       // SVG иконки для категорий POI
@@ -353,17 +593,27 @@
           if (!baseId || !regTbl) return false;
           const u = '/api/test-proxy.php?provider=airtable&base_id='+encodeURIComponent(baseId)+'&table='+encodeURIComponent(regTbl);
           const r2 = await fetch(u); if(!r2.ok) return false; const j2 = await r2.json();
+          console.log('Airtable API response for regions:', j2);
           const recs = (j2 && j2.body && (j2.body.records || j2.body.items)) || j2.records || j2.items || [];
+          console.log('Parsed records from Airtable:', recs);
           regions = recs.map((rec, idx)=>{
             const fields = rec.fields || {};
             const name = fields['Name (RU)'] || fields['Название (RU)'] || fields['Name'] || fields['Название'] || ('Регион '+(idx+1));
             const rid = fields['Идентификатор'] || fields['Region ID'] || fields['ID'] || fields['Регион ID'] || '';
-            return { id: rec.id || ('REG-'+String(idx+1).padStart(3,'0')), name, rid };
+            return { 
+              id: rec.id || ('REG-'+String(idx+1).padStart(3,'0')), 
+              name, 
+              rid: rid || ''
+            };
           });
+          console.log('Final regions array:', regions);
           citiesByRegion = {};
           renderRegions();
           return regions.length>0;
-        }catch(e){ console.warn('loadRegionsViaProxy failed', e); return false; }
+        }catch(e){ 
+          console.warn('loadRegionsViaProxy failed', e); 
+          return false;
+        }
       }
 
       // Save Airtable Mapping
