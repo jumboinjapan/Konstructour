@@ -2505,7 +2505,12 @@
           
           try {
             console.log('Синхронизация с Airtable...');
-            await refreshAllData();
+            
+            // Очищаем кэш
+            clearAllCache();
+            
+            // Перезагружаем регионы
+            await syncRegionsFromAirtable();
             
             // Обновляем отображение в зависимости от текущего уровня
             if (level === 'regions') {
