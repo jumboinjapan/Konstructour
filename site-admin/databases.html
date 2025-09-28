@@ -2512,6 +2512,19 @@
             // Перезагружаем регионы
             await syncRegionsFromAirtable();
             
+            // Перезагружаем города для всех регионов
+            for (const region of regions) {
+              await loadCitiesForRegion(region);
+            }
+            
+            // Перезагружаем POI для всех городов
+            for (const region of regions) {
+              const cities = citiesByRegion[region.id] || [];
+              for (const city of cities) {
+                await loadPoisForCity(city);
+              }
+            }
+            
             // Обновляем отображение в зависимости от текущего уровня
             if (level === 'regions') {
               renderRegions();
