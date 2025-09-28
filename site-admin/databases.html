@@ -873,18 +873,6 @@
               return true;
             }
             
-            // Если POI не связан ни с каким городом, показываем его в первом городе региона
-            if (cityField.length === 0) {
-              // Проверяем, является ли это первым городом в регионе
-              const regionCities = citiesByRegion[selectedRegion?.id] || [];
-              const isFirstCity = regionCities.length > 0 && regionCities[0].id === city.id;
-              
-              if (isFirstCity) {
-                console.log(`POI ${record.fields?.['POI Name (RU)']} has no city link, showing in first city ${city.name}`);
-                return true;
-              }
-            }
-            
             console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
             return false;
           });
@@ -972,12 +960,6 @@
                 
                 if (isDirectlyLinked) {
                   console.log(`POI ${record.fields?.['POI Name (RU)']} directly linked to city ${city.name} (${city.id})`);
-                  return true;
-                }
-                
-                // Если POI не связан ни с каким городом, присваиваем его первому городу
-                if (cityField.length === 0 && cityIndex === 0) {
-                  console.log(`POI ${record.fields?.['POI Name (RU)']} has no city link, assigning to first city ${city.name}`);
                   return true;
                 }
                 
