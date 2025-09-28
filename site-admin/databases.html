@@ -841,49 +841,50 @@
         }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
       }
 
-      // Навигация — один надёжный делегат на документ по селектору в пределах #db_cards
-      console.log('Setting up click handler for navigation...');
-      document.addEventListener('click', async function(e){
-        console.log('Click detected on:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className);
-        console.log('Click target parent:', e.target.parentElement?.tagName, e.target.parentElement?.className);
-        
-        // Проверяем, есть ли элемент #db_cards
-        const dbCards = document.getElementById('db_cards');
-        console.log('db_cards element exists:', !!dbCards, 'children count:', dbCards?.children.length);
-        
-        // Проверяем, находится ли кликнутый элемент внутри #db_cards
-        const isInsideDbCards = e.target.closest('#db_cards');
-        console.log('Click inside #db_cards:', !!isInsideDbCards);
-        
-        // игнорируем клики по кнопкам действий внутри карточек
-        if (e.target.closest('button[data-act]')) {
-          console.log('Click on action button, ignoring');
-          return;
-        }
-        
-        // Ищем элемент с data-go, начиная с текущего элемента и поднимаясь вверх по DOM
-        let go = e.target.closest('[data-go]');
-        console.log('Found data-go element (anywhere):', !!go, go);
-        
-        // Если нашли элемент с data-go, проверяем, что он внутри #db_cards
-        if (go && !go.closest('#db_cards')) {
-          console.log('data-go element found but not inside #db_cards, ignoring');
-          go = null;
-        }
-        
-        if (!go) { 
-          console.log('Click outside actionable element:', e.target);
-          console.log('Available data-go elements in #db_cards:', document.querySelectorAll('#db_cards [data-go]').length);
-          console.log('All data-go elements on page:', document.querySelectorAll('[data-go]').length);
-          dlog('click outside actionable', e.target); 
-          return; 
-        }
-        
-        e.preventDefault();
-        const id = go.getAttribute('data-id');
-        const to = go.getAttribute('data-go');
-        console.log('Navigation triggered:', {to, id, element: go});
-        dlog('navigate', {to,id});
+      // Функция настройки обработчика кликов для навигации
+      function setupNavigationHandler() {
+        console.log('Setting up click handler for navigation...');
+        document.addEventListener('click', async function(e){
+          console.log('Click detected on:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className);
+          console.log('Click target parent:', e.target.parentElement?.tagName, e.target.parentElement?.className);
+          
+          // Проверяем, есть ли элемент #db_cards
+          const dbCards = document.getElementById('db_cards');
+          console.log('db_cards element exists:', !!dbCards, 'children count:', dbCards?.children.length);
+          
+          // Проверяем, находится ли кликнутый элемент внутри #db_cards
+          const isInsideDbCards = e.target.closest('#db_cards');
+          console.log('Click inside #db_cards:', !!isInsideDbCards);
+          
+          // игнорируем клики по кнопкам действий внутри карточек
+          if (e.target.closest('button[data-act]')) {
+            console.log('Click on action button, ignoring');
+            return;
+          }
+          
+          // Ищем элемент с data-go, начиная с текущего элемента и поднимаясь вверх по DOM
+          let go = e.target.closest('[data-go]');
+          console.log('Found data-go element (anywhere):', !!go, go);
+          
+          // Если нашли элемент с data-go, проверяем, что он внутри #db_cards
+          if (go && !go.closest('#db_cards')) {
+            console.log('data-go element found but not inside #db_cards, ignoring');
+            go = null;
+          }
+          
+          if (!go) { 
+            console.log('Click outside actionable element:', e.target);
+            console.log('Available data-go elements in #db_cards:', document.querySelectorAll('#db_cards [data-go]').length);
+            console.log('All data-go elements on page:', document.querySelectorAll('[data-go]').length);
+            dlog('click outside actionable', e.target); 
+            return; 
+          }
+          
+          e.preventDefault();
+          const id = go.getAttribute('data-id');
+          const to = go.getAttribute('data-go');
+          console.log('Navigation triggered:', {to, id, element: go});
+          dlog('navigate', {to,id});
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
           push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
@@ -935,6 +936,7 @@
           return;
         }
       });
+      } // Конец функции setupNavigationHandler
 
       // Breadcrumbs — строго в пределах контейнера, чтобы не было конфликтов с делегатами
       crumbs.addEventListener('click', async function(e){
@@ -1705,6 +1707,10 @@
         await syncRegionsFromAirtable();
         if (!regions.length){ await loadRegionsViaProxy(); }
         if (!regions.length) renderRegions();
+        
+        // Настраиваем обработчик кликов ПОСЛЕ загрузки данных
+        setupNavigationHandler();
+        console.log('Navigation handler setup completed after data loading');
       })();
 
       // Deploy button placeholder removed per requirements
