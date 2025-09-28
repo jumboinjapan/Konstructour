@@ -817,19 +817,29 @@
               tableId: window.AIRTABLE_POI_TABLE_ID
             });
             
-            // Временно используем прямой запрос к Airtable через test-proxy
-            const proxyUrl = '/api/test-proxy.php?provider=airtable&base_id=' + 
-              encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
-            
-            console.log('Direct Airtable request URL:', proxyUrl);
-            
-            const res = await fetch(proxyUrl);
-          const j = await res.json();
+            // Загружаем POI через db-sync.php с фильтрацией по городу
+            const res = await fetch('/api/db-sync.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                scope: 'pois', 
+                action: 'list', 
+                data: { 
+                  filter: { 
+                    cityId: city.id, 
+                    cityName: city.name,
+                    regionId: selectedRegion?.id,
+                    regionName: selectedRegion?.name
+                  } 
+                } 
+              })
+            });
+            const j = await res.json();
             
             console.log('POI API response:', j);
             
-          // test-proxy возвращает другую структуру
-          const records = j.ok ? (j.body?.records || j.records || []) : [];
+          // db-sync возвращает структуру с items
+          const records = j.ok ? (j.items || []) : [];
           console.log('Raw POI records:', records);
           
           // Показываем структуру данных для отладки
@@ -939,14 +949,23 @@
               }
             });
             
-            // Загружаем все POI один раз
-            const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
-            const proxyUrl = '/api/test-proxy.php?provider=airtable&base_id=' + 
-              encodeURIComponent(baseId) + '&table=' + encodeURIComponent(window.AIRTABLE_POI_TABLE_ID);
-            
-            const res = await fetch(proxyUrl);
-              const j = await res.json();
-            const records = j.ok ? (j.body?.records || j.records || []) : [];
+            // Загружаем POI через db-sync.php с фильтрацией по региону
+            const res = await fetch('/api/db-sync.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                scope: 'pois', 
+                action: 'list', 
+                data: { 
+                  filter: { 
+                    regionId: region.id, 
+                    regionName: region.name 
+                  } 
+                } 
+              })
+            });
+            const j = await res.json();
+            const records = j.ok ? (j.items || []) : [];
             
             console.log('Loading POI for region:', region.name, 'Total POI records:', records.length);
             
