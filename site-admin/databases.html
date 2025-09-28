@@ -916,11 +916,15 @@
 
       // History helpers
       async function renderFromState(state){
+        console.log('renderFromState called with state:', state);
+        
         if (!state || !state.level) { 
           level = 'regions';
           selectedRegion = null;
           selectedCity = null;
           selectedPoi = null;
+          renderCrumbs();
+          setMappingHeader('region');
           renderRegions(); 
           return; 
         }
@@ -931,6 +935,8 @@
           selectedRegion = null;
           selectedCity = null;
           selectedPoi = null;
+          renderCrumbs();
+          setMappingHeader('region');
           renderRegions(); 
           return; 
         }
@@ -939,6 +945,9 @@
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
           selectedCity = null;
           selectedPoi = null;
+          renderCrumbs();
+          setMappingHeader('city');
+          
           if (selectedRegion) {
             // Загружаем города если еще не загружены
             if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
@@ -956,6 +965,9 @@
             const list = citiesByRegion[selectedRegion.id] || [];
             selectedCity = list.find(c=>c.id===state.cityId) || null;
             selectedPoi = null;
+            renderCrumbs();
+            setMappingHeader('poi');
+            
             if (selectedCity) {
               // Загружаем POI если еще не загружены
               if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
@@ -977,6 +989,8 @@
               selectedPoi = listP.find(p=>p.id===state.poiId) || null;
             }
           }
+          renderCrumbs();
+          setMappingHeader('poi');
           renderPOIDetails(); 
           return;
         }
@@ -991,6 +1005,8 @@
               selectedPoi = listP.find(p=>p.id===state.poiId) || null;
             }
           }
+          renderCrumbs();
+          setMappingHeader('ticket');
           renderTickets(); 
           return;
         }
@@ -1000,6 +1016,8 @@
         selectedRegion = null;
         selectedCity = null;
         selectedPoi = null;
+        renderCrumbs();
+        setMappingHeader('region');
         renderRegions();
       }
       function push(level, ids){
@@ -1537,12 +1555,51 @@
         }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
       }
 
+      // Функция настройки обработчика кликов для хлебных крошек
+      function setupBreadcrumbHandler() {
+        // Удаляем предыдущий обработчик если он был
+        if (window.breadcrumbHandler) {
+          document.removeEventListener('click', window.breadcrumbHandler);
+        }
+        
+        window.breadcrumbHandler = function(e) {
+          if (e.target.matches('[data-level]')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const targetLevel = e.target.getAttribute('data-level');
+            const regionId = e.target.getAttribute('data-region-id');
+            const cityId = e.target.getAttribute('data-city-id');
+            const poiId = e.target.getAttribute('data-poi-id');
+            
+            console.log('Breadcrumb navigation:', { targetLevel, regionId, cityId, poiId });
+            
+            // Создаем состояние для навигации
+            const state = { level: targetLevel };
+            if (regionId) state.regionId = regionId;
+            if (cityId) state.cityId = cityId;
+            if (poiId) state.poiId = poiId;
+            
+            // Обновляем историю и рендерим
+            history.pushState(state, '');
+            renderFromState(state);
+          }
+        };
+        
+        document.addEventListener('click', window.breadcrumbHandler);
+      }
+
       // Функция настройки обработчика кликов для навигации
       function setupNavigationHandler() {
         console.log('Setting up click handler for navigation...');
         
+        // Удаляем предыдущий обработчик если он был
+        if (window.navigationHandler) {
+          document.removeEventListener('click', window.navigationHandler);
+        }
+        
         // Используем делегирование событий для лучшей производительности
-        document.addEventListener('click', async function(e){
+        window.navigationHandler = async function(e){
           console.log('Click detected on:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className);
           
           // Ищем элемент с data-go, начиная с текущего элемента и поднимаясь вверх по DOM
@@ -1563,6 +1620,12 @@
           // Игнорируем клики по кнопкам действий внутри карточек
           if (e.target.closest('button[data-act]')) {
             console.log('Click on action button, ignoring');
+            return;
+          }
+          
+          // Игнорируем клики по ссылкам в хлебных крошках
+          if (e.target.closest('[data-level]')) {
+            console.log('Click on breadcrumb, ignoring');
             return;
           }
           
@@ -1635,49 +1698,12 @@
           renderTickets();
           return;
         }
-      });
+      };
+      
+      document.addEventListener('click', window.navigationHandler);
       } // Конец функции setupNavigationHandler
 
-      // Breadcrumbs — строго в пределах контейнера, чтобы не было конфликтов с делегатами
-      crumbs.addEventListener('click', async function(e){
-        const a = e.target.closest && e.target.closest('a[data-level]');
-        if (!a) return;
-        e.preventDefault();
-        const lv = a.getAttribute('data-level');
-        if (lv==='regions'){
-          selectedRegion=null; selectedCity=null; selectedPoi=null;
-          push('regions'); renderRegions(); return;
-        }
-        if (lv==='cities'){
-          const regionId = a.getAttribute('data-region-id');
-          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
-          selectedCity=null; selectedPoi=null;
-          push('cities', { regionId: (selectedRegion?selectedRegion.id:null) });
-          await renderCities(); return;
-        }
-        if (lv==='pois'){
-          const regionId = a.getAttribute('data-region-id');
-          const cityId = a.getAttribute('data-city-id');
-          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
-          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
-          selectedCity = list.find(c=>c.id===cityId) || selectedCity;
-          selectedPoi=null;
-          push('pois', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null) });
-          await renderPois(); return;
-        }
-        if (lv==='poi-details'){
-          const regionId = a.getAttribute('data-region-id');
-          const cityId = a.getAttribute('data-city-id');
-          const poiId = a.getAttribute('data-poi-id');
-          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
-          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
-          selectedCity = list.find(c=>c.id===cityId) || selectedCity;
-          const poiList = selectedCity ? (poisByCity[selectedCity.id]||[]) : [];
-          selectedPoi = poiList.find(p=>p.id===poiId) || selectedPoi;
-          push('poi-details', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null), poiId: (selectedPoi?selectedPoi.id:null) });
-          renderPOIDetails(); return;
-        }
-      });
+      // Breadcrumbs обработчик удален - теперь используется setupBreadcrumbHandler
 
       // Back button
       document.getElementById('db_back')?.addEventListener('click', async function(){
@@ -2604,25 +2630,7 @@
         setupNavigationHandler();
         
         // Обработчик кликов для хлебных крошек
-        document.addEventListener('click', function(e) {
-          if (e.target.matches('[data-level]')) {
-            e.preventDefault();
-            const targetLevel = e.target.getAttribute('data-level');
-            const regionId = e.target.getAttribute('data-region-id');
-            const cityId = e.target.getAttribute('data-city-id');
-            const poiId = e.target.getAttribute('data-poi-id');
-            
-            // Создаем состояние для навигации
-            const state = { level: targetLevel };
-            if (regionId) state.regionId = regionId;
-            if (cityId) state.cityId = cityId;
-            if (poiId) state.poiId = poiId;
-            
-            // Обновляем историю и рендерим
-            history.pushState(state, '');
-            renderFromState(state);
-          }
-        });
+        setupBreadcrumbHandler();
         
         console.log('Navigation handler setup completed after data loading');
       })();
