@@ -734,9 +734,16 @@
             });
           }
           
+          // Отладочное логирование структуры POI записи
+          if (records.length > 0) {
+            console.log('Sample POI record fields for city filtering:', Object.keys(records[0].fields || {}));
+            console.log('Sample POI record for city filtering:', records[0]);
+          }
+          
           // Фильтруем POI по городу через поле City (связь с городом)
           const cityLinkedRecords = records.filter(record => {
-            const cityField = record.fields?.['City'] || record.fields?.['Cities'] || [];
+            const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Regions'] || [];
+            console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField, 'looking for city ID:', city.id);
             // Проверяем, есть ли ID текущего города в связанных записях
             const isLinked = Array.isArray(cityField) && cityField.includes(city.id);
             if (isLinked) {
@@ -789,10 +796,18 @@
             
             console.log('Loading POI for region:', region.name, 'Total POI records:', records.length);
             
+            // Отладочное логирование структуры POI записи
+            if (records.length > 0) {
+              console.log('Sample POI record fields:', Object.keys(records[0].fields || {}));
+              console.log('Sample POI record:', records[0]);
+            }
+            
             // Правильно распределяем POI по городам через поле City
             list.forEach(city => {
+              console.log(`Processing city: ${city.name} (${city.id})`);
               const cityLinkedRecords = records.filter(record => {
-                const cityField = record.fields?.['City'] || record.fields?.['Cities'] || [];
+                const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Regions'] || [];
+                console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField);
                 // Проверяем, есть ли ID текущего города в связанных записях
                 const isLinked = Array.isArray(cityField) && cityField.includes(city.id);
                 if (isLinked) {
