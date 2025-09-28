@@ -1075,8 +1075,8 @@
           return;
         }
         
-        // Сортируем регионы по ID в порядке возрастания
-        const sortedRegions = regions.sort((a, b) => {
+        // Сортируем регионы по ID в порядке возрастания (создаем новый массив)
+        const sortedRegions = [...regions].sort((a, b) => {
           // Извлекаем числовую часть из ID (например, REG-001 -> 1)
           const getNumericId = (id) => {
             const match = id.match(/(\d+)$/);
@@ -1236,8 +1236,8 @@
           });
         }
         
-        // Сортируем города по ID в порядке возрастания
-        const sortedCities = list.sort((a, b) => {
+        // Сортируем города по ID в порядке возрастания (создаем новый массив)
+        const sortedCities = [...list].sort((a, b) => {
           // Извлекаем числовую часть из ID (например, CTY-001 -> 1)
           const getNumericId = (id) => {
             const match = id.match(/(\d+)$/);
@@ -1296,8 +1296,8 @@
         console.log('POI list for city:', list);
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
         
-        // Сортируем POI по ID в порядке возрастания
-        const sortedPois = list.sort((a, b) => {
+        // Сортируем POI по ID в порядке возрастания (создаем новый массив)
+        const sortedPois = [...list].sort((a, b) => {
           // Извлекаем числовую часть из ID (например, POI-001 -> 1)
           const getNumericId = (id) => {
             const match = id.match(/(\d+)$/);
@@ -1522,8 +1522,8 @@
             type: it.type === 'location' ? 'location' : 'city' 
           }));
           
-          // Сортируем города по ID в порядке возрастания
-          const sortedCities = cities.sort((a, b) => {
+          // Сортируем города по ID в порядке возрастания (создаем новый массив)
+          const sortedCities = [...cities].sort((a, b) => {
             const getNumericId = (id) => {
               const match = id.match(/(\d+)$/);
               return match ? parseInt(match[1], 10) : 0;
@@ -1571,8 +1571,8 @@
             region: record.region_id ? [record.region_id] : []
           }));
           
-          // Сортируем POI по ID в порядке возрастания
-          const sortedPois = pois.sort((a, b) => {
+          // Сортируем POI по ID в порядке возрастания (создаем новый массив)
+          const sortedPois = [...pois].sort((a, b) => {
             const getNumericId = (id) => {
               const match = id.match(/(\d+)$/);
               return match ? parseInt(match[1], 10) : 0;
@@ -1627,8 +1627,8 @@
                 region: record.region_id ? [record.region_id] : []
               }));
               
-              // Сортируем POI по ID в порядке возрастания
-              const sortedPois = pois.sort((a, b) => {
+              // Сортируем POI по ID в порядке возрастания (создаем новый массив)
+              const sortedPois = [...pois].sort((a, b) => {
                 const getNumericId = (id) => {
                   const match = id.match(/(\d+)$/);
                   return match ? parseInt(match[1], 10) : 0;
@@ -1673,8 +1673,8 @@
         level='tickets'; renderCrumbs();
         const list = ticketsByPoi[selectedPoi.id] || [];
         
-        // Сортируем билеты по ID в порядке возрастания
-        const sortedTickets = list.sort((a, b) => {
+        // Сортируем билеты по ID в порядке возрастания (создаем новый массив)
+        const sortedTickets = [...list].sort((a, b) => {
           // Извлекаем числовую часть из ID (например, T-001 -> 1)
           const getNumericId = (id) => {
             const match = id.match(/(\d+)$/);
