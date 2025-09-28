@@ -90,10 +90,13 @@
             <!-- Контейнер карточек уровня (динамически) -->
             <div id="db_cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
-            <!-- Кнопка добавления под сеткой -->
-            <div class="mt-6 flex justify-center">
+            <!-- Кнопки управления под сеткой -->
+            <div class="mt-6 flex justify-center gap-4">
               <button id="db_fab_add" class="btn-japanese rounded-full w-12 h-12 flex items-center justify-center shadow-lg" title="Добавить">
                 <i class="fas fa-plus"></i>
+              </button>
+              <button id="db_fab_sync" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-colors" title="Синхронизировать с Airtable">
+                <i class="fas fa-sync-alt"></i>
               </button>
             </div>
           </div>
@@ -2492,6 +2495,43 @@
           renderTickets();
         }
       });
+
+      // Обработчик кнопки синхронизации
+      const syncBtn = document.getElementById('db_fab_sync');
+      if (syncBtn) {
+        syncBtn.addEventListener('click', async function() {
+          this.disabled = true;
+          this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+          
+          try {
+            console.log('Синхронизация с Airtable...');
+            await refreshAllData();
+            
+            // Обновляем отображение в зависимости от текущего уровня
+            if (level === 'regions') {
+              renderRegions();
+            } else if (level === 'cities' && selectedRegion) {
+              await renderCities();
+            } else if (level === 'pois' && selectedCity) {
+              renderPois();
+            }
+            
+            console.log('Синхронизация завершена');
+            this.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+              this.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }, 2000);
+          } catch (error) {
+            console.error('Ошибка синхронизации:', error);
+            this.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            setTimeout(() => {
+              this.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }, 3000);
+          } finally {
+            this.disabled = false;
+          }
+        });
+      }
 
       // Поля ввода и иконки синхронизации удалены, бинды не требуются
 
