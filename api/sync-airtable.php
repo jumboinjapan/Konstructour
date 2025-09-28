@@ -30,10 +30,15 @@ function syncFromAirtable() {
                 'id' => $record['id'],
                 'name_ru' => $record['fields']['Name (RU)'] ?? $record['fields']['Название (RU)'] ?? 'Unknown',
                 'name_en' => $record['fields']['Name (EN)'] ?? $record['fields']['Название (EN)'] ?? null,
-                'business_id' => $record['fields']['Идентификатор'] ?? $record['fields']['Region ID'] ?? null
+                'business_id' => $record['fields']['ID'] ?? null
             ];
             $db->saveRegion($data);
             $results['regions']++;
+            
+            // Debug: log region data
+            error_log("Region: " . $data['name_ru'] . 
+                     " | ID: " . $data['id'] . 
+                     " | Business ID: " . ($data['business_id'] ?? 'NULL'));
         }
         
         // Sync Cities
@@ -53,7 +58,7 @@ function syncFromAirtable() {
             $results['cities']++;
         }
         
-        // Sync POI
+        // Sync POI - СТРОГО ТОЛЬКО ПО BUSINESS ID
         $pois = fetchAirtableData($baseId, 'tblVCmFcHRpXUT24y', $pat);
         foreach ($pois as $record) {
             // СТРОГО: Получаем Airtable Record ID региона из поля Regions
@@ -67,10 +72,21 @@ function syncFromAirtable() {
                 }
             }
             
-            // СТРОГО: Используем Airtable Record ID напрямую
-            $regionId = $regionAirtableId;
+            // СТРОГО: Найдем регион по Airtable Record ID и получим его business ID
+            $regionId = null;
+            $regionBusinessId = null;
+            if ($regionAirtableId) {
+                $regions = $db->getRegions();
+                foreach ($regions as $region) {
+                    if ($region['id'] === $regionAirtableId) {
+                        $regionId = $region['id'];
+                        $regionBusinessId = $region['business_id'];
+                        break;
+                    }
+                }
+            }
             
-            // СТРОГО: Найдем город по префектуре (единственный способ привязки)
+            // СТРОГО: Найдем город по префектуре в найденном регионе
             $cityId = null;
             if ($regionId && isset($record['fields']['Prefecture (RU)'])) {
                 $prefecture = $record['fields']['Prefecture (RU)'];
@@ -87,8 +103,9 @@ function syncFromAirtable() {
             // Debug: log POI data
             error_log("POI: " . ($record['fields']['POI Name (RU)'] ?? 'Unknown') . 
                      " | Region Airtable ID: " . ($regionAirtableId ?? 'NULL') . 
+                     " | Region Business ID: " . ($regionBusinessId ?? 'NULL') . 
                      " | Region ID: " . ($regionId ?? 'NULL') . 
-                     " | Prefecture: " . ($record['fields']['Prefecture (RU)'] ?? 'NULL') . 
+                     " | City Business ID: " . ($record['fields']['City ID'] ?? 'NULL') . 
                      " | City ID: " . ($cityId ?? 'NULL'));
             
             $data = [
