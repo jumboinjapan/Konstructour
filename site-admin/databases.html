@@ -850,21 +850,34 @@
             console.log('Sample POI record for city filtering:', records[0]);
           }
           
-          // Фильтруем POI по городу через строгую иерархию POI → City
+          // Фильтруем POI по городу: прямые связи + POI без связей для первого города
           const cityLinkedRecords = records.filter(record => {
             // Ищем поле связи с городом - может быть City, Cities, Location, Locations
             const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
             console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField, 'looking for city ID:', city.id);
             
-            // Строгая проверка: POI должен быть напрямую связан с городом
-            const isLinked = Array.isArray(cityField) && cityField.includes(city.id);
+            // Прямая связь: POI связан с городом
+            const isDirectlyLinked = Array.isArray(cityField) && cityField.includes(city.id);
             
-            if (isLinked) {
-              console.log(`POI ${record.fields?.['POI Name (RU)']} linked to city ${city.name} (${city.id})`);
-            } else {
-              console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
+            if (isDirectlyLinked) {
+              console.log(`POI ${record.fields?.['POI Name (RU)']} directly linked to city ${city.name} (${city.id})`);
+              return true;
             }
-            return isLinked;
+            
+            // Если POI не связан ни с каким городом, показываем его в первом городе региона
+            if (cityField.length === 0) {
+              // Проверяем, является ли это первым городом в регионе
+              const regionCities = citiesByRegion[selectedRegion?.id] || [];
+              const isFirstCity = regionCities.length > 0 && regionCities[0].id === city.id;
+              
+              if (isFirstCity) {
+                console.log(`POI ${record.fields?.['POI Name (RU)']} has no city link, showing in first city ${city.name}`);
+                return true;
+              }
+            }
+            
+            console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
+            return false;
           });
           
           console.log(`Found ${cityLinkedRecords.length} POI for city ${city.name} out of ${records.length} total POI`);
@@ -923,7 +936,7 @@
               console.log('Sample POI record:', records[0]);
             }
             
-            // Правильно распределяем POI по городам через строгую иерархию POI → City
+            // Распределяем POI по городам: сначала прямые связи, потом POI без связей - первому городу
             list.forEach((city, cityIndex) => {
               console.log(`Processing city: ${city.name} (${city.id})`);
               const cityLinkedRecords = records.filter(record => {
@@ -931,16 +944,22 @@
                 const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
                 console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField);
                 
-                // Строгая проверка: POI должен быть напрямую связан с городом
-                const isLinked = Array.isArray(cityField) && cityField.includes(city.id);
+                // Прямая связь: POI связан с городом
+                const isDirectlyLinked = Array.isArray(cityField) && cityField.includes(city.id);
                 
-                if (isLinked) {
-                  console.log(`POI ${record.fields?.['POI Name (RU)']} linked to city ${city.name} (${city.id})`);
+                if (isDirectlyLinked) {
+                  console.log(`POI ${record.fields?.['POI Name (RU)']} directly linked to city ${city.name} (${city.id})`);
                   return true;
-                } else {
-                  console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
-                  return false;
                 }
+                
+                // Если POI не связан ни с каким городом, присваиваем его первому городу
+                if (cityField.length === 0 && cityIndex === 0) {
+                  console.log(`POI ${record.fields?.['POI Name (RU)']} has no city link, assigning to first city ${city.name}`);
+                  return true;
+                }
+                
+                console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
+                return false;
               });
               
               console.log(`City ${city.name} (${city.id}) has ${cityLinkedRecords.length} POI out of ${records.length} total`);
