@@ -1075,8 +1075,18 @@
           return;
         }
         
+        // Сортируем регионы по ID в порядке возрастания
+        const sortedRegions = regions.sort((a, b) => {
+          // Извлекаем числовую часть из ID (например, REG-001 -> 1)
+          const getNumericId = (id) => {
+            const match = id.match(/(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return getNumericId(a.id) - getNumericId(b.id);
+        });
+        
         // Рендерим регионы с нулевыми счетчиками для мгновенного отображения
-        const regionsHTML = regions.map(r=>{
+        const regionsHTML = sortedRegions.map(r=>{
           const count = 0; // Начинаем с нуля, обновим после загрузки счетчиков
           dlog('region-card', {id:r.id, name:r.name, count});
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
@@ -1226,9 +1236,19 @@
           });
         }
         
+        // Сортируем города по ID в порядке возрастания
+        const sortedCities = list.sort((a, b) => {
+          // Извлекаем числовую часть из ID (например, CTY-001 -> 1)
+          const getNumericId = (id) => {
+            const match = id.match(/(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return getNumericId(a.id) - getNumericId(b.id);
+        });
+        
         // Если список пуст — показываем кнопку добавления через ту же +
-        function findCityNameById(id){ const x=(list||[]).find(v=>v.id===id); return x?x.name:''; }
-        cards.innerHTML = list.map(c=>{
+        function findCityNameById(id){ const x=(sortedCities||[]).find(v=>v.id===id); return x?x.name:''; }
+        cards.innerHTML = sortedCities.map(c=>{
           const count = (poisByCity[c.id]||[]).length;
           console.log(`City ${c.name} (${c.id}) pill count: ${count}, poisByCity[${c.id}]:`, poisByCity[c.id]);
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
@@ -1275,8 +1295,18 @@
         
         console.log('POI list for city:', list);
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
+        
+        // Сортируем POI по ID в порядке возрастания
+        const sortedPois = list.sort((a, b) => {
+          // Извлекаем числовую часть из ID (например, POI-001 -> 1)
+          const getNumericId = (id) => {
+            const match = id.match(/(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return getNumericId(a.id) - getNumericId(b.id);
+        });
           
-        cards.innerHTML = list.map(p=>{
+        cards.innerHTML = sortedPois.map(p=>{
           // Получаем иконку для категории POI
           const categoryIcon = window.getPOICategoryIcon(p.type);
           const categoryColor = {
@@ -1492,7 +1522,16 @@
             type: it.type === 'location' ? 'location' : 'city' 
           }));
           
-          citiesByRegion[region.id] = cities;
+          // Сортируем города по ID в порядке возрастания
+          const sortedCities = cities.sort((a, b) => {
+            const getNumericId = (id) => {
+              const match = id.match(/(\d+)$/);
+              return match ? parseInt(match[1], 10) : 0;
+            };
+            return getNumericId(a.id) - getNumericId(b.id);
+          });
+          
+          citiesByRegion[region.id] = sortedCities;
           console.log(`Загружено городов для ${region.name}:`, cities.length);
         }catch(e){ 
           citiesByRegion[region.id] = []; 
@@ -1532,7 +1571,16 @@
             region: record.region_id ? [record.region_id] : []
           }));
           
-          poisByCity[city.id] = pois;
+          // Сортируем POI по ID в порядке возрастания
+          const sortedPois = pois.sort((a, b) => {
+            const getNumericId = (id) => {
+              const match = id.match(/(\d+)$/);
+              return match ? parseInt(match[1], 10) : 0;
+            };
+            return getNumericId(a.id) - getNumericId(b.id);
+          });
+          
+          poisByCity[city.id] = sortedPois;
           console.log(`Загружено POI для ${city.name}:`, pois.length);
         } catch(e){ 
           console.error('Error loading POIs for city:', city.name, e);
@@ -1579,7 +1627,16 @@
                 region: record.region_id ? [record.region_id] : []
               }));
               
-              poisByCity[city.id] = pois;
+              // Сортируем POI по ID в порядке возрастания
+              const sortedPois = pois.sort((a, b) => {
+                const getNumericId = (id) => {
+                  const match = id.match(/(\d+)$/);
+                  return match ? parseInt(match[1], 10) : 0;
+                };
+                return getNumericId(a.id) - getNumericId(b.id);
+              });
+              
+              poisByCity[city.id] = sortedPois;
               console.log(`Loaded ${pois.length} POI for city ${city.name}`);
               
               // Обновляем UI после загрузки каждого города
@@ -1615,7 +1672,18 @@
       function renderTickets(){
         level='tickets'; renderCrumbs();
         const list = ticketsByPoi[selectedPoi.id] || [];
-        cards.innerHTML = list.map(t=>{
+        
+        // Сортируем билеты по ID в порядке возрастания
+        const sortedTickets = list.sort((a, b) => {
+          // Извлекаем числовую часть из ID (например, T-001 -> 1)
+          const getNumericId = (id) => {
+            const match = id.match(/(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return getNumericId(a.id) - getNumericId(b.id);
+        });
+        
+        cards.innerHTML = sortedTickets.map(t=>{
           const actions = '<button data-act="edit-ticket" data-id="'+t.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
                           '<button data-act="del-ticket" data-id="'+t.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>';
           const inner = '<div class="flex items-center justify-between">\
