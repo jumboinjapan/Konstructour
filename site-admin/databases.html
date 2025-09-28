@@ -477,7 +477,7 @@
           cards.innerHTML = '<div class="text-gray-500">Нет регионов. Нажмите + чтобы добавить.</div>';
           return;
         }
-        cards.innerHTML = regions.map(r=>{
+        const regionsHTML = regions.map(r=>{
           const count = (citiesByRegion[r.id]||[]).length;
           dlog('region-card', {id:r.id, name:r.name, count});
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
@@ -500,6 +500,13 @@
             </div>';
           return '<a href="#" role="button" class="block" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</a>';
         }).join('');
+        
+        console.log('Rendering regions HTML:', regionsHTML.substring(0, 200) + '...');
+        cards.innerHTML = regionsHTML;
+        
+        // Проверяем, что карточки рендерились с правильными атрибутами
+        const renderedCards = document.querySelectorAll('#db_cards [data-go="cities"]');
+        console.log('Rendered region cards with data-go="cities":', renderedCards.length);
       }
 
       // Загрузка регионов из Airtable и отрисовка
@@ -836,18 +843,28 @@
 
       // Навигация — один надёжный делегат на документ по селектору в пределах #db_cards
       document.addEventListener('click', async function(e){
-        console.log('Click detected on:', e.target);
+        console.log('Click detected on:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className);
+        
+        // Проверяем, есть ли элемент #db_cards
+        const dbCards = document.getElementById('db_cards');
+        console.log('db_cards element exists:', !!dbCards, 'children count:', dbCards?.children.length);
+        
         // игнорируем клики по кнопкам действий внутри карточек
         if (e.target.closest('button[data-act]')) {
           console.log('Click on action button, ignoring');
           return;
         }
+        
         const go = e.target.closest('#db_cards [data-go]');
+        console.log('Found data-go element:', !!go, go);
+        
         if (!go) { 
           console.log('Click outside actionable element:', e.target);
+          console.log('Available data-go elements:', document.querySelectorAll('#db_cards [data-go]').length);
           dlog('click outside actionable', e.target); 
           return; 
         }
+        
         e.preventDefault();
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
