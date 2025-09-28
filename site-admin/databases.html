@@ -842,6 +842,7 @@
       }
 
       // Навигация — один надёжный делегат на документ по селектору в пределах #db_cards
+      console.log('Setting up click handler for navigation...');
       document.addEventListener('click', async function(e){
         console.log('Click detected on:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className);
         
@@ -1677,6 +1678,15 @@
       window.addEventListener('popstate', async function(ev){ await renderFromState(ev.state); });
       // Initial state
       history.replaceState({ level: 'regions' }, '');
+      
+      // Тест обработчика кликов
+      console.log('Testing click handler...');
+      setTimeout(() => {
+        console.log('Click handler test - simulating click on document');
+        const testEvent = new MouseEvent('click', { bubbles: true });
+        document.dispatchEvent(testEvent);
+      }, 1000);
+      
       // Попробуем загрузить из Airtable, если настроено, иначе локальный список
       (async function(){
         await syncRegionsFromAirtable();
