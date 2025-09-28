@@ -55,10 +55,6 @@
               <p class="text-gray-600">Выберите базу и управляйте данными через интеграции API</p>
             </div>
             <div class="flex items-center gap-3">
-              <button id="refresh-data-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2" title="Обновить данные из Airtable">
-                <i class="fas fa-sync-alt"></i>
-                <span>Обновить</span>
-              </button>
               <button id="clear-cache-btn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2" title="Очистить кэш">
                 <i class="fas fa-trash"></i>
                 <span>Очистить кэш</span>
@@ -558,28 +554,9 @@
         });
       };
 
-      // Обработчики кнопок обновления
+      // Обработчик кнопки очистки кэша
       document.addEventListener('DOMContentLoaded', function() {
-        const refreshBtn = document.getElementById('refresh-data-btn');
         const clearCacheBtn = document.getElementById('clear-cache-btn');
-        
-        if (refreshBtn) {
-          refreshBtn.addEventListener('click', async function() {
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Обновление...</span>';
-            
-            try {
-              await refreshAllData();
-              alert('Данные успешно обновлены!');
-            } catch (error) {
-              console.error('Ошибка обновления:', error);
-              alert('Ошибка при обновлении данных');
-            } finally {
-              this.disabled = false;
-              this.innerHTML = '<i class="fas fa-sync-alt"></i> <span>Обновить</span>';
-            }
-          });
-        }
         
         if (clearCacheBtn) {
           clearCacheBtn.addEventListener('click', function() {
