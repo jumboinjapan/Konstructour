@@ -388,6 +388,23 @@
         console.log('=== КОНЕЦ СПИСКА ID ===');
       };
 
+      // Функция для отображения реальных ID из массива regions
+      window.showRealRegionIds = function() {
+        console.log('=== РЕАЛЬНЫЕ ID РЕГИОНОВ ИЗ МАССИВА ===');
+        
+        if (window.regions && window.regions.length > 0) {
+          window.regions.forEach((region, idx) => {
+            console.log(`Регион ${idx + 1}:`, {
+              id: region.id || 'НЕТ ID',
+              name: region.name || 'НЕТ НАЗВАНИЯ',
+              rid: region.rid || 'НЕТ RID'
+            });
+          });
+        } else {
+          console.log('Массив regions пуст или не загружен');
+        }
+      };
+
       // Функция для отображения реальных ID из DOM карточек
       window.showRealIdsFromCards = function() {
         console.log('=== РЕАЛЬНЫЕ ID ИЗ DOM КАРТОЧЕК ===');
