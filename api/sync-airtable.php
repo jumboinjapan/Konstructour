@@ -5,11 +5,11 @@ require_once 'config.php';
 
 function syncFromAirtable() {
     $db = new Database();
-    $config = getConfig();
+    $config = include 'config.php';
     
     // Airtable settings
-    $baseId = $config['airtable']['base_id'] ?? 'apppwhjFN82N9zNqm';
-    $pat = $config['airtable']['token'] ?? '';
+    $baseId = 'apppwhjFN82N9zNqm';
+    $pat = getenv('AIRTABLE_PAT') ?: 'PLACEHOLDER_FOR_REAL_API_KEY';
     
     if (!$pat) {
         throw new Exception('Airtable token not configured');
