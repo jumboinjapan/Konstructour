@@ -56,7 +56,7 @@ function syncFromAirtable() {
         // Sync POI
         $pois = fetchAirtableData($baseId, 'tblVCmFcHRpXUT24y', $pat);
         foreach ($pois as $record) {
-            // Получаем Airtable Record ID региона из поля Regions
+            // СТРОГО: Получаем Airtable Record ID региона из поля Regions
             $regionAirtableId = null;
             if (isset($record['fields']['Regions'])) {
                 $regions = $record['fields']['Regions'];
@@ -67,16 +67,17 @@ function syncFromAirtable() {
                 }
             }
             
-            // Найдем регион по Airtable Record ID
-            $regionId = $regionAirtableId; // Используем Airtable Record ID напрямую
+            // СТРОГО: Используем Airtable Record ID напрямую
+            $regionId = $regionAirtableId;
             
-            // Найдем город по префектуре в найденном регионе
+            // СТРОГО: Найдем город по префектуре (единственный способ привязки)
             $cityId = null;
             if ($regionId && isset($record['fields']['Prefecture (RU)'])) {
                 $prefecture = $record['fields']['Prefecture (RU)'];
                 $cities = $db->getCitiesByRegion($regionId);
                 foreach ($cities as $city) {
-                    if (strpos($city['name_ru'], $prefecture) !== false || strpos($prefecture, $city['name_ru']) !== false) {
+                    // СТРОГО: Точное совпадение по названию префектуры
+                    if ($city['name_ru'] === $prefecture) {
                         $cityId = $city['id'];
                         break;
                     }
