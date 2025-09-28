@@ -1157,6 +1157,9 @@
         level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
         let list = citiesByRegion[selectedRegion.id] || [];
         
+        // Проверяем актуальность данных перед загрузкой
+        await checkDataFreshness();
+        
         // Если города не загружены, загружаем их сразу
         if (list.length === 0) {
           console.log('Города не загружены, загружаем для региона:', selectedRegion.name);
@@ -1211,6 +1214,9 @@
         console.log('poisByCity keys:', Object.keys(poisByCity));
         console.log('Looking for POI in poisByCity[' + selectedCity.id + ']:', poisByCity[selectedCity.id]);
         let list = poisByCity[selectedCity.id] || [];
+        
+        // Проверяем актуальность данных перед загрузкой
+        await checkDataFreshness();
         
         // Если POI не загружены, загружаем их сразу
         if (list.length === 0) {
@@ -2568,37 +2574,12 @@
         });
       }
 
-      // Функция для принудительного обновления POI для конкретного города
-      window.forceRefreshCityPOI = async function(cityId) {
-        console.log('Принудительное обновление POI для города:', cityId);
-        
-        // Очищаем кэш POI для этого города
-        const cacheKey = `pois_${cityId}`;
-        localStorage.removeItem(cacheKey);
-        poisByCity[cityId] = [];
-        
-        // Находим город по ID
-        let city = null;
-        for (const region of regions) {
-          const cities = citiesByRegion[region.id] || [];
-          city = cities.find(c => c.id === cityId);
-          if (city) break;
-        }
-        
-        if (city) {
-          console.log('Найден город для обновления:', city.name);
-          await loadPoisForCity(city);
-          console.log('POI обновлены для города:', city.name, 'количество:', poisByCity[cityId]?.length || 0);
-        } else {
-          console.error('Город не найден для ID:', cityId);
-        }
-      };
-
-      // Функция для отладки POI в Airtable
-      window.debugPOIInAirtable = async function() {
-        console.log('=== ОТЛАДКА POI В AIRTABLE ===');
+      // Автоматическая проверка актуальности данных при загрузке
+      window.checkDataFreshness = async function() {
+        console.log('Проверка актуальности данных...');
         
         try {
+          // Получаем время последнего обновления из Airtable
           const res = await fetch('/api/db-sync.php?v=' + Date.now(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2606,47 +2587,52 @@
               scope: 'pois', 
               action: 'list', 
               data: { 
-                filter: {} // Без фильтров - получаем все POI
+                filter: {},
+                limit: 1 // Получаем только одну запись для проверки времени
               } 
             })
           });
           
           const j = await res.json();
-          console.log('Все POI из Airtable:', j);
-          
-          if (j.ok && j.items) {
-            console.log('Количество POI в Airtable:', j.items.length);
+          if (j.ok && j.items && j.items.length > 0) {
+            const lastRecord = j.items[0];
+            const lastModified = lastRecord.createdTime || lastRecord.fields?.LastModified || Date.now();
             
-            // Ищем POI связанные с Киото
-            const kyotoPOIs = j.items.filter(record => {
-              const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
-              const poiName = record.fields?.['POI Name (RU)'] || record.fields?.['POI Name (EN)'] || 'Unknown';
+            // Проверяем, нужно ли обновить кэш
+            const cacheTime = localStorage.getItem('konstructour_last_sync');
+            const shouldRefresh = !cacheTime || (Date.now() - parseInt(cacheTime)) > (30 * 60 * 1000); // 30 минут
+            
+            if (shouldRefresh) {
+              console.log('Данные устарели, обновляем кэш...');
+              clearAllCache();
+              localStorage.setItem('konstructour_last_sync', Date.now().toString());
               
-              // Проверяем, содержит ли поле города слово "Киото" или ID Киото
-              const hasKyoto = Array.isArray(cityField) ? 
-                cityField.some(city => 
-                  (typeof city === 'string' && city.toLowerCase().includes('kyoto')) ||
-                  (typeof city === 'object' && city.fields && city.fields['Name (RU)'] && city.fields['Name (RU)'].toLowerCase().includes('киото'))
-                ) : false;
-              
-              if (hasKyoto) {
-                console.log('Найден POI связанный с Киото:', {
-                  name: poiName,
-                  cityField: cityField,
-                  id: record.id
-                });
+              // Перезагружаем все данные
+              await syncRegionsFromAirtable();
+              for (const region of regions) {
+                await loadCitiesForRegion(region);
+                const cities = citiesByRegion[region.id] || [];
+                for (const city of cities) {
+                  await loadPoisForCity(city);
+                }
               }
               
-              return hasKyoto;
-            });
-            
-            console.log('POI связанные с Киото:', kyotoPOIs.length);
-            kyotoPOIs.forEach(poi => {
-              console.log('POI Киото:', poi.fields?.['POI Name (RU)'], 'ID:', poi.id);
-            });
+              // Обновляем отображение
+              if (level === 'regions') {
+                renderRegions();
+              } else if (level === 'cities' && selectedRegion) {
+                await renderCities();
+              } else if (level === 'pois' && selectedCity) {
+                await renderPois();
+              }
+              
+              console.log('Данные обновлены автоматически');
+            } else {
+              console.log('Данные актуальны, используем кэш');
+            }
           }
         } catch (error) {
-          console.error('Ошибка отладки POI:', error);
+          console.warn('Не удалось проверить актуальность данных:', error);
         }
       };
 
@@ -2665,46 +2651,54 @@
         document.dispatchEvent(testEvent);
       }, 1000);
       
-      // Ленивая загрузка с предзагрузкой POI для подсчета
+      // Умная загрузка с автоматической проверкой актуальности
       (async function(){
-        console.log('Загрузка регионов...');
+        console.log('Инициализация системы...');
         
         try {
-          // Загружаем регионы при старте
+          // Сначала проверяем актуальность данных
+          await checkDataFreshness();
+          
+          // Если данные не загружены после проверки, загружаем их
+          if (!regions.length) {
+            console.log('Загрузка регионов...');
         await syncRegionsFromAirtable();
         if (!regions.length){ await loadRegionsViaProxy(); }
-          if (!regions.length) {
-            renderRegions();
-            return;
+            if (!regions.length) {
+              renderRegions();
+              return;
+            }
           }
           
-          console.log('Регионы загружены, предзагружаем POI для подсчета...');
-          
-          // Предзагружаем POI для всех регионов для корректного подсчета в пилюлях
-          for (const region of regions) {
-            try {
+          // Если города не загружены, загружаем их
+          if (Object.keys(citiesByRegion).length === 0) {
+            console.log('Загрузка городов для всех регионов...');
+            for (const region of regions) {
               await loadCitiesForRegion(region);
+            }
+          }
+          
+          // Если POI не загружены, загружаем их
+          if (Object.keys(poisByCity).length === 0) {
+            console.log('Загрузка POI для всех городов...');
+            for (const region of regions) {
               const cities = citiesByRegion[region.id] || [];
               for (const city of cities) {
                 await loadPoisForCity(city);
               }
-            } catch (error) {
-              console.warn('Ошибка предзагрузки для региона', region.name, error);
             }
           }
           
           // Отображаем регионы с правильными счетчиками
-          console.log('Данные перед рендерингом регионов:');
+          console.log('Данные готовы:');
           console.log('regions:', regions.length);
           console.log('citiesByRegion:', Object.keys(citiesByRegion).length, 'регионов с городами');
-          regions.forEach(r => {
-            const cities = citiesByRegion[r.id] || [];
-            console.log(`Регион ${r.name}: ${cities.length} городов`);
-          });
+          console.log('poisByCity:', Object.keys(poisByCity).length, 'городов с POI');
+          
           renderRegions();
-          console.log('Предзагрузка завершена, готов к навигации');
+          console.log('Система готова к работе');
         } catch (error) {
-          console.error('Ошибка загрузки регионов:', error);
+          console.error('Ошибка инициализации:', error);
           renderRegions();
         }
         
