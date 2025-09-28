@@ -1033,7 +1033,10 @@
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
+          console.log('API Response status:', res.status);
+          console.log('API Response ok:', res.ok);
           const j = await res.json();
+          console.log('API Response data:', j);
           const items = j.ok ? (j.items || []) : [];
           
           regions = items.map((it, idx) => ({
@@ -1057,8 +1060,10 @@
             }));
             renderRegions();
           } catch (_e) { /* ignore */ }
-        } catch(e){
-          console.warn('syncRegionsFromAirtable failed', e);
+        } catch(e){ 
+          console.error('syncRegionsFromAirtable failed', e);
+          console.error('Error details:', e.message);
+          console.error('Error stack:', e.stack);
           // Fallback: прямой запрос через test-proxy при наличии реестра
           try{
               let baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || '';
