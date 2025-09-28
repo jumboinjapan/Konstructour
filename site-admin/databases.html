@@ -836,13 +836,22 @@
 
       // Навигация — один надёжный делегат на документ по селектору в пределах #db_cards
       document.addEventListener('click', async function(e){
+        console.log('Click detected on:', e.target);
         // игнорируем клики по кнопкам действий внутри карточек
-        if (e.target.closest('button[data-act]')) return;
+        if (e.target.closest('button[data-act]')) {
+          console.log('Click on action button, ignoring');
+          return;
+        }
         const go = e.target.closest('#db_cards [data-go]');
-        if (!go) { dlog('click outside actionable', e.target); return; }
+        if (!go) { 
+          console.log('Click outside actionable element:', e.target);
+          dlog('click outside actionable', e.target); 
+          return; 
+        }
         e.preventDefault();
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
+        console.log('Navigation triggered:', {to, id, element: go});
         dlog('navigate', {to,id});
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
@@ -855,6 +864,7 @@
         if (to==='pois'){
           const list = citiesByRegion[selectedRegion.id] || [];
           selectedCity = list.find(c=>c.id===id) || null;
+          console.log('Navigating to POIs for city:', selectedCity);
           push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
           await loadPoisForCity(selectedCity);
           renderPois();
