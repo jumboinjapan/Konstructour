@@ -2538,6 +2538,8 @@
                 await loadPoisForCity(city, true);
               }
               
+              // Восстанавливаем состояние
+              selectedRegion = currentRegion;
               await renderCities();
               console.log(`✅ Синхронизация городов завершена: ${cities.length} городов`);
               
@@ -2551,6 +2553,10 @@
               
               // Перезагружаем POI из Airtable
               await loadPoisForCity(currentCity, true);
+              
+              // Восстанавливаем состояние
+              selectedRegion = currentRegion;
+              selectedCity = currentCity;
               await renderPois();
               
               const poiCount = poisByCity[currentCity.id]?.length || 0;
@@ -2584,7 +2590,17 @@
                 }
               }
               
-              renderRegions();
+              // Восстанавливаем состояние после полной синхронизации
+              if (currentLevel === 'cities' && currentRegion) {
+                selectedRegion = currentRegion;
+                await renderCities();
+              } else if (currentLevel === 'pois' && currentCity && currentRegion) {
+                selectedRegion = currentRegion;
+                selectedCity = currentCity;
+                await renderPois();
+              } else {
+                renderRegions();
+              }
               console.log(`✅ Полная синхронизация завершена: ${totalPOI} POI всего`);
             }
             
