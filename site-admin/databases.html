@@ -647,7 +647,11 @@
 
       function renderPois(){
         level='pois'; /* keep selectedPoi */ renderCrumbs(); setMappingHeader('poi');
+        console.log('renderPois called for city:', selectedCity);
+        console.log('poisByCity keys:', Object.keys(poisByCity));
+        console.log('Looking for POI in poisByCity[' + selectedCity.id + ']:', poisByCity[selectedCity.id]);
         const list = poisByCity[selectedCity.id] || [];
+        console.log('POI list for city:', list);
         const parentTypeLabel = selectedCity && selectedCity.type==='location' ? 'Локация' : 'Город';
           
         cards.innerHTML = list.map(p=>{
@@ -796,6 +800,12 @@
       }
 
       async function loadPoisForCity(city){
+        // Если POI уже загружены для этого города, не перезагружаем
+        if (poisByCity[city.id] && poisByCity[city.id].length > 0) {
+          console.log('POI already loaded for city:', city.name, 'count:', poisByCity[city.id].length);
+          return;
+        }
+        
         try{
             const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
             
@@ -869,7 +879,8 @@
             region: record.fields?.['Regions'] || []
           }));
             
-            console.log('Processed POIs for city:', city.name, poisByCity[city.id]);
+            console.log('Processed POIs for city:', city.name, 'city.id:', city.id, 'poisByCity[city.id]:', poisByCity[city.id]);
+            console.log('poisByCity after update:', Object.keys(poisByCity).map(k => ({ key: k, count: poisByCity[k].length })));
           }catch(e){ 
             console.error('Error loading POIs for city:', city.name, e);
             poisByCity[city.id] = []; 
