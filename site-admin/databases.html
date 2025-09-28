@@ -916,27 +916,90 @@
 
       // History helpers
       async function renderFromState(state){
-        if (!state || !state.level) { renderRegions(); return; }
+        if (!state || !state.level) { 
+          level = 'regions';
+          selectedRegion = null;
+          selectedCity = null;
+          selectedPoi = null;
+          renderRegions(); 
+          return; 
+        }
+        
         level = state.level;
-        if (level === 'regions') { renderRegions(); return; }
+        
+        if (level === 'regions') { 
+          selectedRegion = null;
+          selectedCity = null;
+          selectedPoi = null;
+          renderRegions(); 
+          return; 
+        }
+        
         if (level === 'cities') {
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
-          await renderCities(); return;
+          selectedCity = null;
+          selectedPoi = null;
+          if (selectedRegion) {
+            // Загружаем города если еще не загружены
+            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+              await loadCitiesForRegion(selectedRegion);
+            }
+            await preloadPoisCountsForRegion(selectedRegion);
+          }
+          renderCities(); 
+          return;
         }
+        
         if (level === 'pois') {
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
-          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
-          selectedCity = list.find(c=>c.id===state.cityId) || null;
-          await renderPois(); return;
+          if (selectedRegion) {
+            const list = citiesByRegion[selectedRegion.id] || [];
+            selectedCity = list.find(c=>c.id===state.cityId) || null;
+            selectedPoi = null;
+            if (selectedCity) {
+              // Загружаем POI если еще не загружены
+              if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
+                await loadPoisForCity(selectedCity);
+              }
+            }
+          }
+          renderPois(); 
+          return;
         }
+        
+        if (level === 'poi-details') {
+          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          if (selectedRegion) {
+            const listC = citiesByRegion[selectedRegion.id] || [];
+            selectedCity = listC.find(c=>c.id===state.cityId) || null;
+            if (selectedCity) {
+              const listP = poisByCity[selectedCity.id] || [];
+              selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+            }
+          }
+          renderPOIDetails(); 
+          return;
+        }
+        
         if (level === 'tickets') {
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
-          const listC = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
-          selectedCity = listC.find(c=>c.id===state.cityId) || null;
-          const listP = selectedCity ? (poisByCity[selectedCity.id]||[]) : [];
-          selectedPoi = listP.find(p=>p.id===state.poiId) || null;
-          renderTickets(); return;
+          if (selectedRegion) {
+            const listC = citiesByRegion[selectedRegion.id] || [];
+            selectedCity = listC.find(c=>c.id===state.cityId) || null;
+            if (selectedCity) {
+              const listP = poisByCity[selectedCity.id] || [];
+              selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+            }
+          }
+          renderTickets(); 
+          return;
         }
+        
+        // Fallback
+        level = 'regions';
+        selectedRegion = null;
+        selectedCity = null;
+        selectedPoi = null;
         renderRegions();
       }
       function push(level, ids){
@@ -1506,14 +1569,18 @@
         e.preventDefault();
         const id = go.getAttribute('data-id');
         const to = go.getAttribute('data-go');
-          console.log('Navigation triggered:', {to, id, element: go});
-        dlog('navigate', {to,id});
+        console.log('Navigation triggered:', {to, id, element: go});
+        
+        // Мгновенная навигация без await
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
           push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
-          await loadCitiesForRegion(selectedRegion);
-          await preloadPoisCountsForRegion(selectedRegion);
-          await renderCities(); // рендерим ПОСЛЕ загрузки POI
+          // Асинхронная загрузка в фоне
+          loadCitiesForRegion(selectedRegion).then(() => {
+            preloadPoisCountsForRegion(selectedRegion).then(() => {
+              renderCities();
+            });
+          });
           return;
         }
         if (to==='pois'){
@@ -1521,8 +1588,10 @@
           selectedCity = list.find(c=>c.id===id) || null;
           console.log('Navigating to POIs for city:', selectedCity);
           push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
-          await loadPoisForCity(selectedCity);
-          await renderPois();
+          // Асинхронная загрузка в фоне
+          loadPoisForCity(selectedCity).then(() => {
+            renderPois();
+          });
           return;
         }
         if (to==='poi-details'){
@@ -2533,6 +2602,28 @@
         
         // Настраиваем обработчик кликов ПОСЛЕ загрузки данных
         setupNavigationHandler();
+        
+        // Обработчик кликов для хлебных крошек
+        document.addEventListener('click', function(e) {
+          if (e.target.matches('[data-level]')) {
+            e.preventDefault();
+            const targetLevel = e.target.getAttribute('data-level');
+            const regionId = e.target.getAttribute('data-region-id');
+            const cityId = e.target.getAttribute('data-city-id');
+            const poiId = e.target.getAttribute('data-poi-id');
+            
+            // Создаем состояние для навигации
+            const state = { level: targetLevel };
+            if (regionId) state.regionId = regionId;
+            if (cityId) state.cityId = cityId;
+            if (poiId) state.poiId = poiId;
+            
+            // Обновляем историю и рендерим
+            history.pushState(state, '');
+            renderFromState(state);
+          }
+        });
+        
         console.log('Navigation handler setup completed after data loading');
       })();
 
