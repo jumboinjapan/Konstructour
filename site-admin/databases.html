@@ -852,6 +852,15 @@
           
           // Фильтруем POI по городу: прямые связи + POI без связей для первого города
           const cityLinkedRecords = records.filter(record => {
+            // Проверяем, что POI принадлежит текущему региону
+            const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
+            const isInCurrentRegion = Array.isArray(regionField) && regionField.includes(selectedRegion?.id);
+            
+            if (!isInCurrentRegion) {
+              console.log(`POI ${record.fields?.['POI Name (RU)']} belongs to different region, skipping`);
+              return false;
+            }
+            
             // Ищем поле связи с городом - может быть City, Cities, Location, Locations
             const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
             console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField, 'looking for city ID:', city.id);
@@ -907,7 +916,12 @@
           const list = citiesByRegion[region.id] || [];
           if (!list.length) return;
           
-          // Очищаем POI для всех городов текущего региона перед загрузкой
+          // Полная очистка poisByCity для предотвращения "перетекания" POI между регионами
+          Object.keys(poisByCity).forEach(key => {
+            delete poisByCity[key];
+          });
+          
+          // Инициализируем пустые массивы для всех городов текущего региона
           list.forEach(city => {
             poisByCity[city.id] = [];
           });
@@ -940,6 +954,15 @@
             list.forEach((city, cityIndex) => {
               console.log(`Processing city: ${city.name} (${city.id})`);
               const cityLinkedRecords = records.filter(record => {
+                // Проверяем, что POI принадлежит текущему региону
+                const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
+                const isInCurrentRegion = Array.isArray(regionField) && regionField.includes(region.id);
+                
+                if (!isInCurrentRegion) {
+                  console.log(`POI ${record.fields?.['POI Name (RU)']} belongs to different region, skipping`);
+                  return false;
+                }
+                
                 // Ищем поле связи с городом - может быть City, Cities, Location, Locations
                 const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
                 console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField);
