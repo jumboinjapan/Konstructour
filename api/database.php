@@ -171,7 +171,7 @@ class Database {
             $data['published'] ? 1 : 0,
             $data['business_id'] ?? null,
             $data['city_id'],
-            $data['region_id'],
+            is_array($data['region_id']) ? $data['region_id'][0] ?? null : $data['region_id'],
             $data['description'] ?? null,
             $data['latitude'] ?? null,
             $data['longitude'] ?? null

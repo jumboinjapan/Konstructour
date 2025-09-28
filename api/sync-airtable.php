@@ -56,8 +56,27 @@ function syncFromAirtable() {
         // Sync POI
         $pois = fetchAirtableData($baseId, 'tblVCmFcHRpXUT24y', $pat);
         foreach ($pois as $record) {
-            $cityId = extractLinkedRecordId($record['fields'], ['City', 'Город', 'Cities', 'Города']);
             $regionId = extractLinkedRecordId($record['fields'], ['Regions', 'Регионы', 'Region', 'Регион']);
+            
+            // Найдем город по префектуре
+            $cityId = null;
+            if (isset($record['fields']['Prefecture (RU)'])) {
+                $prefecture = $record['fields']['Prefecture (RU)'];
+                // Найдем город с таким же названием в регионе
+                $cities = $db->getCitiesByRegion($regionId);
+                foreach ($cities as $city) {
+                    if (strpos($city['name_ru'], $prefecture) !== false || strpos($prefecture, $city['name_ru']) !== false) {
+                        $cityId = $city['id'];
+                        break;
+                    }
+                }
+            }
+            
+            // Debug: log POI data
+            error_log("POI: " . ($record['fields']['POI Name (RU)'] ?? 'Unknown') . 
+                     " | Prefecture: " . ($record['fields']['Prefecture (RU)'] ?? 'NULL') . 
+                     " | City ID: " . ($cityId ?? 'NULL') . 
+                     " | Region ID: " . ($regionId ?? 'NULL'));
             
             $data = [
                 'id' => $record['id'],
@@ -69,7 +88,7 @@ function syncFromAirtable() {
                 'business_id' => $record['fields']['POI ID'] ?? null,
                 'city_id' => $cityId,
                 'region_id' => $regionId,
-                'description' => $record['fields']['Description'] ?? null,
+                'description' => $record['fields']['Description (RU)'] ?? $record['fields']['Description'] ?? null,
                 'latitude' => $record['fields']['Latitude'] ?? null,
                 'longitude' => $record['fields']['Longitude'] ?? null
             ];
