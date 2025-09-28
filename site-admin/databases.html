@@ -2537,23 +2537,49 @@
             const currentRegion = selectedRegion;
             const currentCity = selectedCity;
             
-            // Очищаем кэш для текущего уровня
+            // Очищаем кэш и перезагружаем данные для текущего уровня
             if (currentLevel === 'cities' && currentRegion) {
               // Очищаем кэш городов для текущего региона
               const cacheKey = `cities_${currentRegion.id}`;
               localStorage.removeItem(cacheKey);
               citiesByRegion[currentRegion.id] = [];
+              
+              // Принудительно обновляем время последней синхронизации
+              localStorage.setItem('konstructour_last_sync', '0');
+              
+              // Перезагружаем города из Airtable
+              await loadCitiesForRegion(currentRegion);
               await renderCities();
             } else if (currentLevel === 'pois' && currentCity) {
               // Очищаем кэш POI для текущего города
               const cacheKey = `pois_${currentCity.id}`;
               localStorage.removeItem(cacheKey);
               poisByCity[currentCity.id] = [];
+              
+              // Принудительно обновляем время последней синхронизации
+              localStorage.setItem('konstructour_last_sync', '0');
+              
+              // Перезагружаем POI из Airtable
+              await loadPoisForCity(currentCity);
               await renderPois();
             } else {
-              // Очищаем кэш регионов
+              // Очищаем кэш регионов и перезагружаем все
               clearAllCache();
               await syncRegionsFromAirtable();
+              
+              // Перезагружаем города для всех регионов
+              for (const region of regions) {
+                await loadCitiesForRegion(region);
+              }
+              
+              // Перезагружаем POI для всех городов
+              for (const region of regions) {
+                const cities = citiesByRegion[region.id] || [];
+                for (const city of cities) {
+                  await loadPoisForCity(city);
+                }
+              }
+              
               renderRegions();
             }
             
