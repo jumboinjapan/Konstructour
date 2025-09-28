@@ -818,7 +818,8 @@
             });
             
             // Загружаем POI через db-sync.php с фильтрацией по городу
-            const res = await fetch('/api/db-sync.php', {
+            console.log('Loading POI via db-sync.php for city:', city.name, 'ID:', city.id);
+            const res = await fetch('/api/db-sync.php?v=' + Date.now(), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
@@ -833,8 +834,8 @@
                   } 
                 } 
               })
-            });
-            const j = await res.json();
+          });
+          const j = await res.json();
             
             console.log('POI API response:', j);
             
@@ -950,7 +951,7 @@
             });
             
             // Загружаем POI через db-sync.php с фильтрацией по региону
-            const res = await fetch('/api/db-sync.php', {
+            const res = await fetch('/api/db-sync.php?v=' + Date.now(), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
@@ -963,8 +964,8 @@
                   } 
                 } 
               })
-            });
-            const j = await res.json();
+              });
+              const j = await res.json();
             const records = j.ok ? (j.items || []) : [];
             
             console.log('Loading POI for region:', region.name, 'Total POI records:', records.length);
