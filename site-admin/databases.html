@@ -1408,96 +1408,41 @@
               }
             });
             
-            // Загружаем POI через db-sync.php с фильтрацией по региону
-            const res = await fetch('/api/db-sync.php?v=' + Date.now(), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                scope: 'pois', 
-                action: 'list', 
-                data: { 
-                  filter: { 
-                    regionId: region.id, 
-                    regionName: region.name 
-                  } 
-                } 
-              })
-              });
-              const j = await res.json();
-            const records = j.ok ? (j.items || []) : [];
-            
-            console.log('Loading POI for region:', region.name, 'Total POI records:', records.length);
-            
-            // Отладочное логирование структуры POI записи
-            if (records.length > 0) {
-              console.log('Sample POI record fields:', Object.keys(records[0].fields || {}));
-              console.log('Sample POI record:', records[0]);
+            // Загружаем POI через data-api.php для каждого города
+            for (const city of list) {
+              try {
+                const res = await fetch(`/api/data-api.php?action=pois&city_id=${city.id}`, {
+                  method: 'GET',
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                const j = await res.json();
+                const items = j.ok ? (j.items || []) : [];
+                
+                const pois = items.map(record => ({
+                  id: record.id,
+                  name: record.name_ru || '—',
+                  type: record.category || '',
+                  name_en: record.name_en || '',
+                  place_id: record.place_id || '',
+                  published: record.published || false,
+                  poi_id: record.business_id || '',
+                  region: record.region_id ? [record.region_id] : []
+                }));
+                
+                poisByCity[city.id] = pois;
+                console.log(`Loaded ${pois.length} POI for city ${city.name}`);
+              } catch (e) {
+                console.warn(`Error loading POI for city ${city.name}:`, e);
+                poisByCity[city.id] = [];
+              }
             }
             
-            // Логируем все POI и их связи для отладки
-            console.log('=== ALL POI RECORDS DEBUG ===');
-            records.forEach((record, index) => {
-              const poiName = record.fields?.['POI Name (RU)'] || record.fields?.['POI Name (EN)'] || `POI-${index}`;
-              const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
-              const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
-              console.log(`POI ${poiName}:`, {
-                id: record.id,
-                regionField: regionField,
-                cityField: cityField,
-                isInCurrentRegion: Array.isArray(regionField) && regionField.includes(region.id)
-              });
-            });
-            console.log('=== END POI RECORDS DEBUG ===');
+            console.log('Loading POI for region:', region.name, 'Total cities:', list.length);
             
-            // Распределяем POI по городам: сначала прямые связи, потом POI без связей - первому городу
-            list.forEach((city, cityIndex) => {
-              console.log(`Processing city: ${city.name} (${city.id})`);
-              const cityLinkedRecords = records.filter(record => {
-                // Проверяем, что POI принадлежит текущему региону
-                const regionField = record.fields?.['Regions'] || record.fields?.['Region'] || [];
-                const isInCurrentRegion = Array.isArray(regionField) && regionField.includes(region.id);
-                
-                if (!isInCurrentRegion) {
-                  console.log(`POI ${record.fields?.['POI Name (RU)']} belongs to different region, skipping`);
-                  return false;
-                }
-                
-                // Ищем поле связи с городом - может быть City, Cities, Location, Locations
-                const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
-                console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField);
-                
-                // Прямая связь: POI связан с городом
-                const isDirectlyLinked = Array.isArray(cityField) && cityField.includes(city.id);
-                
-                if (isDirectlyLinked) {
-                  console.log(`POI ${record.fields?.['POI Name (RU)']} directly linked to city ${city.name} (${city.id})`);
-                  return true;
-                }
-                
-                console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
-                return false;
-              });
-              
-              console.log(`City ${city.name} (${city.id}) has ${cityLinkedRecords.length} POI out of ${records.length} total`);
-              
-              poisByCity[city.id] = cityLinkedRecords.map(record => ({
-                id: record.id, 
-                name: record.fields?.['POI Name (RU)'] || record.fields?.['POI ID'] || '—', 
-                type: (record.fields?.['POI Category (RU)']?.[0] || ''),
-                region: record.fields?.['Regions'] || [],
-                name_en: record.fields?.['POI Name (EN)'] || '',
-                place_id: record.fields?.['Place ID'] || '',
-                published: record.fields?.['Published'] || false,
-                poi_id: record.fields?.['POI ID'] || ''
-              }));
-              
-              console.log(`City ${city.name} has ${poisByCity[city.id].length} POI`);
-          });
-          
-          // Перерендерим города после загрузки POI чтобы обновить пилюли
-          if (level === 'cities') {
-            await renderCities();
-          }
+            // Перерендерим города после загрузки POI чтобы обновить пилюли
+            if (level === 'cities') {
+              await renderCities();
+            }
           
         }catch(e){
             console.error('Error preloading POI for region:', region.name, e);
