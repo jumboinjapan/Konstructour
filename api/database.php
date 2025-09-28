@@ -192,6 +192,37 @@ class Database {
         ];
     }
     
+    // Get city counts by region
+    public function getCityCountsByRegion() {
+        $stmt = $this->db->query("
+            SELECT region_id, COUNT(*) as count 
+            FROM cities 
+            GROUP BY region_id
+        ");
+        $result = [];
+        while ($row = $stmt->fetch()) {
+            $result[$row['region_id']] = (int)$row['count'];
+        }
+        return $result;
+    }
+    
+    // Get POI counts by city for a specific region
+    public function getPoiCountsByCity($regionId) {
+        $stmt = $this->db->prepare("
+            SELECT c.id as city_id, COUNT(p.id) as count 
+            FROM cities c
+            LEFT JOIN pois p ON c.id = p.city_id
+            WHERE c.region_id = ?
+            GROUP BY c.id
+        ");
+        $stmt->execute([$regionId]);
+        $result = [];
+        while ($row = $stmt->fetch()) {
+            $result[$row['city_id']] = (int)$row['count'];
+        }
+        return $result;
+    }
+    
     private function getLastSyncTime() {
         $stmt = $this->db->query("SELECT MAX(timestamp) as last_sync FROM sync_log");
         $result = $stmt->fetch();

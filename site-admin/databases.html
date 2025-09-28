@@ -1074,8 +1074,10 @@
           cards.innerHTML = '<div class="text-gray-500">Нет регионов. Нажмите + чтобы добавить.</div>';
           return;
         }
+        
+        // Рендерим регионы с нулевыми счетчиками для мгновенного отображения
         const regionsHTML = regions.map(r=>{
-          const count = (citiesByRegion[r.id]||[]).length;
+          const count = 0; // Начинаем с нуля, обновим после загрузки счетчиков
           dlog('region-card', {id:r.id, name:r.name, count});
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
               '+(r.rid ? '<span class="ml-2 px-3 py-1 text-sm rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
@@ -1107,6 +1109,9 @@
         
         // Переустанавливаем обработчик кликов после рендеринга
         setupNavigationHandler();
+        
+        // Загружаем только счетчики городов в фоне
+        loadRegionCounts();
       }
 
       // Загрузка регионов из серверной БД
@@ -1211,17 +1216,14 @@
           list = citiesByRegion[selectedRegion.id] || [];
         }
         
-        // Предзагружаем POI для всех городов региона в фоне, если еще не загружены
+        // Загружаем только счетчики POI для городов в фоне
         if (list.length > 0 && !preloadInProgress) {
-          const needsPreload = list.some(city => !poisByCity[city.id] || poisByCity[city.id].length === 0);
-          if (needsPreload) {
-            console.log('Preloading POI for cities in region:', selectedRegion.name);
-            preloadInProgress = true;
-            // Загружаем в фоне без await
-            preloadPoisCountsForRegion(selectedRegion).finally(() => {
-              preloadInProgress = false;
-            });
-          }
+          console.log('Loading POI counts for cities in region:', selectedRegion.name);
+          preloadInProgress = true;
+          // Загружаем только счетчики в фоне
+          loadCityCounts(selectedRegion.id).finally(() => {
+            preloadInProgress = false;
+          });
         }
         
         // Если список пуст — показываем кнопку добавления через ту же +
@@ -1407,6 +1409,70 @@
         `;
         
         cards.innerHTML = details;
+      }
+
+      // Ленивая загрузка - загружаем только счетчики для текущего уровня
+      async function loadRegionCounts(){
+        try{
+          console.log('Загружаем только счетчики регионов');
+          const res = await fetch('/api/data-api.php?action=stats', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const j = await res.json();
+          if (j.ok && j.stats) {
+            // Обновляем счетчики городов для каждого региона
+            Object.keys(citiesByRegion).forEach(regionId => {
+              const region = regions.find(r => r.id === regionId);
+              if (region) {
+                const cityCount = j.stats.cities_by_region[regionId] || 0;
+                // Обновляем счетчик в UI если мы на уровне регионов
+                if (level === 'regions') {
+                  const regionElement = document.querySelector(`[data-go="cities"][data-id="${regionId}"]`);
+                  if (regionElement) {
+                    const countElement = regionElement.querySelector('.text-xs.font-medium');
+                    if (countElement) {
+                      countElement.textContent = cityCount;
+                    }
+                  }
+                }
+              }
+            });
+            console.log('Счетчики регионов обновлены');
+          }
+        }catch(e){
+          console.warn('Ошибка загрузки счетчиков регионов:', e);
+        }
+      }
+
+      async function loadCityCounts(regionId){
+        try{
+          console.log(`Загружаем счетчики POI для городов региона ${regionId}`);
+          const res = await fetch(`/api/data-api.php?action=city-stats&region_id=${regionId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const j = await res.json();
+          if (j.ok && j.stats) {
+            // Обновляем счетчики POI для каждого города
+            Object.keys(j.stats).forEach(cityId => {
+              const poiCount = j.stats[cityId] || 0;
+              // Обновляем счетчик в UI если мы на уровне городов
+              if (level === 'cities') {
+                const cityElement = document.querySelector(`[data-go="pois"][data-id="${cityId}"]`);
+                if (cityElement) {
+                  const countElement = cityElement.querySelector('.text-xs.font-medium');
+                  if (countElement) {
+                    countElement.textContent = poiCount;
+                  }
+                }
+              }
+            });
+            console.log('Счетчики городов обновлены');
+          }
+        }catch(e){
+          console.warn('Ошибка загрузки счетчиков городов:', e);
+        }
       }
 
       // Server database loaders for each level
@@ -1649,8 +1715,8 @@
           
           // Затем загружаем данные в фоне
           loadCitiesForRegion(selectedRegion).then(() => {
-            // Загружаем POI параллельно без блокировки UI
-            preloadPoisCountsForRegion(selectedRegion);
+            // Загружаем только счетчики POI в фоне
+            loadCityCounts(selectedRegion.id);
           });
           return;
         }

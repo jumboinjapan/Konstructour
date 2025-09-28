@@ -49,7 +49,19 @@ try {
         case 'stats':
             if ($method === 'GET') {
                 $stats = $db->getStats();
-                respond(true, $stats);
+                $stats['cities_by_region'] = $db->getCityCountsByRegion();
+                respond(true, ['stats' => $stats]);
+            }
+            break;
+            
+        case 'city-stats':
+            if ($method === 'GET') {
+                $regionId = $_GET['region_id'] ?? '';
+                if (!$regionId) {
+                    respond(false, ['error' => 'Region ID required'], 400);
+                }
+                $stats = $db->getPoiCountsByCity($regionId);
+                respond(true, ['stats' => $stats]);
             }
             break;
             
