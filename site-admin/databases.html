@@ -2580,11 +2580,41 @@
         document.dispatchEvent(testEvent);
       }, 1000);
       
-      // Попробуем загрузить из Airtable, если настроено, иначе локальный список
+      // Автоматическая синхронизация при загрузке страницы
       (async function(){
-        await syncRegionsFromAirtable();
-        if (!regions.length){ await loadRegionsViaProxy(); }
-        if (!regions.length) renderRegions();
+        console.log('Автоматическая синхронизация при загрузке...');
+        
+        try {
+          // Очищаем кэш
+          clearAllCache();
+          
+          // Перезагружаем регионы
+          await syncRegionsFromAirtable();
+          
+          // Перезагружаем города для всех регионов
+          for (const region of regions) {
+            await loadCitiesForRegion(region);
+          }
+          
+          // Перезагружаем POI для всех городов
+          for (const region of regions) {
+            const cities = citiesByRegion[region.id] || [];
+            for (const city of cities) {
+              await loadPoisForCity(city);
+            }
+          }
+          
+          // Отображаем регионы
+          renderRegions();
+          
+          console.log('Автоматическая синхронизация завершена');
+        } catch (error) {
+          console.error('Ошибка автоматической синхронизации:', error);
+          // Fallback: простая загрузка регионов
+          await syncRegionsFromAirtable();
+          if (!regions.length){ await loadRegionsViaProxy(); }
+          if (!regions.length) renderRegions();
+        }
         
         // Настраиваем обработчик кликов ПОСЛЕ загрузки данных
         setupNavigationHandler();
