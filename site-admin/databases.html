@@ -454,15 +454,20 @@
         // City
         if (selectedCity){
           parts.push('<span class="mx-2">/</span>');
-          if (level === 'pois'){
+          if (level === 'pois' || level === 'poi-details'){
             parts.push('<span class="text-gray-800">'+selectedCity.name+'</span>');
           } else {
             parts.push('<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+selectedCity.id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>');
           }
         }
-        // POI (always last visible item is plain text)
+        // POI
         if (selectedPoi){
-          parts.push('<span class="mx-2">/</span><span class="text-gray-800">'+selectedPoi.name+'</span>');
+          parts.push('<span class="mx-2">/</span>');
+          if (level === 'poi-details' || level === 'tickets'){
+            parts.push('<span class="text-gray-800">'+selectedPoi.name+'</span>');
+          } else {
+            parts.push('<a href="#" data-level="poi-details" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+(selectedCity?selectedCity.id:'')+'" data-poi-id="'+selectedPoi.id+'" class="text-indigo-600 hover:underline">'+selectedPoi.name+'</a>');
+          }
         }
         crumbs.innerHTML = parts.join('');
       }
@@ -684,9 +689,97 @@
                 </div>\
               </div>\
             </div>';
-          // Клик по карточке сразу открывает форму редактирования POI
-          return '<div class="cursor-pointer" data-go="poi-edit" data-id="'+p.id+'">'+card('', inner)+'</div>';
+          // Клик по карточке переходит к деталям POI
+          return '<div class="cursor-pointer" data-go="poi-details" data-id="'+p.id+'">'+card('', inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет POI. Нажмите + чтобы добавить.</div>';
+      }
+
+      // Функция для отображения деталей POI
+      function renderPOIDetails(){
+        level='poi-details'; renderCrumbs(); setMappingHeader('poi-details');
+        if (!selectedPoi) {
+          cards.innerHTML = '<div class="text-gray-500">POI не найден</div>';
+          return;
+        }
+        
+        const poi = selectedPoi;
+        const categoryIcon = window.getPOICategoryIcon(poi.type);
+        const categoryColor = {
+          'Синтоистское святилище': 'text-red-600',
+          'Буддийский храм': 'text-orange-600', 
+          'Архитектурный объект': 'text-gray-600',
+          'Музей': 'text-blue-600',
+          'Арт-пространство / Галерея': 'text-purple-600',
+          'Смотровая площадка': 'text-green-600',
+          'Ландшафтный сад / Парк': 'text-green-500',
+          'Достопримечательность': 'text-yellow-600',
+          'Историческое место': 'text-brown-600',
+          'Японский отель': 'text-indigo-600',
+          'Развлечения': 'text-pink-600',
+          'Шоппинг': 'text-emerald-600',
+          'Термальный источник': 'text-blue-500',
+          'СПА': 'text-teal-600'
+        }[poi.type] || 'text-gray-500';
+        
+        const details = `
+          <div class="bg-white rounded-lg shadow-sm border p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 flex items-center justify-center ${categoryColor}">
+                  ${categoryIcon.replace('w-6 h-6', 'w-6 h-6')}
+                </div>
+                <div>
+                  <h2 class="text-xl font-semibold text-gray-800">${poi.name}</h2>
+                  <p class="text-sm text-gray-600">${poi.name_en || ''}</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button class="btn-japanese" data-act="edit-poi" data-id="${poi.id}">Редактировать</button>
+                <button class="btn-japanese accent" data-act="view-tickets" data-id="${poi.id}">Билеты</button>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <h3 class="font-medium text-gray-700 mb-2">Основная информация</h3>
+                <div class="space-y-2 text-sm">
+                  <div><span class="font-medium">Категория:</span> <span class="${categoryColor}">${poi.type}</span></div>
+                  <div><span class="font-medium">Префектура:</span> ${poi.prefecture_ru || ''} / ${poi.prefecture_en || ''}</div>
+                  <div><span class="font-medium">POI ID:</span> <code class="bg-gray-100 px-1 rounded">${poi.poi_id || '—'}</code></div>
+                  <div><span class="font-medium">Place ID:</span> <code class="bg-gray-100 px-1 rounded">${poi.place_id || '—'}</code></div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="font-medium text-gray-700 mb-2">Контактная информация</h3>
+                <div class="space-y-2 text-sm">
+                  <div><span class="font-medium">Сайт:</span> ${poi.website ? `<a href="${poi.website}" target="_blank" class="text-blue-600 hover:underline">${poi.website}</a>` : '—'}</div>
+                  <div><span class="font-medium">Часы работы:</span> ${poi.hours || '—'}</div>
+                  <div><span class="font-medium">Статус:</span> <span class="px-2 py-1 rounded text-xs ${poi.published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${poi.published ? 'Опубликован' : 'Черновик'}</span></div>
+                </div>
+              </div>
+            </div>
+            
+            ${poi.description_ru || poi.description_en ? `
+              <div class="mb-4">
+                <h3 class="font-medium text-gray-700 mb-2">Описание</h3>
+                <div class="text-sm text-gray-600 space-y-2">
+                  ${poi.description_ru ? `<div><strong>RU:</strong> ${poi.description_ru}</div>` : ''}
+                  ${poi.description_en ? `<div><strong>EN:</strong> ${poi.description_en}</div>` : ''}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${poi.notes ? `
+              <div class="mb-4">
+                <h3 class="font-medium text-gray-700 mb-2">Заметки</h3>
+                <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded">${poi.notes}</div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        
+        cards.innerHTML = details;
       }
 
       // Airtable-backed loaders for each level
@@ -883,7 +976,7 @@
       // Функция настройки обработчика кликов для навигации
       function setupNavigationHandler() {
         console.log('Setting up click handler for navigation...');
-        document.addEventListener('click', async function(e){
+      document.addEventListener('click', async function(e){
           console.log('Click detected on:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className);
           console.log('Click target parent:', e.target.parentElement?.tagName, e.target.parentElement?.className);
           
@@ -895,7 +988,7 @@
           const isInsideDbCards = e.target.closest('#db_cards');
           console.log('Click inside #db_cards:', !!isInsideDbCards);
           
-          // игнорируем клики по кнопкам действий внутри карточек
+        // игнорируем клики по кнопкам действий внутри карточек
           if (e.target.closest('button[data-act]')) {
             console.log('Click on action button, ignoring');
             return;
@@ -919,11 +1012,11 @@
             return; 
           }
           
-          e.preventDefault();
-          const id = go.getAttribute('data-id');
-          const to = go.getAttribute('data-go');
+        e.preventDefault();
+        const id = go.getAttribute('data-id');
+        const to = go.getAttribute('data-go');
           console.log('Navigation triggered:', {to, id, element: go});
-          dlog('navigate', {to,id});
+        dlog('navigate', {to,id});
         if (to==='cities'){
           selectedRegion = regions.find(r=>r.id===id) || null;
           push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
@@ -939,6 +1032,14 @@
           push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
           await loadPoisForCity(selectedCity);
           renderPois();
+          return;
+        }
+        if (to==='poi-details'){
+          const list = poisByCity[selectedCity.id] || [];
+          selectedPoi = list.find(p=>p.id===id) || null;
+          console.log('Navigating to POI details:', selectedPoi);
+          push('poi-details', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
+          renderPOIDetails();
           return;
         }
           if (to==='poi-edit'){
@@ -1004,12 +1105,25 @@
           push('pois', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null) });
           renderPois(); return;
         }
+        if (lv==='poi-details'){
+          const regionId = a.getAttribute('data-region-id');
+          const cityId = a.getAttribute('data-city-id');
+          const poiId = a.getAttribute('data-poi-id');
+          selectedRegion = regions.find(r=>r.id===regionId) || selectedRegion;
+          const list = selectedRegion ? (citiesByRegion[selectedRegion.id]||[]) : [];
+          selectedCity = list.find(c=>c.id===cityId) || selectedCity;
+          const poiList = selectedCity ? (poisByCity[selectedCity.id]||[]) : [];
+          selectedPoi = poiList.find(p=>p.id===poiId) || selectedPoi;
+          push('poi-details', { regionId: (selectedRegion?selectedRegion.id:null), cityId: (selectedCity?selectedCity.id:null), poiId: (selectedPoi?selectedPoi.id:null) });
+          renderPOIDetails(); return;
+        }
       });
 
       // Back button
       document.getElementById('db_back')?.addEventListener('click', async function(){
         if (level==='cities') return renderRegions();
         if (level==='pois') return await renderCities();
+        if (level==='poi-details') return renderPois();
         if (level==='tickets') return renderPois();
       });
 
@@ -1049,16 +1163,11 @@
         } else if (act==='del-city'){
           const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; await renderCities();
         } else if (act==='edit-poi'){
-            // ПОЛНОСТЬЮ ОТКЛЮЧЕНО - редактирование только через модальное окно деталей
-            console.log('edit-poi blocked - use details modal instead');
-            return;
-            
-            // Находим POI для редактирования
+            // Открываем форму редактирования POI
             const list = poisByCity[selectedCity.id]||[];
             const poi = list.find(x=>x.id===id);
             if (!poi) return;
             
-            // Открываем модальное окно с данными для редактирования
             const data = await openCreatePOIModal(poi);
             if (!data) return;
             
@@ -1081,62 +1190,28 @@
                 notes: data.notes
               });
               
-              // Получаем base_id из конфигурации
-              const baseId = (window.airtableReg && (window.airtableReg.baseId || window.airtableReg.base_id)) || window.AIRTABLE_BASE_ID;
-              
-              // Подготавливаем данные для Airtable
-              const airtableFields = {
-                'POI ID': poi.id,
-                'POI Name (RU)': poi.name,
-                'POI Name (EN)': poi.name_en,
-                'Regions': [selectedRegion.id], // Link to Regions table
-                'Prefecture (RU)': poi.prefecture_ru,
-                'Prefecture (EN)': poi.prefecture_en,
-                'POI Category (RU)': poi.categories_ru,
-                'POI Category (EN)': poi.categories_en,
-                'Place ID': poi.place_id,
-                'Website': poi.website,
-                'Working Hours': poi.hours,
-                'Description (RU)': poi.description_ru,
-                'Description (EN)': poi.description_en,
-                'Published': poi.published,
-                'Notes': poi.notes
-              };
-              
-              // Отправляем на сервер
-              const res = await fetch('/api/db-sync.php', {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'X-Admin-Token': window.ADMIN_TOKEN || ''
-                },
-                body: JSON.stringify({
-                  scope: 'pois',
-                  action: 'update',
-                  data: {
-                    id: poi.id,
-                    base_id: baseId,
-                    table_id: window.AIRTABLE_POI_TABLE_ID,
-                    fields: airtableFields,
-                    localData: poi
-                  }
-                })
-              });
-              
-              const j = await res.json();
-              if (!res.ok || !j.ok) {
-                throw new Error((j && j.error) || 'Ошибка обновления');
+              // Обновляем отображение
+              if (level === 'poi-details') {
+                renderPOIDetails();
+              } else {
+                renderPois();
               }
               
               if (window.osNotify) {
                 window.osNotify('POI обновлён', data.name_ru);
               }
-              
-              renderPois();
             } catch(e) {
               alert('Не удалось обновить POI: ' + (e.message || 'Неизвестная ошибка'));
-              // Здесь можно добавить откат изменений если нужно
             }
+            return;
+        } else if (act==='view-tickets'){
+          // Переходим к билетам POI
+          const list = poisByCity[selectedCity.id]||[];
+          selectedPoi = list.find(x=>x.id===id) || null;
+          if (selectedPoi) {
+            push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
+            renderTickets();
+          }
         } else if (act==='del-poi'){
           const list = poisByCity[selectedCity.id]||[]; poisByCity[selectedCity.id] = list.filter(x=>x.id!==id); delete ticketsByPoi[id]; renderPois();
         } else if (act==='edit-ticket'){
