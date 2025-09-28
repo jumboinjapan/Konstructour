@@ -2216,19 +2216,16 @@
           const wrap = document.createElement('div');
           wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
           wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-            <div class="relative bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-96 border border-white/20">
+            <div class="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"></div>
+            <div class="relative bg-white/70 backdrop-blur-xl rounded-xl shadow-2xl p-6 w-80 border border-white/30">
               <div class="text-center">
-                <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                  <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">${title}</h3>
-                <p class="text-gray-600 mb-6">${message}</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">${title}</h3>
+                <p class="text-gray-700 mb-6 text-sm">${message}</p>
                 <div class="flex gap-3 justify-center">
-                  <button id="delete_cancel" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium">
+                  <button id="delete_cancel" class="px-4 py-2 bg-gray-200/80 hover:bg-gray-300/80 text-gray-800 rounded-lg transition-all duration-200 font-medium">
                     Отмена
                   </button>
-                  <button id="delete_confirm" class="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                  <button id="delete_confirm" class="px-4 py-2 bg-red-500/80 hover:bg-red-600/80 text-white rounded-lg transition-all duration-200 font-medium">
                     Удалить
                   </button>
                 </div>
@@ -2266,19 +2263,15 @@
           const wrap = document.createElement('div');
           wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
           wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-            <div class="relative bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-96 border border-white/20">
+            <div class="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"></div>
+            <div class="relative bg-white/70 backdrop-blur-xl rounded-xl shadow-2xl p-6 w-80 border border-white/30">
               <div class="text-lg text-gray-800 mb-4">Редактировать регион</div>
-              <div class="space-y-3">
-                <input id="edit_region_ru" class="input-japanese w-full" placeholder="Название (RU)" value="${region.name || ''}"/>
-                <input id="edit_region_en" class="input-japanese w-full" placeholder="Name (EN)" value="${region.name_en || ''}"/>
-                <input id="edit_region_rid" class="input-japanese w-full" placeholder="Region ID (REG-001)" value="${region.rid || ''}"/>
-              </div>
-              <div class="mt-6 flex justify-end gap-3">
-                <button id="edit_region_cancel" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium">
+              <input id="edit_region_ru" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Название региона" value="${region.name || ''}"/>
+              <div class="flex justify-end gap-3">
+                <button id="edit_region_cancel" class="px-4 py-2 bg-gray-200/80 hover:bg-gray-300/80 text-gray-800 rounded-lg transition-all duration-200 font-medium">
                   Отмена
                 </button>
-                <button id="edit_region_save" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                <button id="edit_region_save" class="px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 text-white rounded-lg transition-all duration-200 font-medium">
                   Сохранить
                 </button>
               </div>
@@ -2295,15 +2288,13 @@
           wrap.querySelector('#edit_region_cancel').onclick = () => done(null);
           wrap.querySelector('#edit_region_save').onclick = () => {
             const ru = wrap.querySelector('#edit_region_ru').value.trim();
-            const en = wrap.querySelector('#edit_region_en').value.trim();
-            const rid = wrap.querySelector('#edit_region_rid').value.trim();
             
             if (!ru) {
-              alert('Введите название RU');
+              alert('Введите название региона');
               return;
             }
             
-            done({ ru, en, rid });
+            done({ ru, en: ru, rid: region.rid });
           };
           
           wrap.addEventListener('click', e => {
@@ -2325,23 +2316,15 @@
           const wrap = document.createElement('div');
           wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
           wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-            <div class="relative bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-96 border border-white/20">
+            <div class="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"></div>
+            <div class="relative bg-white/70 backdrop-blur-xl rounded-xl shadow-2xl p-6 w-80 border border-white/30">
               <div class="text-lg text-gray-800 mb-4">Редактировать город</div>
-              <div class="space-y-3">
-                <input id="edit_city_ru" class="input-japanese w-full" placeholder="Название (RU)" value="${city.name || ''}"/>
-                <input id="edit_city_en" class="input-japanese w-full" placeholder="Name (EN)" value="${city.name_en || ''}"/>
-                <input id="edit_city_code" class="input-japanese w-full" placeholder="City ID (CTY-001)" value="${city.code || ''}"/>
-                <select id="edit_city_type" class="input-japanese w-full">
-                  <option value="city" ${city.type === 'city' ? 'selected' : ''}>Город</option>
-                  <option value="location" ${city.type === 'location' ? 'selected' : ''}>Локация</option>
-                </select>
-              </div>
-              <div class="mt-6 flex justify-end gap-3">
-                <button id="edit_city_cancel" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium">
+              <input id="edit_city_ru" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Название города" value="${city.name || ''}"/>
+              <div class="flex justify-end gap-3">
+                <button id="edit_city_cancel" class="px-4 py-2 bg-gray-200/80 hover:bg-gray-300/80 text-gray-800 rounded-lg transition-all duration-200 font-medium">
                   Отмена
                 </button>
-                <button id="edit_city_save" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                <button id="edit_city_save" class="px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 text-white rounded-lg transition-all duration-200 font-medium">
                   Сохранить
                 </button>
               </div>
@@ -2358,16 +2341,13 @@
           wrap.querySelector('#edit_city_cancel').onclick = () => done(null);
           wrap.querySelector('#edit_city_save').onclick = () => {
             const ru = wrap.querySelector('#edit_city_ru').value.trim();
-            const en = wrap.querySelector('#edit_city_en').value.trim();
-            const code = wrap.querySelector('#edit_city_code').value.trim();
-            const type = wrap.querySelector('#edit_city_type').value;
             
             if (!ru) {
-              alert('Введите название RU');
+              alert('Введите название города');
               return;
             }
             
-            done({ ru, en, code, type });
+            done({ ru, en: ru, code: city.code, type: city.type });
           };
           
           wrap.addEventListener('click', e => {
@@ -2389,20 +2369,15 @@
           const wrap = document.createElement('div');
           wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
           wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-            <div class="relative bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-96 border border-white/20">
+            <div class="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"></div>
+            <div class="relative bg-white/70 backdrop-blur-xl rounded-xl shadow-2xl p-6 w-80 border border-white/30">
               <div class="text-lg text-gray-800 mb-4">Редактировать POI</div>
-              <div class="space-y-3">
-                <input id="edit_poi_ru" class="input-japanese w-full" placeholder="Название (RU)" value="${poi.name || ''}"/>
-                <input id="edit_poi_en" class="input-japanese w-full" placeholder="Name (EN)" value="${poi.name_en || ''}"/>
-                <input id="edit_poi_category" class="input-japanese w-full" placeholder="Категория" value="${poi.type || ''}"/>
-                <textarea id="edit_poi_description" class="input-japanese w-full h-20" placeholder="Описание">${poi.description || ''}</textarea>
-              </div>
-              <div class="mt-6 flex justify-end gap-3">
-                <button id="edit_poi_cancel" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium">
+              <input id="edit_poi_ru" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Название POI" value="${poi.name || ''}"/>
+              <div class="flex justify-end gap-3">
+                <button id="edit_poi_cancel" class="px-4 py-2 bg-gray-200/80 hover:bg-gray-300/80 text-gray-800 rounded-lg transition-all duration-200 font-medium">
                   Отмена
                 </button>
-                <button id="edit_poi_save" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                <button id="edit_poi_save" class="px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 text-white rounded-lg transition-all duration-200 font-medium">
                   Сохранить
                 </button>
               </div>
@@ -2419,16 +2394,13 @@
           wrap.querySelector('#edit_poi_cancel').onclick = () => done(null);
           wrap.querySelector('#edit_poi_save').onclick = () => {
             const ru = wrap.querySelector('#edit_poi_ru').value.trim();
-            const en = wrap.querySelector('#edit_poi_en').value.trim();
-            const category = wrap.querySelector('#edit_poi_category').value.trim();
-            const description = wrap.querySelector('#edit_poi_description').value.trim();
             
             if (!ru) {
-              alert('Введите название RU');
+              alert('Введите название POI');
               return;
             }
             
-            done({ ru, en, category, description });
+            done({ ru, en: ru, category: poi.type, description: poi.description });
           };
           
           wrap.addEventListener('click', e => {
@@ -2450,20 +2422,15 @@
           const wrap = document.createElement('div');
           wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
           wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-            <div class="relative bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-96 border border-white/20">
+            <div class="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"></div>
+            <div class="relative bg-white/70 backdrop-blur-xl rounded-xl shadow-2xl p-6 w-80 border border-white/30">
               <div class="text-lg text-gray-800 mb-4">Редактировать билет</div>
-              <div class="space-y-3">
-                <input id="edit_ticket_category" class="input-japanese w-full" placeholder="Категория билета" value="${ticket.category || ''}"/>
-                <input id="edit_ticket_price" class="input-japanese w-full" placeholder="Цена" value="${ticket.price || ''}"/>
-                <input id="edit_ticket_currency" class="input-japanese w-full" placeholder="Валюта" value="${ticket.currency || ''}"/>
-                <textarea id="edit_ticket_note" class="input-japanese w-full h-20" placeholder="Примечание">${ticket.note || ''}</textarea>
-              </div>
-              <div class="mt-6 flex justify-end gap-3">
-                <button id="edit_ticket_cancel" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium">
+              <input id="edit_ticket_category" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Категория билета" value="${ticket.category || ''}"/>
+              <div class="flex justify-end gap-3">
+                <button id="edit_ticket_cancel" class="px-4 py-2 bg-gray-200/80 hover:bg-gray-300/80 text-gray-800 rounded-lg transition-all duration-200 font-medium">
                   Отмена
                 </button>
-                <button id="edit_ticket_save" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                <button id="edit_ticket_save" class="px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 text-white rounded-lg transition-all duration-200 font-medium">
                   Сохранить
                 </button>
               </div>
@@ -2480,16 +2447,13 @@
           wrap.querySelector('#edit_ticket_cancel').onclick = () => done(null);
           wrap.querySelector('#edit_ticket_save').onclick = () => {
             const category = wrap.querySelector('#edit_ticket_category').value.trim();
-            const price = wrap.querySelector('#edit_ticket_price').value.trim();
-            const currency = wrap.querySelector('#edit_ticket_currency').value.trim();
-            const note = wrap.querySelector('#edit_ticket_note').value.trim();
             
             if (!category) {
               alert('Введите категорию билета');
               return;
             }
             
-            done({ category, price, currency, note });
+            done({ category, price: ticket.price, currency: ticket.currency, note: ticket.note });
           };
           
           wrap.addEventListener('click', e => {
