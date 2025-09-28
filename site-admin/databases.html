@@ -740,14 +740,19 @@
             console.log('Sample POI record for city filtering:', records[0]);
           }
           
-          // Фильтруем POI по городу через поле City (связь с городом)
+          // Фильтруем POI по городу через строгую иерархию POI → City
           const cityLinkedRecords = records.filter(record => {
-            const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Regions'] || [];
+            // Ищем поле связи с городом - может быть City, Cities, Location, Locations
+            const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
             console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField, 'looking for city ID:', city.id);
-            // Проверяем, есть ли ID текущего города в связанных записях
+            
+            // Строгая проверка: POI должен быть напрямую связан с городом
             const isLinked = Array.isArray(cityField) && cityField.includes(city.id);
+            
             if (isLinked) {
               console.log(`POI ${record.fields?.['POI Name (RU)']} linked to city ${city.name} (${city.id})`);
+            } else {
+              console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
             }
             return isLinked;
           });
@@ -802,16 +807,21 @@
               console.log('Sample POI record:', records[0]);
             }
             
-            // Правильно распределяем POI по городам через поле City
+            // Правильно распределяем POI по городам через строгую иерархию POI → City
             list.forEach(city => {
               console.log(`Processing city: ${city.name} (${city.id})`);
               const cityLinkedRecords = records.filter(record => {
-                const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Regions'] || [];
+                // Ищем поле связи с городом - может быть City, Cities, Location, Locations
+                const cityField = record.fields?.['City'] || record.fields?.['Cities'] || record.fields?.['Location'] || record.fields?.['Locations'] || [];
                 console.log(`POI ${record.fields?.['POI Name (RU)']} city field:`, cityField);
-                // Проверяем, есть ли ID текущего города в связанных записях
+                
+                // Строгая проверка: POI должен быть напрямую связан с городом
                 const isLinked = Array.isArray(cityField) && cityField.includes(city.id);
+                
                 if (isLinked) {
                   console.log(`POI ${record.fields?.['POI Name (RU)']} linked to city ${city.name} (${city.id})`);
+                } else {
+                  console.log(`POI ${record.fields?.['POI Name (RU)']} NOT linked to city ${city.name} (${city.id})`);
                 }
                 return isLinked;
               });
