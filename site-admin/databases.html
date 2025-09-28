@@ -2583,17 +2583,44 @@
         document.dispatchEvent(testEvent);
       }, 1000);
       
-      // Ленивая загрузка - загружаем только то, что нужно
+      // Ленивая загрузка с предзагрузкой POI для подсчета
       (async function(){
         console.log('Загрузка регионов...');
         
         try {
-          // Загружаем только регионы при старте
-          await syncRegionsFromAirtable();
-          if (!regions.length){ await loadRegionsViaProxy(); }
-          if (!regions.length) renderRegions();
+          // Загружаем регионы при старте
+        await syncRegionsFromAirtable();
+        if (!regions.length){ await loadRegionsViaProxy(); }
+          if (!regions.length) {
+            renderRegions();
+            return;
+          }
           
-          console.log('Регионы загружены, готов к навигации');
+          console.log('Регионы загружены, предзагружаем POI для подсчета...');
+          
+          // Предзагружаем POI для всех регионов для корректного подсчета в пилюлях
+          for (const region of regions) {
+            try {
+              await loadCitiesForRegion(region);
+              const cities = citiesByRegion[region.id] || [];
+              for (const city of cities) {
+                await loadPoisForCity(city);
+              }
+            } catch (error) {
+              console.warn('Ошибка предзагрузки для региона', region.name, error);
+            }
+          }
+          
+          // Отображаем регионы с правильными счетчиками
+          console.log('Данные перед рендерингом регионов:');
+          console.log('regions:', regions.length);
+          console.log('citiesByRegion:', Object.keys(citiesByRegion).length, 'регионов с городами');
+          regions.forEach(r => {
+            const cities = citiesByRegion[r.id] || [];
+            console.log(`Регион ${r.name}: ${cities.length} городов`);
+          });
+          renderRegions();
+          console.log('Предзагрузка завершена, готов к навигации');
         } catch (error) {
           console.error('Ошибка загрузки регионов:', error);
           renderRegions();
