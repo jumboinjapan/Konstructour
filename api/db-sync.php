@@ -160,7 +160,12 @@ if ($provider === 'airtable'){
           $fields = $rec['fields'] ?? [];
           $candidates = [];
           if ($scope==='cities'){ $candidates = ['Region','Регион','Regions','Регионы','region','Страна/Регион','Region Link','Регион (ссылка)','Регион → Города']; }
-          if ($scope==='pois'){ $candidates = ['City','Город','city','Локация/Город']; }
+          if ($scope==='pois'){ 
+            // Для POI проверяем связи с городом И регионом
+            $cityCandidates = ['City','Город','city','Локация/Город'];
+            $regionCandidates = ['Regions','Регионы','Region','Регион','region'];
+            $candidates = array_merge($cityCandidates, $regionCandidates);
+          }
             $hasFilter = (bool)($rid || $rname || $cid || $cname);
           foreach ($candidates as $fn){
             if (!array_key_exists($fn, $fields)) continue;
@@ -175,6 +180,20 @@ if ($provider === 'airtable'){
               }
             } else if (is_string($val)){
               if ($val===$rid || $val===$rname || $val===$cid || $val===$cname) return true;
+            }
+            
+            // Дополнительная проверка для POI: если есть фильтр по городу, проверяем только городские поля
+            if ($scope==='pois' && ($cid || $cname)){
+              $cityFields = ['City','Город','city','Локация/Город'];
+              if (in_array($fn, $cityFields)){
+                if (is_array($val)){
+                  foreach ($val as $v){
+                    if (is_string($v) && ($v===$cid || $v===$cname)) return true;
+                    if (is_array($v) && isset($v['id']) && $v['id']===$cid) return true;
+                    if (is_array($v) && isset($v['name']) && $v['name']===$cname) return true;
+                  }
+                } else if (is_string($val) && ($val===$cid || $val===$cname)) return true;
+              }
             }
           }
             // Если фильтр задан, но соответствующих полей/совпадений нет — запись не включаем.
