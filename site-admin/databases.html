@@ -137,6 +137,67 @@
       window.AIRTABLE_POI_TABLE_ID = 'tblVCmFcHRpXUT24y';
       window.AIRTABLE_TICKETS_TABLE_ID = 'tblKOLhiHMihpWsVl';
       
+      // Функция для отображения всех ID в системе
+      window.showAllIds = function() {
+        console.log('=== ВСЕ ID В СИСТЕМЕ ===');
+        console.log('Base ID:', window.AIRTABLE_BASE_ID);
+        console.log('Regions Table ID:', window.AIRTABLE_REGIONS_TABLE_ID);
+        console.log('Cities Table ID:', window.AIRTABLE_CITIES_TABLE_ID);
+        console.log('POI Table ID:', window.AIRTABLE_POI_TABLE_ID);
+        console.log('Tickets Table ID:', window.AIRTABLE_TICKETS_TABLE_ID);
+        
+        console.log('\n=== РЕГИОНЫ ===');
+        if (window.regions) {
+          window.regions.forEach((region, idx) => {
+            console.log(`Регион ${idx + 1}:`, {
+              id: region.id,
+              name: region.name,
+              rid: region.rid || 'нет'
+            });
+          });
+        } else {
+          console.log('Регионы не загружены');
+        }
+        
+        console.log('\n=== ГОРОДА ПО РЕГИОНАМ ===');
+        if (window.citiesByRegion) {
+          Object.keys(window.citiesByRegion).forEach(regionId => {
+            const region = window.regions?.find(r => r.id === regionId);
+            console.log(`Регион ${region?.name || regionId}:`);
+            window.citiesByRegion[regionId].forEach((city, idx) => {
+              console.log(`  Город ${idx + 1}:`, {
+                id: city.id,
+                name: city.name,
+                code: city.code || 'нет',
+                type: city.type
+              });
+            });
+          });
+        } else {
+          console.log('Города не загружены');
+        }
+        
+        console.log('\n=== POI ПО ГОРОДАМ ===');
+        if (window.poisByCity) {
+          Object.keys(window.poisByCity).forEach(cityId => {
+            const city = Object.values(window.citiesByRegion || {}).flat().find(c => c.id === cityId);
+            console.log(`Город ${city?.name || cityId}:`);
+            window.poisByCity[cityId].forEach((poi, idx) => {
+              console.log(`  POI ${idx + 1}:`, {
+                id: poi.id,
+                name: poi.name,
+                poi_id: poi.poi_id || 'нет',
+                category: poi.category || 'нет'
+              });
+            });
+          });
+        } else {
+          console.log('POI не загружены');
+        }
+        
+        console.log('=== КОНЕЦ СПИСКА ID ===');
+      };
+      
       // SVG иконки для категорий POI
       window.POI_CATEGORY_ICONS = {
         'Синтоистское святилище': `<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
