@@ -2029,7 +2029,7 @@
         
         try {
           // Запускаем двустороннюю синхронизацию
-          const response = await fetch('/api/bidirectional-sync.php?action=full', {
+          const response = await fetch('/api/sync-api-fixed.php?action=sync', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
@@ -2089,7 +2089,7 @@
 
       async function loadSyncStatus() {
         try {
-          const response = await fetch('/api/sync-diagnostics.php', {
+          const response = await fetch('/api/sync-api-fixed.php?action=status', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
@@ -2099,14 +2099,11 @@
           const statusIcon = document.querySelector('#sync-status i');
           
           if (result.ok) {
-            if (result.airtable_connection && result.local_db_connection) {
-              const lastSync = new Date().toLocaleString('ru-RU');
-              statusText.textContent = `Последняя синхронизация: ${lastSync} | Airtable: ${result.airtable_regions_count || 0} регионов | Локально: ${result.local_regions_count || 0} регионов`;
-              statusIcon.className = 'fas fa-check-circle mr-1 text-green-500';
-            } else {
-              statusText.textContent = 'Проблемы с подключением к Airtable или локальной БД';
-              statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
-            }
+            const lastSync = new Date().toLocaleString('ru-RU');
+            const regionsCount = result.local_regions_count || 0;
+            const airtableStatus = result.airtable_connection ? 'Подключен' : 'Не настроен';
+            statusText.textContent = `Последняя проверка: ${lastSync} | Регионов: ${regionsCount} | Airtable: ${airtableStatus}`;
+            statusIcon.className = result.local_db_connection ? 'fas fa-check-circle mr-1 text-green-500' : 'fas fa-exclamation-triangle mr-1 text-red-500';
           } else {
             statusText.textContent = 'Не удалось загрузить статус синхронизации';
             statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';

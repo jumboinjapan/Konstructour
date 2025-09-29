@@ -97,7 +97,7 @@ class SyncLogger {
 }
 
 // API endpoints для логирования
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
     $logger = new SyncLogger();
     
