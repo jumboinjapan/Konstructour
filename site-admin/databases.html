@@ -3171,14 +3171,27 @@
           try {
             console.log('🔄 Полное зеркалирование с Airtable...');
             
-            // Запускаем двустороннюю синхронизацию (GET; ModSecurity-дружелюбно)
-            const syncRes = await fetch('/api/bidirectional-sync.php', { method: 'GET' });
-            
-            let syncData = null;
-            try { syncData = await syncRes.json(); } catch(_) {}
-            if (!syncRes.ok || !syncData || syncData.ok === false) {
-              const msg = (syncData && (syncData.error || (syncData.summary===null && 'Server error'))) || `HTTP ${syncRes.status}: ${syncRes.statusText}`;
-              throw new Error(msg);
+            // Полный запуск синка (регионы + города) через GET с ?full=1
+            const endpoints = [
+              '/api/bidirectional-sync.php?full=1',   // регионы
+              '/api/sync-cities.php?full=1'           // города/локации
+            ];
+
+            const totals = { pulled:0, pushed:0, updated_local:0, updated_air:0, deleted_local:0, deleted_air:0 };
+            for (const url of endpoints) {
+              const res = await fetch(url, { method: 'GET' });
+              let data = null; try { data = await res.json(); } catch(_) {}
+              if (!res.ok || !data || data.ok === false) {
+                const msg = (data && (data.error || (data.summary===null && 'Server error'))) || `HTTP ${res.status}: ${res.statusText}`;
+                throw new Error(msg + ` [${url}]`);
+              }
+              const s = data.summary || {};
+              totals.pulled        += s.pulled        || 0;
+              totals.pushed        += s.pushed        || 0;
+              totals.updated_local += s.updated_local || 0;
+              totals.updated_air   += s.updated_air   || 0;
+              totals.deleted_local += s.deleted_local || 0;
+              totals.deleted_air   += s.deleted_air   || 0;
             }
             
             // Полностью перезагружаем все данные
@@ -3205,9 +3218,9 @@
             renderRegions();
             loadRegionCounts();
             
-            // Показываем результат (унифицированный контракт)
-            const s = syncData.summary || {};
-            const message = `Pull: ${s.pulled||0}, Push: ${s.pushed||0}, Updated(L): ${s.updated_local||0}, Updated(A): ${s.updated_air||0}, Deleted(L): ${s.deleted_local||0}, Deleted(A): ${s.deleted_air||0}`;
+            // Показываем суммарный результат
+            const s = totals;
+            const message = `Pull: ${s.pulled}, Push: ${s.pushed}, Updated(L): ${s.updated_local}, Updated(A): ${s.updated_air}, Deleted(L): ${s.deleted_local}, Deleted(A): ${s.deleted_air}`;
             console.log(`✅ Зеркалирование завершено: ${message}`);
             
             if (window.osNotify) {
