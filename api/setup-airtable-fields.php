@@ -27,15 +27,13 @@ try {
     exit;
   }
   
-  // Если meta недоступно (404), продолжаем проверкой таблицы
+  // Если meta вернул что-то иное, просто прикрепим в ответ для диагностики, но не блокируем
   if ($code >= 400 && $code !== 404) {
-    http_response_code(500);
-    echo json_encode([
-      'ok'=>false,
-      'error'=>"Airtable error $code on meta",
-      'airtable_response'=>$json ?: $out
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $metaInfo = [
+      'meta_code'=>$code,
+      'meta_url'=>$url,
+      'meta_response'=>$json ?: $out
+    ];
   }
 
   // 2) Проверка доступа к таблице (list records)
@@ -53,10 +51,12 @@ try {
     exit;
   }
 
-  echo json_encode([
+  $response = [
     'ok'=>true,
     'message'=>'Доступ к базе и таблице подтверждён. Поля можно настраивать.'
-  ], JSON_UNESCAPED_UNICODE);
+  ];
+  if (isset($metaInfo)) $response['meta'] = $metaInfo;
+  echo json_encode($response, JSON_UNESCAPED_UNICODE);
 
 } catch (Throwable $e) {
   http_response_code(500);
