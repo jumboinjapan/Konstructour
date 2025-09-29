@@ -76,7 +76,7 @@ try {
 
   // === ЗАГРУЖАЕМ ГОРОДА ===
   $params = ['pageSize'=>100];
-  [$code,$out,$err,$url] = air_call('GET','tblbSajWkzI8X7M4U', null, $params);
+  [$code,$out,$err,$url] = air_call('GET','tblHaHc9NV0mA8bSa', null, $params);
   if ($code>=400) fail("Airtable cities $code", ['url'=>$url]);
   
   $j = json_decode($out,true);
@@ -84,14 +84,10 @@ try {
   foreach (($j['records']??[]) as $rec){
     $f = $rec['fields'] ?? [];
     $cities[] = [
-      'business_id' => $f['fldkJevgUbtAbM4vr'] ?? '',
-      'name_ru' => $f['Name (RU)'] ?? '',
-      'name_en' => $f['Name (EN)'] ?? '',
-      'region' => $f['Region'] ?? '',
-      'lat' => isset($f['Latitude']) ? floatval($f['Latitude']) : null,
-      'lng' => isset($f['Longitude']) ? floatval($f['Longitude']) : null,
-      'place_id' => $f['Place ID'] ?? '',
-      'airtable_id' => $rec['id']
+      'business_id' => $f['A ID'] ?? '',
+      'name_ru' => $f['A Name (RU)'] ?? '',
+      'name_en' => $f['A Name (EN)'] ?? '',
+      'region' => $f['Regions'] ?? ''
     ];
   }
   $results['cities'] = $cities;
