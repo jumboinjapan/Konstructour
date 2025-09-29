@@ -34,24 +34,9 @@ try {
     name_ru TEXT NOT NULL,
     name_en TEXT,
     region TEXT,
-    lat REAL, lng REAL, place_id TEXT,
-    airtable_id TEXT UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )");
-  
-  // Добавляем недостающие колонки если их нет
-  try {
-    $pdo->exec("ALTER TABLE cities ADD COLUMN airtable_id TEXT");
-  } catch (Exception $e) {
-    // Колонка уже существует, игнорируем ошибку
-  }
-  
-  try {
-    $pdo->exec("ALTER TABLE cities ADD COLUMN region TEXT");
-  } catch (Exception $e) {
-    // Колонка уже существует, игнорируем ошибку
-  }
 
   // === ЗАГРУЖАЕМ РЕГИОНЫ ===
   $allowedRegions = ['REG-0001','REG-0002','REG-0003','REG-0004','REG-0005','REG-0006','REG-0007','REG-0008','REG-0009'];
@@ -113,12 +98,11 @@ try {
 
   // Сохраняем города в базу данных
   $pdo->beginTransaction();
-  $insCity = $pdo->prepare('INSERT OR REPLACE INTO cities (business_id,name_ru,name_en,region,lat,lng,place_id,airtable_id,updated_at) VALUES (?,?,?,?,?,?,?,?,?)');
+  $insCity = $pdo->prepare('INSERT OR REPLACE INTO cities (business_id,name_ru,name_en,region,updated_at) VALUES (?,?,?,?,?)');
   foreach ($cities as $c) {
     if ($c['business_id'] !== '') {
       $insCity->execute([
-        $c['business_id'], $c['name_ru'], $c['name_en'], $c['region'],
-        $c['lat'], $c['lng'], $c['place_id'], $c['airtable_id'], gmdate('c')
+        $c['business_id'], $c['name_ru'], $c['name_en'], $c['region'], gmdate('c')
       ]);
     }
   }
