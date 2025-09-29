@@ -332,7 +332,7 @@ try {
     $pat = getenv('AIRTABLE_PAT') ?: 'PLACEHOLDER_FOR_REAL_API_KEY';
     
     if ($pat === 'PLACEHOLDER_FOR_REAL_API_KEY') {
-        respond(false, ['error' => 'Airtable token not configured'], 400);
+        respond(false, ['error' => 'Airtable token not configured. Please set up token first.'], 400);
     }
     
     $baseId = 'apppwhjFN82N9zNqm';

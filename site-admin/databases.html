@@ -3171,9 +3171,9 @@
           try {
             console.log('🔄 Полное зеркалирование с Airtable...');
             
-            // Запускаем полное зеркалирование
-            const syncRes = await fetch('/api/mirror-sync.php', {
-              method: 'POST',
+            // Запускаем двустороннюю синхронизацию
+            const syncRes = await fetch('/api/bidirectional-sync.php', {
+              method: 'GET',
               headers: { 'Content-Type': 'application/json' }
             });
             
