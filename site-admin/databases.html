@@ -1961,6 +1961,8 @@
             const id = menuBtn.getAttribute('data-id');
             const menuContent = document.querySelector(`[data-menu-content="${menuType}-${id}"]`);
             
+            console.log('Menu button clicked:', { menuType, id, menuContent: !!menuContent });
+            
             if (menuContent) {
               // Закрываем все другие меню
               document.querySelectorAll('[data-menu-content]').forEach(menu => {
@@ -1971,6 +1973,10 @@
               
               // Переключаем текущее меню
               menuContent.classList.toggle('hidden');
+              
+              // Проверяем содержимое меню
+              const buttons = menuContent.querySelectorAll('button[data-act]');
+              console.log('Menu content buttons:', buttons.length, Array.from(buttons).map(b => b.getAttribute('data-act')));
             }
             return;
           }
