@@ -91,8 +91,8 @@
               <button id="db_fab_add" class="btn-japanese rounded-full w-12 h-12 flex items-center justify-center shadow-lg" title="Добавить">
                 <i class="fas fa-plus"></i>
               </button>
-              <button id="db_fab_sync" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-colors" title="Синхронизировать с Airtable">
-                <i class="fas fa-sync-alt"></i>
+              <button id="db_sync_new" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-colors" title="Зеркалировать с Airtable">
+                <i class="fas fa-arrows-rotate"></i>
               </button>
             </div>
           </div>
@@ -3162,7 +3162,7 @@
       });
 
       // Обработчик кнопки синхронизации - полное зеркалирование Airtable
-      const syncBtn = document.getElementById('db_fab_sync');
+      const syncBtn = document.getElementById('db_sync_new');
       if (syncBtn) {
         syncBtn.addEventListener('click', async function() {
           this.disabled = true;
@@ -3173,8 +3173,8 @@
             
             // Полный запуск синка (регионы + города) через GET с ?full=1
             const endpoints = [
-              '/api/bidirectional-sync.php?full=1',   // регионы
-              '/api/sync-cities.php?full=1'           // города/локации
+              '/api/bidirectional-sync-v2.php?full=1',   // регионы (новый, без legacy)
+              '/api/sync-cities.php?full=1'              // города/локации
             ];
 
             const totals = { pulled:0, pushed:0, updated_local:0, updated_air:0, deleted_local:0, deleted_air:0 };

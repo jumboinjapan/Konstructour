@@ -7,7 +7,8 @@ try {
   $BASE_ID = getenv('AIRTABLE_BASE_ID') ?: 'apppwhjFN82N9zNqm';
   $TABLE_ID_CITIES = getenv('AIRTABLE_TABLE_ID_CITIES') ?: 'tblHaHc9NV0mA8bSa'; // замените при необходимости
 
-  $F_ID      = getenv('AIR_C_ID')      ?: 'ID';
+  // Cities Business ID fieldId: fldkJevgUbtAbM4vr
+  $F_ID      = getenv('AIR_C_ID')      ?: 'fldkJevgUbtAbM4vr';
   $F_RU      = getenv('AIR_C_RU')      ?: 'Name (RU)';
   $F_EN      = getenv('AIR_C_EN')      ?: 'Name (EN)';
   $F_REGION  = getenv('AIR_C_REGION')  ?: 'Region ID';
