@@ -2194,9 +2194,8 @@
             // Перерендерим регионы
             renderRegions();
             
-            if (window.osNotify) {
-              window.osNotify('Сохранено', 'Регион обновлен');
-            }
+            // Показываем тост-уведомление об успешном обновлении
+            showNotification('Регион обновлён', `${data.ru} успешно обновлён`, 'success');
           } else {
             throw new Error(j.error || 'Ошибка обновления');
           }
@@ -2237,9 +2236,8 @@
             // Перерендерим регионы
             renderRegions();
             
-            if (window.osNotify) {
-              window.osNotify('Удалено', 'Регион удален');
-            }
+            // Показываем тост-уведомление об успешном удалении
+            showNotification('Регион удалён', `${region.name} успешно удалён`, 'success');
           } else {
             throw new Error(j.error || 'Ошибка удаления');
           }
@@ -2281,9 +2279,8 @@
             // Перерендерим города
             renderCities();
             
-            if (window.osNotify) {
-              window.osNotify('Сохранено', 'Город обновлен');
-            }
+            // Показываем тост-уведомление об успешном обновлении
+            showNotification('Город обновлён', `${data.ru} успешно обновлён`, 'success');
           } else {
             throw new Error(j.error || 'Ошибка обновления');
           }
@@ -2324,9 +2321,8 @@
             // Перерендерим города
             renderCities();
             
-            if (window.osNotify) {
-              window.osNotify('Удалено', 'Город удален');
-            }
+            // Показываем тост-уведомление об успешном удалении
+            showNotification('Город удалён', `${city.name} успешно удалён`, 'success');
           } else {
             throw new Error(j.error || 'Ошибка удаления');
           }
@@ -2369,9 +2365,8 @@
             // Перерендерим POI
             renderPois();
             
-            if (window.osNotify) {
-              window.osNotify('Сохранено', 'POI обновлен');
-            }
+            // Показываем тост-уведомление об успешном обновлении
+            showNotification('POI обновлён', `${data.ru} успешно обновлён`, 'success');
           } else {
             throw new Error(j.error || 'Ошибка обновления');
           }
@@ -2411,9 +2406,8 @@
             // Перерендерим POI
             renderPois();
             
-            if (window.osNotify) {
-              window.osNotify('Удалено', 'POI удален');
-            }
+            // Показываем тост-уведомление об успешном удалении
+            showNotification('POI удалён', `${poi.name} успешно удалён`, 'success');
           } else {
             throw new Error(j.error || 'Ошибка удаления');
           }
@@ -3163,7 +3157,9 @@
               console.error('REGION_CREATE_ERR', j);
               throw new Error(detailsMsg);
             }
-            if (window.osNotify){ window.osNotify('Сохранено','ID: '+j.region_id); } else { alert('Сохранено: '+j.region_id); }
+            // Показываем тост-уведомление об успешном сохранении
+            showNotification('Регион сохранён', `${data.name_ru} успешно добавлен в базу данных`, 'success');
+            
             await syncRegionsFromAirtable();
           }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
         } else if (level==='cities'){
@@ -3207,8 +3203,14 @@
             });
             const j = await res.json();
             if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
-            if (window.osNotify){ window.osNotify('Город сохранён', (j.linked? 'Связь с регионом установлена' : 'Создан без связи: проверьте поле связи')); }
-            await loadCitiesForRegion(selectedRegion); await preloadPoisCountsForRegion(selectedRegion); await renderCities();
+            
+            // Показываем тост-уведомление об успешном сохранении
+            showNotification('Город сохранён', `${name_ru} успешно добавлен в базу данных`, 'success');
+            
+            // Обновляем данные и перерисовываем список
+            await loadCitiesForRegion(selectedRegion); 
+            await preloadPoisCountsForRegion(selectedRegion); 
+            await renderCities();
           }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
         } else if (level==='pois'){
             const data = await openCreatePOIModal();
@@ -3307,11 +3309,10 @@
                 throw new Error((j && j.error) || 'Ошибка сохранения');
               }
               
-              if (window.osNotify) {
-                window.osNotify('POI создан', data.name_ru);
-              }
+              // Показываем тост-уведомление об успешном сохранении
+              showNotification('POI создан', `${data.name_ru} успешно добавлен в базу данных`, 'success');
               
-          await renderPois();
+              await renderPois();
             } catch(e) {
               alert('Не удалось сохранить POI: ' + (e.message || 'Неизвестная ошибка'));
               // Откатываем изменения
