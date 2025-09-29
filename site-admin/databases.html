@@ -3194,29 +3194,12 @@
               totals.deleted_air   += s.deleted_air   || 0;
             }
             
-            // Полностью перезагружаем все данные
-            regions = [];
-            citiesByRegion = {};
-            poisByCity = {};
-            
-            // Загружаем актуальные данные
-            await syncRegionsFromAirtable();
-            if (!regions.length) {
-              await loadRegionsViaProxy();
+            // Обновляем UI надёжно: чистим кэш и жёстко перезагружаем страницу,
+            // чтобы отрисовать данные из обновлённой БД
+            if (typeof clearAllCache === 'function') {
+              try { clearAllCache(); } catch(_) {}
             }
-            
-            // Загружаем города для всех регионов
-            for (const region of regions) {
-              await loadCitiesForRegion(region, true);
-              const cities = citiesByRegion[region.id] || [];
-              for (const city of cities) {
-                await loadPoisForCity(city, true);
-              }
-            }
-            
-            // Обновляем UI
-            renderRegions();
-            loadRegionCounts();
+            // Покажем результат перед перезагрузкой, затем перезагрузим страницу
             
             // Показываем суммарный результат
             const s = totals;
@@ -3228,12 +3211,8 @@
             } else {
               alert(`Синхронизация завершена:\n${message}`);
             }
-            
-            // Успешное завершение
-            this.innerHTML = '<i class="fas fa-check"></i>';
-            setTimeout(() => {
-              this.innerHTML = '<i class="fas fa-sync-alt"></i>';
-            }, 2000);
+            // Жёсткая перезагрузка данных
+            setTimeout(() => { location.reload(); }, 300);
             
           } catch (error) {
             console.error('❌ Ошибка зеркалирования:', error);
