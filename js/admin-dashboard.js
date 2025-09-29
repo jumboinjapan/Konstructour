@@ -38,10 +38,22 @@ function initializeDashboard() {
     // Render API statuses from localStorage
     try { renderApiStatuses(); } catch(_) {}
 
-    // Trigger immediate health poll so sorting/labels update without delay
-    try { pollHealth(); } catch(_) {}
-    // Trigger immediate errors counter update
-    try { updateErrorsCard(); } catch(_) {}
+    // Показываем индикатор загрузки
+    showLoadingIndicator();
+    
+    // Загружаем данные асинхронно без блокировки UI
+    setTimeout(() => {
+        try { pollHealth(); } catch(_) {}
+    }, 100);
+    
+    setTimeout(() => {
+        try { updateErrorsCard(); } catch(_) {}
+    }, 200);
+    
+    // Скрываем индикатор загрузки через 2 секунды
+    setTimeout(() => {
+        hideLoadingIndicator();
+    }, 2000);
 }
 
 // Add Japanese animations
@@ -294,7 +306,15 @@ function renderApiStatuses(){
 // Poll aggregated server health and mirror to UI
 async function pollHealth(){
     try {
-        const res = await fetch('/api/health.php', { cache:'no-store' });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 секунд таймаут
+        
+        const res = await fetch('/api/health.php', { 
+            cache:'no-store',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         const data = await res.json();
         if (!data || !data.results) return;
         const map = {};
@@ -308,7 +328,11 @@ async function pollHealth(){
         try { localStorage.setItem('konstructour_api_status', JSON.stringify(map)); } catch(_) {}
         renderApiStatuses();
     } catch (e) {
-        // ignore
+        if (e.name === 'AbortError') {
+            console.warn('Health check timeout - server may be slow');
+        } else {
+            console.warn('Health check failed:', e.message);
+        }
     }
 }
 
@@ -597,10 +621,35 @@ function updateRealtimeStats() {
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
 
+// Показать индикатор загрузки
+function showLoadingIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'loading-indicator';
+    indicator.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2';
+    indicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Загрузка данных...';
+    document.body.appendChild(indicator);
+}
+
+// Скрыть индикатор загрузки
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('loading-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
 // Обновить карточку "Ошибки за час"
 async function updateErrorsCard(){
     try{
-        const res = await fetch('/api/error-log.php?action=count&window=3600', { cache:'no-store' });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 секунды таймаут
+        
+        const res = await fetch('/api/error-log.php?action=count&window=3600', { 
+            cache:'no-store',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
         const j = await res.json();
         if (!j || !j.ok) return;
@@ -622,5 +671,11 @@ async function updateErrorsCard(){
                 }
             }
         });
-    }catch(e){ console.error('Error updating errors card:', e); }
+    }catch(e){ 
+        if (e.name === 'AbortError') {
+            console.warn('Error log check timeout - server may be slow');
+        } else {
+            console.error('Error updating errors card:', e); 
+        }
+    }
 }
