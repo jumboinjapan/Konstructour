@@ -380,12 +380,14 @@ try {
     // Читаем токен из файла airtable.env.local
     $pat = 'PLACEHOLDER_FOR_REAL_API_KEY';
     $envFile = __DIR__ . '/airtable.env.local';
+    
     if (file_exists($envFile)) {
         $envContent = file_get_contents($envFile);
         if (preg_match('/AIRTABLE_PAT=([^\s\n\r]+)/', $envContent, $matches)) {
             $pat = trim($matches[1]);
         }
     }
+    
     $baseId = 'apppwhjFN82N9zNqm';
     
     if ($pat === 'PLACEHOLDER_FOR_REAL_API_KEY') {
