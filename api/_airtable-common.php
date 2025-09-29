@@ -14,7 +14,7 @@ function air_cfg() {
   if ($apiKey === '') $apiKey = _read_pat_from_file();
 
   // строгая валидация — чтобы поймать "кавычки" и \n
-  if ($apiKey === '' || !preg_match('/^pat[0-9A-Za-z_]{20,}$/', $apiKey)) {
+  if ($apiKey === '' || !preg_match('/^pat[0-9A-Za-z._-]{20,}$/', $apiKey)) {
     throw new Exception('Airtable token missing or malformed (expect starts with "pat" and no quotes/newlines).');
   }
 
