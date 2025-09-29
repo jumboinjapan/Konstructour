@@ -1253,6 +1253,13 @@
         level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
         let list = citiesByRegion[selectedRegion.id] || [];
         
+        console.log('renderCities called:', { 
+          selectedRegion: selectedRegion?.name, 
+          selectedRegionId: selectedRegion?.id,
+          citiesCount: list.length,
+          cities: list.map(c => ({ id: c.id, name: c.name }))
+        });
+        
         // Проверяем актуальность данных перед загрузкой
         await checkDataFreshness();
         
@@ -2128,6 +2135,8 @@
       }
 
       function showNotification(title, message, type = 'info') {
+        console.log('showNotification called:', { title, message, type });
+        
         // Создаем уведомление
         const notification = document.createElement('div');
         notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm ${
@@ -2154,11 +2163,13 @@
         `;
         
         document.body.appendChild(notification);
+        console.log('Notification added to DOM:', notification);
         
         // Автоматически удаляем через 5 секунд
         setTimeout(() => {
           if (notification.parentElement) {
             notification.remove();
+            console.log('Notification removed after 5 seconds');
           }
         }, 5000);
       }
@@ -3157,10 +3168,28 @@
               console.error('REGION_CREATE_ERR', j);
               throw new Error(detailsMsg);
             }
+            // Сразу добавляем новый регион в локальные данные для мгновенного отображения
+            const newRegion = {
+              id: j.region_id || `temp_${Date.now()}`,
+              name: data.name_ru,
+              name_en: data.name_en,
+              rid: j.region_id || '',
+              business_id: j.region_id || ''
+            };
+            
+            // Добавляем в локальный кэш
+            regions.push(newRegion);
+            
             // Показываем тост-уведомление об успешном сохранении
             showNotification('Регион сохранён', `${data.name_ru} успешно добавлен в базу данных`, 'success');
             
-            await syncRegionsFromAirtable();
+            // Сразу перерисовываем список с новым регионом
+            renderRegions();
+            
+            // Обновляем данные с сервера в фоне
+            setTimeout(async () => {
+              await syncRegionsFromAirtable();
+            }, 1000);
           }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
         } else if (level==='cities'){
           // модалка выбора типа + ввод названия
@@ -3204,13 +3233,37 @@
             const j = await res.json();
             if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
             
+            // Сразу добавляем новый город в локальные данные для мгновенного отображения
+            const newCity = {
+              id: j.record_id || `temp_${Date.now()}`,
+              name: name_ru,
+              name_en: name_en,
+              type: picked,
+              code: j.city_id || '',
+              region_id: selectedRegion.id
+            };
+            
+            // Добавляем в локальный кэш
+            if (!citiesByRegion[selectedRegion.id]) {
+              citiesByRegion[selectedRegion.id] = [];
+            }
+            citiesByRegion[selectedRegion.id].push(newCity);
+            
+            console.log('Город создан успешно:', { newCity, citiesByRegion: citiesByRegion[selectedRegion.id] });
+            
             // Показываем тост-уведомление об успешном сохранении
             showNotification('Город сохранён', `${name_ru} успешно добавлен в базу данных`, 'success');
             
-            // Обновляем данные и перерисовываем список
-            await loadCitiesForRegion(selectedRegion); 
-            await preloadPoisCountsForRegion(selectedRegion); 
+            // Сразу перерисовываем список с новым городом
+            console.log('Перерисовываем города...');
             await renderCities();
+            
+            // Обновляем данные с сервера в фоне
+            setTimeout(async () => {
+              await loadCitiesForRegion(selectedRegion); 
+              await preloadPoisCountsForRegion(selectedRegion); 
+              await renderCities();
+            }, 1000);
           }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
         } else if (level==='pois'){
             const data = await openCreatePOIModal();
