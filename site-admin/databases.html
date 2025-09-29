@@ -53,8 +53,16 @@
             <div class="flex-1">
               <h2 class="text-3xl font-light text-gray-800 mb-1">Базы данных</h2>
               <p class="text-gray-600">Выберите базу и управляйте данными через интеграции API</p>
+              <div id="sync-status" class="mt-2 text-sm text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>
+                <span id="sync-status-text">Загрузка статуса синхронизации...</span>
+              </div>
             </div>
             <div class="flex items-center gap-3">
+              <button id="sync-airtable-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2" title="Синхронизировать с Airtable">
+                <i class="fas fa-sync-alt"></i>
+                <span>Синхронизировать с Airtable</span>
+              </button>
               <button id="clear-cache-btn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2" title="Очистить кэш">
                 <i class="fas fa-trash"></i>
                 <span>Очистить кэш</span>
@@ -1994,6 +2002,160 @@
         document.addEventListener('click', window.menuHandler);
       } // Конец функции setupMenuHandler
 
+      // Функции синхронизации с Airtable
+      function setupSyncHandler() {
+        console.log('Setting up sync handler...');
+        
+        const syncBtn = document.getElementById('sync-airtable-btn');
+        if (syncBtn) {
+          syncBtn.addEventListener('click', async function() {
+            await performSync();
+          });
+        }
+      }
+
+      async function performSync() {
+        const syncBtn = document.getElementById('sync-airtable-btn');
+        const statusText = document.getElementById('sync-status-text');
+        const statusIcon = document.querySelector('#sync-status i');
+        
+        if (!syncBtn || !statusText) return;
+        
+        // Показываем состояние загрузки
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Синхронизация...';
+        statusText.textContent = 'Синхронизация с Airtable...';
+        statusIcon.className = 'fas fa-spinner fa-spin mr-1';
+        
+        try {
+          // Запускаем двустороннюю синхронизацию
+          const response = await fetch('/api/bidirectional-sync.php?action=full', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          const result = await response.json();
+          
+          if (result.ok) {
+            // Успешная синхронизация
+            statusText.textContent = `Синхронизация завершена: +${result.airtable_to_local} из Airtable, +${result.local_to_airtable} в Airtable, ${result.updates} обновлений`;
+            statusIcon.className = 'fas fa-check-circle mr-1 text-green-500';
+            
+            // Показываем уведомление
+            showNotification('Синхронизация успешна', 'Данные синхронизированы с Airtable', 'success');
+            
+            // Обновляем данные на странице
+            await refreshData();
+            
+          } else {
+            throw new Error(result.error || 'Ошибка синхронизации');
+          }
+          
+        } catch (error) {
+          console.error('Sync error:', error);
+          statusText.textContent = `Ошибка синхронизации: ${error.message}`;
+          statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
+          
+          // Показываем уведомление об ошибке
+          showNotification('Ошибка синхронизации', error.message, 'error');
+        } finally {
+          // Восстанавливаем кнопку
+          syncBtn.disabled = false;
+          syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i>Синхронизировать с Airtable';
+        }
+      }
+
+      async function refreshData() {
+        try {
+          // Перезагружаем данные
+          regions = [];
+          citiesByRegion = {};
+          poisByCity = {};
+          
+          // Загружаем актуальные данные
+          await syncRegionsFromAirtable();
+          if (!regions.length) {
+            await loadRegionsViaProxy();
+          }
+          
+          // Обновляем UI
+          renderRegions();
+          loadRegionCounts();
+          
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+        }
+      }
+
+      async function loadSyncStatus() {
+        try {
+          const response = await fetch('/api/sync-diagnostics.php', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          const result = await response.json();
+          const statusText = document.getElementById('sync-status-text');
+          const statusIcon = document.querySelector('#sync-status i');
+          
+          if (result.ok) {
+            if (result.airtable_connection && result.local_db_connection) {
+              const lastSync = new Date().toLocaleString('ru-RU');
+              statusText.textContent = `Последняя синхронизация: ${lastSync} | Airtable: ${result.airtable_regions_count || 0} регионов | Локально: ${result.local_regions_count || 0} регионов`;
+              statusIcon.className = 'fas fa-check-circle mr-1 text-green-500';
+            } else {
+              statusText.textContent = 'Проблемы с подключением к Airtable или локальной БД';
+              statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
+            }
+          } else {
+            statusText.textContent = 'Не удалось загрузить статус синхронизации';
+            statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
+          }
+        } catch (error) {
+          console.error('Error loading sync status:', error);
+          const statusText = document.getElementById('sync-status-text');
+          const statusIcon = document.querySelector('#sync-status i');
+          statusText.textContent = 'Ошибка загрузки статуса';
+          statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
+        }
+      }
+
+      function showNotification(title, message, type = 'info') {
+        // Создаем уведомление
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm ${
+          type === 'success' ? 'bg-green-500 text-white' :
+          type === 'error' ? 'bg-red-500 text-white' :
+          'bg-blue-500 text-white'
+        }`;
+        
+        notification.innerHTML = `
+          <div class="flex items-start">
+            <i class="fas ${
+              type === 'success' ? 'fa-check-circle' :
+              type === 'error' ? 'fa-exclamation-triangle' :
+              'fa-info-circle'
+            } mr-2 mt-1"></i>
+            <div>
+              <div class="font-medium">${title}</div>
+              <div class="text-sm opacity-90">${message}</div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Автоматически удаляем через 5 секунд
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.remove();
+          }
+        }, 5000);
+      }
+
       // Функции для редактирования и удаления
       async function editRegion(id) {
         const region = regions.find(r => r.id === id);
@@ -3370,6 +3532,10 @@
         setupNavigationHandler();
         setupActionButtonsHandler();
         setupMenuHandler();
+        setupSyncHandler();
+        
+        // 4. Загружаем статус синхронизации
+        loadSyncStatus();
         
         // 4. Проверяем актуальность данных в фоне
         await checkDataFreshness();
