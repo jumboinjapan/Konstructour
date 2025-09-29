@@ -71,7 +71,7 @@ try {
   // ==== Local upserts (Airtable -> SQLite) — без ON CONFLICT (совместимо со старыми SQLite)
   $pdo->exec("CREATE TABLE IF NOT EXISTS cities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    identifier TEXT NOT NULL UNIQUE,
+    business_id TEXT NOT NULL UNIQUE,
     name_ru TEXT NOT NULL,
     name_en TEXT NOT NULL,
     region_ident TEXT,
@@ -81,27 +81,27 @@ try {
     is_deleted INTEGER NOT NULL DEFAULT 0
   )");
 
-  $selId = $pdo->prepare("SELECT id FROM cities WHERE identifier=?");
-  $ins   = $pdo->prepare("INSERT INTO cities (identifier,name_ru,name_en,region_ident,lat,lng,place_id,airtable_id,updated_at,is_deleted)
+  $selId = $pdo->prepare("SELECT id FROM cities WHERE business_id=?");
+  $ins   = $pdo->prepare("INSERT INTO cities (business_id,name_ru,name_en,region_ident,lat,lng,place_id,airtable_id,updated_at,is_deleted)
                           VALUES (?,?,?,?,?,?,?,?,?,?)");
-  $upd   = $pdo->prepare("UPDATE cities SET name_ru=?,name_en=?,region_ident=?,lat=?,lng=?,place_id=?,airtable_id=COALESCE(?,airtable_id),updated_at=?,is_deleted=? WHERE identifier=?");
+  $upd   = $pdo->prepare("UPDATE cities SET name_ru=?,name_en=?,region_ident=?,lat=?,lng=?,place_id=?,airtable_id=COALESCE(?,airtable_id),updated_at=?,is_deleted=? WHERE business_id=?");
 
   $updated_local = 0;
   $pdo->beginTransaction();
   foreach ($remote as $r){
-    if ($r['identifier']==='') continue;
-    $selId->execute([$r['identifier']]);
+    if ($r['business_id']==='') continue;
+    $selId->execute([$r['business_id']]);
     $exists = $selId->fetchColumn();
     if ($exists) {
       $upd->execute([
         $r['name_ru'], $r['name_en'], $r['region_ident'],
         $r['lat'], $r['lng'], $r['place_id'],
         $r['airtable_id'], $r['updated_at'], $r['is_deleted'],
-        $r['identifier']
+        $r['business_id']
       ]);
     } else {
       $ins->execute([
-        $r['identifier'], $r['name_ru'], $r['name_en'], $r['region_ident'],
+        $r['business_id'], $r['name_ru'], $r['name_en'], $r['region_ident'],
         $r['lat'], $r['lng'], $r['place_id'], $r['airtable_id'],
         $r['updated_at'], $r['is_deleted']
       ]);
@@ -134,7 +134,7 @@ try {
     } else {
       [$c,$o,$e,$u] = air_call('POST', $TABLE_ID_CITIES, ['fields'=>$fields]);
       if ($c>=400) continue; $resp = json_decode($o,true);
-      if (!empty($resp['id'])) $pdo->prepare("UPDATE cities SET airtable_id=? WHERE identifier=?")->execute([$resp['id'],$loc['identifier']]);
+      if (!empty($resp['id'])) $pdo->prepare("UPDATE cities SET airtable_id=? WHERE business_id=?")->execute([$resp['id'],$loc['identifier']]);
       $pushed++;
     }
   }
