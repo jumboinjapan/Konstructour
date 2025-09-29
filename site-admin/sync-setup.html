@@ -239,7 +239,7 @@
             log('Запуск тестовой синхронизации...', 'info');
             
             try {
-                const response = await fetch('/api/bidirectional-sync.php');
+                const response = await fetch('/api/bidirectional-sync-v2.php');
                 const result = await response.json();
                 
                 if (result.ok) {
