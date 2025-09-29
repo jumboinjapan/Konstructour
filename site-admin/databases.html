@@ -3165,6 +3165,7 @@
       const syncBtn = document.getElementById('db_sync_new');
       if (syncBtn) {
         syncBtn.addEventListener('click', async function() {
+          console.log('🔄 Кнопка синхронизации нажата!');
           this.disabled = true;
           this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
           
@@ -3184,6 +3185,7 @@
               
               if (url.includes('sync-regions-by-list.php')) {
                 // Для регионов отправляем POST с списком ID
+                console.log('🔄 Синхронизируем регионы через:', url);
                 const regionIds = ['REG-0001','REG-0002','REG-0003','REG-0004','REG-0005','REG-0006','REG-0007','REG-0008','REG-0009'];
                 res = await fetch(url, { 
                   method: 'POST',
@@ -3192,6 +3194,7 @@
                 });
               } else {
                 // Для городов используем GET
+                console.log('🔄 Синхронизируем города через:', url);
                 res = await fetch(url, { method: 'GET' });
               }
               
