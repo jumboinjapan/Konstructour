@@ -3161,7 +3161,7 @@
         }
       });
 
-      // Обработчик кнопки синхронизации
+      // Обработчик кнопки синхронизации - полное зеркалирование Airtable
       const syncBtn = document.getElementById('db_fab_sync');
       if (syncBtn) {
         syncBtn.addEventListener('click', async function() {
@@ -3169,89 +3169,58 @@
           this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
           
           try {
-            console.log('🔄 Синхронизация с Airtable...');
+            console.log('🔄 Полное зеркалирование с Airtable...');
             
-            // Сохраняем текущее состояние
-            const currentLevel = level;
-            const currentRegion = selectedRegion;
-            const currentCity = selectedCity;
-            
-            // Запускаем синхронизацию с Airtable
-            const syncRes = await fetch('/api/sync-airtable.php', {
+            // Запускаем полное зеркалирование
+            const syncRes = await fetch('/api/mirror-sync.php', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
-            const syncData = await syncRes.json();
-            console.log('Результат синхронизации:', syncData);
             
-            if (currentLevel === 'cities' && currentRegion) {
-              console.log(`📍 Обновляем города для региона: ${currentRegion.name}`);
-              
-              // Перезагружаем города из серверной БД
-              await loadCitiesForRegion(currentRegion, true);
-              
-              // Предзагружаем POI для подсчета в пилюлях
-              const cities = citiesByRegion[currentRegion.id] || [];
+            if (!syncRes.ok) {
+              throw new Error(`HTTP ${syncRes.status}: ${syncRes.statusText}`);
+            }
+            
+            const syncData = await syncRes.json();
+            console.log('Результат зеркалирования:', syncData);
+            
+            if (!syncData.ok) {
+              throw new Error(syncData.error || 'Ошибка синхронизации');
+            }
+            
+            // Полностью перезагружаем все данные
+            regions = [];
+            citiesByRegion = {};
+            poisByCity = {};
+            
+            // Загружаем актуальные данные
+            await syncRegionsFromAirtable();
+            if (!regions.length) {
+              await loadRegionsViaProxy();
+            }
+            
+            // Загружаем города для всех регионов
+            for (const region of regions) {
+              await loadCitiesForRegion(region, true);
+              const cities = citiesByRegion[region.id] || [];
               for (const city of cities) {
                 await loadPoisForCity(city, true);
               }
-              
-              // Восстанавливаем состояние
-              selectedRegion = currentRegion;
-              await renderCities();
-              console.log(`✅ Обновление городов завершено: ${cities.length} городов`);
-              
-            } else if (currentLevel === 'pois' && currentCity) {
-              console.log(`📍 Обновляем POI для города: ${currentCity.name}`);
-              
-              // Перезагружаем POI из серверной БД
-              await loadPoisForCity(currentCity, true);
-              
-              // Восстанавливаем состояние
-              selectedRegion = currentRegion;
-              selectedCity = currentCity;
-              await renderPois();
-              
-              const poiCount = poisByCity[currentCity.id]?.length || 0;
-              console.log(`✅ Обновление POI завершено: ${poiCount} POI`);
-              
+            }
+            
+            // Обновляем UI
+            renderRegions();
+            loadRegionCounts();
+            
+            // Показываем результат
+            const results = syncData.results.summary;
+            const message = `Создано: ${results.total_created}, Обновлено: ${results.total_updated}, Удалено: ${results.total_deleted}`;
+            console.log(`✅ Зеркалирование завершено: ${message}`);
+            
+            if (window.osNotify) {
+              window.osNotify('Синхронизация завершена', message);
             } else {
-              console.log('🌍 Полная синхронизация всех данных...');
-              
-              // Перезагружаем все данные из серверной БД
-              await syncRegionsFromAirtable();
-              console.log(`✅ Регионы загружены: ${regions.length}`);
-              
-              // Перезагружаем города для всех регионов
-              for (const region of regions) {
-                await loadCitiesForRegion(region, true);
-                const cities = citiesByRegion[region.id] || [];
-                console.log(`✅ Города для ${region.name}: ${cities.length}`);
-              }
-              
-              // Перезагружаем POI для всех городов
-              let totalPOI = 0;
-              for (const region of regions) {
-                const cities = citiesByRegion[region.id] || [];
-                for (const city of cities) {
-                  await loadPoisForCity(city, true);
-                  const poiCount = poisByCity[city.id]?.length || 0;
-                  totalPOI += poiCount;
-                }
-              }
-              
-              // Восстанавливаем состояние после полной синхронизации
-              if (currentLevel === 'cities' && currentRegion) {
-                selectedRegion = currentRegion;
-                await renderCities();
-              } else if (currentLevel === 'pois' && currentCity && currentRegion) {
-                selectedRegion = currentRegion;
-                selectedCity = currentCity;
-                await renderPois();
-              } else {
-                renderRegions();
-              }
-              console.log(`✅ Полная синхронизация завершена: ${totalPOI} POI всего`);
+              alert(`Синхронизация завершена:\n${message}`);
             }
             
             // Успешное завершение
@@ -3261,8 +3230,15 @@
             }, 2000);
             
           } catch (error) {
-            console.error('❌ Ошибка синхронизации:', error);
+            console.error('❌ Ошибка зеркалирования:', error);
             this.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            
+            if (window.osNotify) {
+              window.osNotify('Ошибка синхронизации', error.message);
+            } else {
+              alert('Ошибка синхронизации: ' + error.message);
+            }
+            
             setTimeout(() => {
               this.innerHTML = '<i class="fas fa-sync-alt"></i>';
             }, 3000);
