@@ -4,7 +4,12 @@ class Database {
     private $db;
     
     public function __construct() {
-        $this->db = new PDO('sqlite:' . __DIR__ . '/konstructour.db');
+        // ЕДИНЫЙ путь к БД, общий с sync-скриптами (/data/constructour.db)
+        $dbPath = __DIR__ . '/../data/constructour.db';
+        if (!is_dir(dirname($dbPath))) {
+            @mkdir(dirname($dbPath), 0775, true);
+        }
+        $this->db = new PDO('sqlite:' . $dbPath);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->initTables();
     }
