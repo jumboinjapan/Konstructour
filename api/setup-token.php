@@ -15,12 +15,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         respond(false, ['error' => 'Invalid PAT format'], 400);
     }
 
-    $dir = __DIR__ . '/../.secrets';
-    @mkdir($dir, 0770, true);
-    $file = $dir . '/airtable_pat.txt';
+    // Write to multiple persistent locations to survive deployments
+    $written = false;
+    $errors = [];
+    $targets = [];
+    // HOME-based storage
+    $home = getenv('HOME');
+    if (!$home) { $home = dirname(__DIR__, 3); }
+    if ($home) {
+        $dir1 = rtrim($home, '/').'/.konstructour';
+        @mkdir($dir1, 0770, true);
+        $targets[] = $dir1 . '/airtable_pat.txt';
+    }
+    // Project-local secrets
+    $dir2 = __DIR__ . '/../.secrets';
+    @mkdir($dir2, 0770, true);
+    $targets[] = $dir2 . '/airtable_pat.txt';
+    // Legacy env file for compatibility
+    $targets[] = __DIR__ . '/airtable.env.local';
 
-    if (file_put_contents($file, $token, LOCK_EX) === false) {
-        respond(false, ['error' => 'Cannot write token file'], 500);
+    foreach ($targets as $path) {
+        if (@file_put_contents($path, $token, LOCK_EX) !== false) {
+            $written = true;
+        } else {
+            $errors[] = $path;
+        }
+    }
+
+    if (!$written) {
+        respond(false, ['error' => 'Cannot write token file', 'targets' => $errors], 500);
     }
 
     respond(true, ['message' => 'Airtable token saved successfully']);

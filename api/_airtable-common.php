@@ -1,10 +1,32 @@
 <?php
 // /api/_airtable-common.php
+function _possible_pat_paths(): array {
+  $paths = [];
+  // Persistent path in user HOME
+  $home = getenv('HOME');
+  if (!$home) {
+    // try to derive home from project path (api/ → public_html/konstructour)
+    $home = dirname(__DIR__, 3); // usually /home/<user>
+  }
+  if ($home) {
+    $paths[] = rtrim($home, '/').'/.konstructour/airtable_pat.txt';
+  }
+  // Project-local secrets (can be preserved by rsync exclude)
+  $paths[] = __DIR__ . '/../.secrets/airtable_pat.txt';
+  // Legacy env file fallback
+  $paths[] = __DIR__ . '/airtable.env.local';
+  return $paths;
+}
+
 function _read_pat_from_file() {
-  $file = __DIR__ . '/../.secrets/airtable_pat.txt';
-  if (is_readable($file)) {
-    $raw = file_get_contents($file);
-    return $raw === false ? '' : trim($raw);
+  foreach (_possible_pat_paths() as $file) {
+    if (is_readable($file)) {
+      $raw = file_get_contents($file);
+      if ($raw !== false) {
+        $val = trim($raw);
+        if ($val !== '') return $val;
+      }
+    }
   }
   return '';
 }
