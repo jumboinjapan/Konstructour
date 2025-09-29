@@ -3201,9 +3201,17 @@
             }
             // Покажем результат перед перезагрузкой, затем перезагрузим страницу
             
-            // Показываем суммарный результат
+            // Показываем суммарный результат + сравнение количества городов
             const s = totals;
-            const message = `Pull: ${s.pulled}, Push: ${s.pushed}, Updated(L): ${s.updated_local}, Updated(A): ${s.updated_air}, Deleted(L): ${s.deleted_local}, Deleted(A): ${s.deleted_air}`;
+            let message = `Pull: ${s.pulled}, Push: ${s.pushed}, Updated(L): ${s.updated_local}, Updated(A): ${s.updated_air}, Deleted(L): ${s.deleted_local}, Deleted(A): ${s.deleted_air}`;
+            try {
+              // второй эндпоинт возвращает totals с remote_total/local_total
+              const lastRes = await fetch('/api/sync-cities.php?full=1', { method:'GET' });
+              const last = await lastRes.json();
+              if (last && last.ok && last.summary) {
+                message += `\n\nCities: Airtable=${last.summary.remote_total ?? '?'}  Local=${last.summary.local_total ?? '?'}`;
+              }
+            } catch(_) {}
             console.log(`✅ Зеркалирование завершено: ${message}`);
             
             if (window.osNotify) {

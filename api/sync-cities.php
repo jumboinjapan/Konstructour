@@ -141,6 +141,10 @@ try {
 
   $setState->execute([$nowIso]);
 
+  // Итоговые количества для наглядности
+  $local_total = (int)$pdo->query("SELECT COUNT(*) FROM cities WHERE is_deleted=0")->fetchColumn();
+  $remote_total = (int)$pulled; // при full=1 это общее число записей в Airtable
+
   echo json_encode([
     'ok'=>true,
     'summary'=>[
@@ -151,7 +155,9 @@ try {
       'pushed'=> $pushed,
       'updated_air'=> $updated_air,
       'deleted_local'=> 0,
-      'deleted_air'=> 0
+      'deleted_air'=> 0,
+      'remote_total'=> $remote_total,
+      'local_total'=> $local_total
     ]
   ], JSON_UNESCAPED_UNICODE);
 
