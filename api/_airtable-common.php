@@ -8,6 +8,13 @@ function air_cfg() {
   // 2) если пусто — читаем из файла, куда сохраняет /api/setup-token.php
   if (!$apiKey) {
     $secretFile = __DIR__ . '/airtable.env.local';
+    $debug = [
+      'file_exists' => file_exists($secretFile),
+      'is_readable' => is_readable($secretFile),
+      'realpath' => realpath($secretFile),
+      'file_size' => file_exists($secretFile) ? filesize($secretFile) : 0
+    ];
+    
     if (is_readable($secretFile)) {
       $lines = file($secretFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
       foreach ($lines as $line) {
@@ -17,10 +24,10 @@ function air_cfg() {
         }
       }
     }
-  }
-
-  if (!$apiKey) {
-    throw new Exception('Airtable token not found: set AIRTABLE_API_KEY or write airtable.env.local');
+    
+    if (!$apiKey) {
+      throw new Exception('Airtable token not found. Debug: ' . json_encode($debug));
+    }
   }
 
   $baseId  = getenv('AIRTABLE_BASE_ID')  ?: 'apppwhjFN82N9zNqm';
