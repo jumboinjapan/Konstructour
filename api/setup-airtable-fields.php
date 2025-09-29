@@ -25,8 +25,9 @@ try {
     ], JSON_UNESCAPED_UNICODE);
     exit;
   }
-
-  if ($code >= 400) {
+  
+  // Если meta недоступно (404), продолжаем проверкой таблицы
+  if ($code >= 400 && $code !== 404) {
     http_response_code(500);
     echo json_encode([
       'ok'=>false,
@@ -37,13 +38,15 @@ try {
   }
 
   // 2) Проверка доступа к таблице (list records)
-  [$c2,$o2,$e2,$u2] = air_call('GET', '', null, ['pageSize'=>1]);
+  [$c2,$o2,$e2,$u2,$h2,$t2] = air_call('GET', '', null, ['pageSize'=>1]);
   if ($c2 >= 400) {
     http_response_code(500);
     echo json_encode([
       'ok'=>false,
       'error'=>"Airtable error $c2 on list records (table)",
       'request_url'=>$u2,
+      'token_head'=>$h2,
+      'token_tail'=>$t2,
       'details'=>json_decode($o2,true) ?: $o2
     ], JSON_UNESCAPED_UNICODE);
     exit;
