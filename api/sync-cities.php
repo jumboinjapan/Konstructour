@@ -68,7 +68,7 @@ try {
     $offset = $j['offset'] ?? null;
   } while ($offset);
 
-  // ==== Local upserts (Airtable -> SQLite) ====
+  // ==== Local upserts (Airtable -> SQLite) — без ON CONFLICT (совместимо со старыми SQLite)
   $pdo->exec("CREATE TABLE IF NOT EXISTS cities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     identifier TEXT NOT NULL UNIQUE,
@@ -80,19 +80,34 @@ try {
     updated_at TEXT NOT NULL,
     is_deleted INTEGER NOT NULL DEFAULT 0
   )");
-  $upsert = $pdo->prepare("INSERT INTO cities (identifier,name_ru,name_en,region_ident,lat,lng,place_id,airtable_id,updated_at,is_deleted)
-    VALUES (:identifier,:name_ru,:name_en,:region_ident,:lat,:lng,:place_id,:airtable_id,:updated_at,:is_deleted)
-    ON CONFLICT(identifier) DO UPDATE SET
-      name_ru=excluded.name_ru,
-      name_en=excluded.name_en,
-      region_ident=excluded.region_ident,
-      lat=excluded.lat, lng=excluded.lng, place_id=excluded.place_id,
-      airtable_id=COALESCE(excluded.airtable_id, cities.airtable_id),
-      updated_at=excluded.updated_at,
-      is_deleted=excluded.is_deleted");
+
+  $selId = $pdo->prepare("SELECT id FROM cities WHERE identifier=?");
+  $ins   = $pdo->prepare("INSERT INTO cities (identifier,name_ru,name_en,region_ident,lat,lng,place_id,airtable_id,updated_at,is_deleted)
+                          VALUES (?,?,?,?,?,?,?,?,?,?)");
+  $upd   = $pdo->prepare("UPDATE cities SET name_ru=?,name_en=?,region_ident=?,lat=?,lng=?,place_id=?,airtable_id=COALESCE(?,airtable_id),updated_at=?,is_deleted=? WHERE identifier=?");
+
   $updated_local = 0;
   $pdo->beginTransaction();
-  foreach ($remote as $r){ if ($r['identifier']!==''){ $upsert->execute($r); $updated_local++; } }
+  foreach ($remote as $r){
+    if ($r['identifier']==='') continue;
+    $selId->execute([$r['identifier']]);
+    $exists = $selId->fetchColumn();
+    if ($exists) {
+      $upd->execute([
+        $r['name_ru'], $r['name_en'], $r['region_ident'],
+        $r['lat'], $r['lng'], $r['place_id'],
+        $r['airtable_id'], $r['updated_at'], $r['is_deleted'],
+        $r['identifier']
+      ]);
+    } else {
+      $ins->execute([
+        $r['identifier'], $r['name_ru'], $r['name_en'], $r['region_ident'],
+        $r['lat'], $r['lng'], $r['place_id'], $r['airtable_id'],
+        $r['updated_at'], $r['is_deleted']
+      ]);
+    }
+    $updated_local++;
+  }
   $pdo->commit();
 
   // ==== SQLite -> Airtable (incremental or full)
