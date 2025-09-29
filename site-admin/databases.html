@@ -3173,14 +3173,29 @@
             
             // Полный запуск синка (регионы + города) через GET с ?full=1
             const endpoints = [
-              '/api/bidirectional-sync-v2.php?full=1',   // регионы (новый, без legacy)
-              '/api/sync-cities.php?full=1'              // города/локации
+              '/api/sync-regions-by-list.php',   // регионы (рабочий эндпоинт)
+              '/api/sync-cities.php?full=1'      // города/локации
             ];
 
-            const totals = { pulled:0, pushed:0, updated_local:0, updated_air:0, deleted_local:0, deleted_air:0 };
-            for (const url of endpoints) {
-              const res = await fetch(url, { method: 'GET' });
-              let data = null; try { data = await res.json(); } catch(_) {}
+            const totals = { pulled:0, pushed:0, updated_local:0, updated_air:0, deleted_local:0, deleted_air:0, remote_total_regions:0, local_total_regions:0, remote_total_cities:0, local_total_cities:0 };
+            for (let i = 0; i < endpoints.length; i++) {
+              const url = endpoints[i];
+              let res, data;
+              
+              if (url.includes('sync-regions-by-list.php')) {
+                // Для регионов отправляем POST с списком ID
+                const regionIds = ['REG-0001','REG-0002','REG-0003','REG-0004','REG-0005','REG-0006','REG-0007','REG-0008','REG-0009'];
+                res = await fetch(url, { 
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ids: regionIds })
+                });
+              } else {
+                // Для городов используем GET
+                res = await fetch(url, { method: 'GET' });
+              }
+              
+              try { data = await res.json(); } catch(_) { data = null; }
               if (!res.ok || !data || data.ok === false) {
                 const msg = (data && (data.error || (data.summary===null && 'Server error'))) || `HTTP ${res.status}: ${res.statusText}`;
                 throw new Error(msg + ` [${url}]`);
@@ -3192,6 +3207,13 @@
               totals.updated_air   += s.updated_air   || 0;
               totals.deleted_local += s.deleted_local || 0;
               totals.deleted_air   += s.deleted_air   || 0;
+              if (url.includes('sync-regions-by-list.php')) {
+                totals.remote_total_regions = s.remote_total || 0;
+                totals.local_total_regions = s.local_total || 0;
+              } else if (url.includes('sync-cities.php')) {
+                totals.remote_total_cities = s.remote_total || 0;
+                totals.local_total_cities = s.local_total || 0;
+              }
             }
             
             // Обновляем UI надёжно: чистим кэш и жёстко перезагружаем страницу,
@@ -3204,14 +3226,8 @@
             // Показываем суммарный результат + сравнение количества городов
             const s = totals;
             let message = `Pull: ${s.pulled}, Push: ${s.pushed}, Updated(L): ${s.updated_local}, Updated(A): ${s.updated_air}, Deleted(L): ${s.deleted_local}, Deleted(A): ${s.deleted_air}`;
-            try {
-              // второй эндпоинт возвращает totals с remote_total/local_total
-              const lastRes = await fetch('/api/sync-cities.php?full=1', { method:'GET' });
-              const last = await lastRes.json();
-              if (last && last.ok && last.summary) {
-                message += `\n\nCities: Airtable=${last.summary.remote_total ?? '?'}  Local=${last.summary.local_total ?? '?'}`;
-              }
-            } catch(_) {}
+            message += `\n\nRegions: Airtable=${s.remote_total_regions} Local=${s.local_total_regions}`;
+            message += `\nCities: Airtable=${s.remote_total_cities} Local=${s.local_total_cities}`;
             console.log(`✅ Зеркалирование завершено: ${message}`);
             
             if (window.osNotify) {
