@@ -1917,7 +1917,7 @@
           const act = btn.getAttribute('data-act');
           const id = btn.getAttribute('data-id');
           
-          console.log('Action button clicked:', { act, id });
+          console.log('Action button clicked:', { act, id, button: btn, text: btn.textContent });
           
           if (act === 'edit-region') {
             await editRegion(id);
