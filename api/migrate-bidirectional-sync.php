@@ -9,8 +9,9 @@ function migrateToBidirectionalSync() {
         $pdo->beginTransaction();
         
         // 1. Обновляем таблицу regions для двусторонней синхронизации
+        // Добавляем колонки без UNIQUE (SQLite не поддерживает UNIQUE в ALTER TABLE)
         $pdo->exec("
-            ALTER TABLE regions ADD COLUMN identifier TEXT UNIQUE;
+            ALTER TABLE regions ADD COLUMN identifier TEXT;
         ");
         
         $pdo->exec("
@@ -52,6 +53,11 @@ function migrateToBidirectionalSync() {
             WHERE updated_at = '1970-01-01T00:00:00Z'
         ");
         
+        // 5. Создаем уникальный индекс для identifier после заполнения данных
+        $pdo->exec("
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_regions_identifier ON regions(identifier);
+        ");
+        
         $pdo->commit();
         
         return [
@@ -62,7 +68,8 @@ function migrateToBidirectionalSync() {
                 'Added updated_at column to regions', 
                 'Added is_deleted column to regions',
                 'Created sync_state table',
-                'Updated existing records with identifiers and timestamps'
+                'Updated existing records with identifiers and timestamps',
+                'Created unique index on identifier column'
             ]
         ];
         
