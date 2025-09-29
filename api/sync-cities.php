@@ -35,14 +35,13 @@ try {
   $full = (($_GET['full'] ?? '')==='1') || (($_POST['full'] ?? '')==='1');
   if ($full) $lastSync = '1970-01-01T00:00:00Z';
 
-  // ==== Airtable list ====
-  $cfg = air_cfg($TABLE_ID_CITIES); // не используется напрямую в air_call
+  // ==== Airtable list (используем конкретный ID таблицы городов) ====
   $pulled = 0; $offset=null; $remote = [];
   do {
     $params = ['pageSize'=>100];
     if (!$full && $F_UPDATED) $params['filterByFormula'] = "VALUE({$F_UPDATED}) > VALUE(\"{$lastSync}\")";
     if ($offset) $params['offset']=$offset;
-    [$code,$out,$err,$url] = air_call('GET', '', null, $params);
+    [$code,$out,$err,$url] = air_call('GET', $TABLE_ID_CITIES, null, $params);
     if ($code>=400) {
       http_response_code(500);
       echo json_encode(['ok'=>false,'error'=>"Airtable $code on list",'url'=>$url,'details'=>json_decode($out,true)?:$out,'summary'=>null], JSON_UNESCAPED_UNICODE);
@@ -129,10 +128,10 @@ try {
       $F_DELETED => !!$loc['is_deleted']
     ];
     if ($loc['airtable_id']) {
-      [$c,$o,$e,$u] = air_call('PATCH', $loc['airtable_id'], ['fields'=>$fields]);
+      [$c,$o,$e,$u] = air_call('PATCH', $TABLE_ID_CITIES.'/'.$loc['airtable_id'], ['fields'=>$fields]);
       if ($c>=400) continue; $updated_air++;
     } else {
-      [$c,$o,$e,$u] = air_call('POST', '', ['fields'=>$fields]);
+      [$c,$o,$e,$u] = air_call('POST', $TABLE_ID_CITIES, ['fields'=>$fields]);
       if ($c>=400) continue; $resp = json_decode($o,true);
       if (!empty($resp['id'])) $pdo->prepare("UPDATE cities SET airtable_id=? WHERE identifier=?")->execute([$resp['id'],$loc['identifier']]);
       $pushed++;
@@ -143,7 +142,7 @@ try {
 
   // Итоговые количества для наглядности
   $local_total = (int)$pdo->query("SELECT COUNT(*) FROM cities WHERE is_deleted=0")->fetchColumn();
-  $remote_total = (int)$pulled; // при full=1 это общее число записей в Airtable
+  $remote_total = (int)$pulled; // при full=1 это общее число записей в таблице Cities
 
   echo json_encode([
     'ok'=>true,
