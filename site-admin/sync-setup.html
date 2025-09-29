@@ -214,10 +214,11 @@
                     const message = `Настроено полей: ${Object.keys(result.field_mappings).length}`;
                     showResult('airtable-result', message, true);
                     log('Airtable настроен успешно', 'success');
-                    if (result.existing_fields) {
-                        log(`Существующие поля: ${Object.keys(result.existing_fields).join(', ')}`, 'info');
+                    const fieldsObj = result && result.existing_fields ? result.existing_fields : null;
+                    if (fieldsObj) {
+                      log(`Существующие поля: ${Object.keys(fieldsObj).join(', ')}`, 'info');
                     } else {
-                        log('Существующие поля: нет данных', 'warning');
+                      log('Существующие поля: нет данных (API вернул пусто)', 'warning');
                     }
                 } else {
                     throw new Error(result.error || 'Неизвестная ошибка');

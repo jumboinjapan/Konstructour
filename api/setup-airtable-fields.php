@@ -51,10 +51,18 @@ try {
     exit;
   }
 
+  // 2.1) Собираем список существующих полей по первой записи (если есть)
+  $existing = [];
+  $j2 = json_decode($o2, true);
+  if (!empty($j2['records'][0]['fields']) && is_array($j2['records'][0]['fields'])) {
+    foreach ($j2['records'][0]['fields'] as $k => $v) { $existing[$k] = true; }
+  }
+
   $response = [
     'ok'=>true,
     'message'=>'Доступ к базе и таблице подтверждён. Поля можно настраивать.',
-    'existing_fields'=>[]
+    'existing_fields'=>$existing,
+    'field_mappings'=>[]
   ];
   if (isset($metaInfo)) $response['meta'] = $metaInfo;
   echo json_encode($response, JSON_UNESCAPED_UNICODE);
