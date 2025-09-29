@@ -99,6 +99,25 @@ try {
     $changes[] = "backfill regions.updated_at for {$c} rows";
   }
 
+  // 8) Таблица cities для двустороннего синка (идемпотентно)
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS cities (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      identifier     TEXT    NOT NULL UNIQUE,
+      name_ru        TEXT    NOT NULL,
+      name_en        TEXT    NOT NULL,
+      region_ident   TEXT,
+      lat            REAL,
+      lng            REAL,
+      place_id       TEXT,
+      airtable_id    TEXT UNIQUE,
+      updated_at     TEXT    NOT NULL,
+      is_deleted     INTEGER NOT NULL DEFAULT 0
+    )
+  ");
+  $pdo->exec("CREATE INDEX IF NOT EXISTS idx_cities_updated_at ON cities(updated_at)");
+  $changes[] = 'ensure table cities';
+
   $pdo->commit();
 
   echo json_encode([
