@@ -64,12 +64,12 @@ function filterAutomaticFields($fields) {
     return array_diff_key($fields, array_flip($automaticFields));
 }
 
-function syncFromAirtable($db, $pat, $baseId) {
+function syncFromAirtable($db, $pat, $baseId, $tables) {
     $results = ['airtable_to_local' => 0, 'updates' => 0, 'errors' => []];
     
     try {
         // Синхронизация регионов
-        $regionsUrl = "https://api.airtable.com/v0/$baseId/Regions";
+        $regionsUrl = "https://api.airtable.com/v0/$baseId/" . $tables['regions'];
         $regionsData = makeAirtableRequest($regionsUrl, 'GET', null, $pat);
         
         foreach ($regionsData['records'] as $record) {
@@ -124,7 +124,7 @@ function syncFromAirtable($db, $pat, $baseId) {
         }
         
         // Синхронизация городов
-        $citiesUrl = "https://api.airtable.com/v0/$baseId/Cities";
+        $citiesUrl = "https://api.airtable.com/v0/$baseId/" . $tables['cities'];
         $citiesData = makeAirtableRequest($citiesUrl, 'GET', null, $pat);
         
         foreach ($citiesData['records'] as $record) {
@@ -199,7 +199,7 @@ function syncFromAirtable($db, $pat, $baseId) {
         }
         
         // Синхронизация POI
-        $poisUrl = "https://api.airtable.com/v0/$baseId/POIs";
+        $poisUrl = "https://api.airtable.com/v0/$baseId/" . $tables['pois'];
         $poisData = makeAirtableRequest($poisUrl, 'GET', null, $pat);
         
         foreach ($poisData['records'] as $record) {
@@ -280,7 +280,7 @@ function syncFromAirtable($db, $pat, $baseId) {
     return $results;
 }
 
-function syncToAirtable($db, $pat, $baseId) {
+function syncToAirtable($db, $pat, $baseId, $tables) {
     $results = ['local_to_airtable' => 0, 'updates' => 0, 'errors' => []];
     
     try {
@@ -296,7 +296,7 @@ function syncToAirtable($db, $pat, $baseId) {
                 
                 $fields = filterAutomaticFields($fields);
                 
-                $url = "https://api.airtable.com/v0/$baseId/Regions/" . $region['airtable_id'];
+                $url = "https://api.airtable.com/v0/$baseId/" . $tables['regions'] . "/" . $region['airtable_id'];
                 makeAirtableRequest($url, 'PATCH', ['fields' => $fields], $pat);
                 $results['updates']++;
             } catch (Exception $e) {
@@ -327,7 +327,7 @@ function syncToAirtable($db, $pat, $baseId) {
                 
                 $fields = filterAutomaticFields($fields);
                 
-                $url = "https://api.airtable.com/v0/$baseId/Cities/" . $city['airtable_id'];
+                $url = "https://api.airtable.com/v0/$baseId/" . $tables['cities'] . "/" . $city['airtable_id'];
                 makeAirtableRequest($url, 'PATCH', ['fields' => $fields], $pat);
                 $results['updates']++;
             } catch (Exception $e) {
@@ -358,7 +358,7 @@ function syncToAirtable($db, $pat, $baseId) {
                 
                 $fields = filterAutomaticFields($fields);
                 
-                $url = "https://api.airtable.com/v0/$baseId/POIs/" . $poi['airtable_id'];
+                $url = "https://api.airtable.com/v0/$baseId/" . $tables['pois'] . "/" . $poi['airtable_id'];
                 makeAirtableRequest($url, 'PATCH', ['fields' => $fields], $pat);
                 $results['updates']++;
             } catch (Exception $e) {
@@ -380,7 +380,8 @@ try {
     // Читаем токен из конфигурации
     $pat = $config['airtable_registry']['api_key'] ?? 'PLACEHOLDER_FOR_REAL_API_KEY';
     
-    $baseId = 'apppwhjFN82N9zNqm';
+    $baseId = $config['airtable_registry']['baseId'];
+    $tables = $config['airtable_registry']['tables'];
     
     if ($pat === 'PLACEHOLDER_FOR_REAL_API_KEY') {
         respond(false, ['error' => 'Airtable token not configured'], 400);
@@ -396,13 +397,13 @@ try {
     
     if ($action === 'sync') {
         // Синхронизация из Airtable в локальную БД
-        $airtableResults = syncFromAirtable($db, $pat, $baseId);
+        $airtableResults = syncFromAirtable($db, $pat, $baseId, $tables);
         $results['airtable_to_local'] += $airtableResults['airtable_to_local'];
         $results['updates'] += $airtableResults['updates'];
         $results['errors'] = array_merge($results['errors'], $airtableResults['errors']);
         
         // Синхронизация из локальной БД в Airtable
-        $localResults = syncToAirtable($db, $pat, $baseId);
+        $localResults = syncToAirtable($db, $pat, $baseId, $tables);
         $results['local_to_airtable'] += $localResults['local_to_airtable'];
         $results['updates'] += $localResults['updates'];
         $results['errors'] = array_merge($results['errors'], $localResults['errors']);

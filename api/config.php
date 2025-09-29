@@ -10,10 +10,20 @@ return array (
   array (
     'baseId' => 'apppwhjFN82N9zNqm',
     'api_key' => $airtablePat,
+    'tables' => array (
+      'regions' => 'tblbSajWkzI8X7M4U',
+      'cities' => 'tblHaHc9NV0mA8bSa',
+      'pois' => 'tbl8X7M4U'
+    ),
   ),
   'airtable' => 
   array (
     'baseId' => 'apppwhjFN82N9zNqm',
     'api_key' => $airtablePat,
+    'tables' => array (
+      'regions' => 'tblbSajWkzI8X7M4U',
+      'cities' => 'tblHaHc9NV0mA8bSa',
+      'pois' => 'tbl8X7M4U'
+    ),
   ),
 );
