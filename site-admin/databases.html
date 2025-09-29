@@ -53,16 +53,8 @@
             <div class="flex-1">
               <h2 class="text-3xl font-light text-gray-800 mb-1">Базы данных</h2>
               <p class="text-gray-600">Выберите базу и управляйте данными через интеграции API</p>
-              <div id="sync-status" class="mt-2 text-sm text-gray-500">
-                <i class="fas fa-info-circle mr-1"></i>
-                <span id="sync-status-text">Загрузка статуса синхронизации...</span>
-              </div>
             </div>
             <div class="flex items-center gap-3">
-              <button id="sync-airtable-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2" title="Синхронизировать с Airtable">
-                <i class="fas fa-sync-alt"></i>
-                <span>Синхронизировать с Airtable</span>
-              </button>
               <button id="clear-cache-btn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2" title="Очистить кэш">
                 <i class="fas fa-trash"></i>
                 <span>Очистить кэш</span>
@@ -2013,7 +2005,7 @@
       function setupSyncHandler() {
         console.log('Setting up sync handler...');
         
-        const syncBtn = document.getElementById('sync-airtable-btn');
+        const syncBtn = document.getElementById('db_fab_sync');
         if (syncBtn) {
           syncBtn.addEventListener('click', async function() {
             await performSync();
@@ -2022,21 +2014,17 @@
       }
 
       async function performSync() {
-        const syncBtn = document.getElementById('sync-airtable-btn');
-        const statusText = document.getElementById('sync-status-text');
-        const statusIcon = document.querySelector('#sync-status i');
+        const syncBtn = document.getElementById('db_fab_sync');
         
-        if (!syncBtn || !statusText) return;
+        if (!syncBtn) return;
         
         // Показываем состояние загрузки
         syncBtn.disabled = true;
-        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Синхронизация...';
-        statusText.textContent = 'Синхронизация с Airtable...';
-        statusIcon.className = 'fas fa-spinner fa-spin mr-1';
+        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         
         try {
-          // Запускаем правильную синхронизацию (тестовая версия)
-          const response = await fetch('/api/sync-correct-test.php?action=sync', {
+          // Запускаем правильную синхронизацию
+          const response = await fetch('/api/sync-correct.php?action=sync', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
@@ -2050,9 +2038,6 @@
             const toAirtable = results.local_to_airtable || 0;
             const updates = results.updates || 0;
             const errors = results.errors || [];
-            
-            statusText.textContent = `Синхронизация завершена: +${fromAirtable} из Airtable, +${toAirtable} в Airtable, ${updates} обновлений`;
-            statusIcon.className = 'fas fa-check-circle mr-1 text-green-500';
             
             // Показываем уведомление
             let message = `Синхронизировано: +${fromAirtable} из Airtable, +${toAirtable} в Airtable, ${updates} обновлений`;
@@ -2070,15 +2055,11 @@
           
         } catch (error) {
           console.error('Sync error:', error);
-          statusText.textContent = `Ошибка синхронизации: ${error.message}`;
-          statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
-          
-          // Показываем уведомление об ошибке
           showNotification('Ошибка синхронизации', error.message, 'error');
         } finally {
           // Восстанавливаем кнопку
           syncBtn.disabled = false;
-          syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i>Синхронизировать с Airtable';
+          syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
         }
       }
 
@@ -2104,35 +2085,6 @@
         }
       }
 
-      async function loadSyncStatus() {
-        try {
-          const response = await fetch('/api/sync-api-fixed.php?action=status', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          
-          const result = await response.json();
-          const statusText = document.getElementById('sync-status-text');
-          const statusIcon = document.querySelector('#sync-status i');
-          
-          if (result.ok) {
-            const lastSync = new Date().toLocaleString('ru-RU');
-            const regionsCount = result.local_regions_count || 0;
-            const airtableStatus = result.airtable_connection ? 'Подключен' : 'Не настроен';
-            statusText.textContent = `Последняя проверка: ${lastSync} | Регионов: ${regionsCount} | Airtable: ${airtableStatus}`;
-            statusIcon.className = result.local_db_connection ? 'fas fa-check-circle mr-1 text-green-500' : 'fas fa-exclamation-triangle mr-1 text-red-500';
-          } else {
-            statusText.textContent = 'Не удалось загрузить статус синхронизации';
-            statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
-          }
-        } catch (error) {
-          console.error('Error loading sync status:', error);
-          const statusText = document.getElementById('sync-status-text');
-          const statusIcon = document.querySelector('#sync-status i');
-          statusText.textContent = 'Ошибка загрузки статуса';
-          statusIcon.className = 'fas fa-exclamation-triangle mr-1 text-red-500';
-        }
-      }
 
       function showNotification(title, message, type = 'info') {
         console.log('showNotification called:', { title, message, type });
@@ -3188,7 +3140,7 @@
             
             // Обновляем данные с сервера в фоне
             setTimeout(async () => {
-              await syncRegionsFromAirtable();
+            await syncRegionsFromAirtable();
             }, 1000);
           }catch(e){ alert('Не удалось сохранить регион: '+(e && e.message ? e.message : '')); }
         } else if (level==='cities'){
@@ -3594,9 +3546,6 @@
         setupActionButtonsHandler();
         setupMenuHandler();
         setupSyncHandler();
-        
-        // 4. Загружаем статус синхронизации
-        loadSyncStatus();
         
         // 4. Проверяем актуальность данных в фоне
         await checkDataFreshness();
