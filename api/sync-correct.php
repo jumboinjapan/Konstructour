@@ -85,6 +85,7 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                 $regionData = [
                     'name_ru' => $fields['Name (RU)'] ?? '',
                     'name_en' => $fields['Name (EN)'] ?? '',
+                    'business_id' => $fields['ID'] ?? '',
                     'airtable_id' => $airtableId,
                     'airtable_updated_at' => date('Y-m-d H:i:s')
                 ];
@@ -93,12 +94,13 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                     // Обновляем существующий регион
                     $update = $db->getConnection()->prepare("
                         UPDATE regions 
-                        SET name_ru = ?, name_en = ?, airtable_updated_at = ?
+                        SET name_ru = ?, name_en = ?, business_id = ?, airtable_updated_at = ?
                         WHERE airtable_id = ?
                     ");
                     $update->execute([
                         $regionData['name_ru'],
                         $regionData['name_en'],
+                        $regionData['business_id'],
                         $regionData['airtable_updated_at'],
                         $airtableId
                     ]);
@@ -106,12 +108,13 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                 } else {
                     // Создаем новый регион
                     $insert = $db->getConnection()->prepare("
-                        INSERT INTO regions (name_ru, name_en, airtable_id, airtable_updated_at, local_updated_at)
-                        VALUES (?, ?, ?, ?, ?)
+                        INSERT INTO regions (name_ru, name_en, business_id, airtable_id, airtable_updated_at, local_updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
                     ");
                     $insert->execute([
                         $regionData['name_ru'],
                         $regionData['name_en'],
+                        $regionData['business_id'],
                         $airtableId,
                         $regionData['airtable_updated_at'],
                         date('Y-m-d H:i:s')
@@ -157,6 +160,7 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                 $cityData = [
                     'name_ru' => $fields['Name (RU)'] ?? '',
                     'name_en' => $fields['Name (EN)'] ?? '',
+                    'business_id' => $fields['ID'] ?? '',
                     'region_id' => $regionId,
                     'airtable_id' => $airtableId,
                     'airtable_updated_at' => date('Y-m-d H:i:s')
@@ -166,12 +170,13 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                     // Обновляем существующий город
                     $update = $db->getConnection()->prepare("
                         UPDATE cities 
-                        SET name_ru = ?, name_en = ?, region_id = ?, airtable_updated_at = ?
+                        SET name_ru = ?, name_en = ?, business_id = ?, region_id = ?, airtable_updated_at = ?
                         WHERE airtable_id = ?
                     ");
                     $update->execute([
                         $cityData['name_ru'],
                         $cityData['name_en'],
+                        $cityData['business_id'],
                         $cityData['region_id'],
                         $cityData['airtable_updated_at'],
                         $airtableId
@@ -180,12 +185,13 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                 } else {
                     // Создаем новый город
                     $insert = $db->getConnection()->prepare("
-                        INSERT INTO cities (name_ru, name_en, region_id, airtable_id, airtable_updated_at, local_updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        INSERT INTO cities (name_ru, name_en, business_id, region_id, airtable_id, airtable_updated_at, local_updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
                     ");
                     $insert->execute([
                         $cityData['name_ru'],
                         $cityData['name_en'],
+                        $cityData['business_id'],
                         $cityData['region_id'],
                         $airtableId,
                         $cityData['airtable_updated_at'],
