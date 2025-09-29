@@ -18,3 +18,15 @@ Thumbs.db
 
 # Node modules (if needed later)
 node_modules/
+
+# Environment files with sensitive data
+.env
+.env.local
+api/airtable.env.local
+api/.env
+api/.env.local
+
+# API Keys and tokens
+api/*.key
+api/*.token
+api/*.pat
