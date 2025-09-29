@@ -1,31 +1,32 @@
 <?php
 // /api/_airtable-common.php
 
-// Загружаем токен из файла
-$envFile = __DIR__ . '/airtable.env.local';
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos($line, 'AIRTABLE_PAT=') === 0) {
-            $token = substr($line, 12);
-            putenv("AIRTABLE_PAT=$token");
-            $_ENV['AIRTABLE_PAT'] = $token;
-            $_SERVER['AIRTABLE_PAT'] = $token;
-            break;
-        }
-    }
-}
-
 function air_cfg() {
-  $cfg = [
-    'api_key'  => getenv('AIRTABLE_PAT') ?: getenv('AIRTABLE_API_KEY'),
-    'base_id'  => getenv('AIRTABLE_BASE_ID') ?: 'apppwhjFN82N9zNqm',
-    'table_id' => getenv('AIRTABLE_TABLE_ID') ?: 'tblbSajWkzI8X7M4U',
-  ];
-  if (!$cfg['api_key'])  throw new Exception('AIRTABLE_API_KEY is missing');
-  if (!$cfg['base_id'])  throw new Exception('AIRTABLE_BASE_ID is missing');
-  if (!$cfg['table_id']) throw new Exception('AIRTABLE_TABLE_ID is missing');
-  return $cfg;
+  // 1) пробуем ENV
+  $apiKey = getenv('AIRTABLE_API_KEY');
+
+  // 2) если пусто — читаем из файла, куда сохраняет /api/setup-token.php
+  if (!$apiKey) {
+    $secretFile = __DIR__ . '/airtable.env.local';
+    if (is_readable($secretFile)) {
+      $lines = file($secretFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+      foreach ($lines as $line) {
+        if (strpos($line, 'AIRTABLE_PAT=') === 0) {
+          $apiKey = trim(substr($line, 12));
+          break;
+        }
+      }
+    }
+  }
+
+  if (!$apiKey) {
+    throw new Exception('Airtable token not found: set AIRTABLE_API_KEY or write airtable.env.local');
+  }
+
+  $baseId  = getenv('AIRTABLE_BASE_ID')  ?: 'apppwhjFN82N9zNqm';
+  $tableId = getenv('AIRTABLE_TABLE_ID') ?: 'tblbSajWkzI8X7M4U';
+
+  return ['api_key'=>$apiKey, 'base_id'=>$baseId, 'table_id'=>$tableId];
 }
 
 function air_call($method, $path, $payload=null, $query=[]) {

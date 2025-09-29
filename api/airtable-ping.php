@@ -5,6 +5,10 @@ require_once __DIR__.'/_airtable-common.php';
 
 try {
   $cfg = air_cfg();
+  
+  // Отладочная информация
+  $tokenPreview = substr($cfg['api_key'], 0, 3) . '...' . substr($cfg['api_key'], -6);
+  
   // пробуем прочитать 1 запись (или схему таблицы через list)
   [$code,$out,$err,$url] = air_call('GET','', null, ['pageSize'=>1]);
   $json = json_decode($out, true);
@@ -30,6 +34,7 @@ try {
     'url'=>$url,
     'base_id'=>$cfg['base_id'],
     'table_id'=>$cfg['table_id'],
+    'token_preview'=>$tokenPreview,
     'sample'=> $json['records'] ?? [],
   ], JSON_UNESCAPED_UNICODE);
 

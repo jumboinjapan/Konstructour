@@ -9,24 +9,21 @@ function respond($ok, $data = [], $code = 200) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
-    $token = $input['token'] ?? '';
+    $token = trim($input['token'] ?? '');
 
-    if (empty($token)) {
-        respond(false, ['error' => 'Token is required'], 400);
+    if (!$token || strncmp($token, 'pat', 3) !== 0) {
+        respond(false, ['error' => 'Invalid token format'], 400);
     }
 
-    $envFilePath = __DIR__ . '/airtable.env.local';
+    // тот же путь, что в _airtable-common.php
+    $file = __DIR__ . '/airtable.env.local';
     $content = "AIRTABLE_PAT=" . $token . "\n";
 
-    if (file_put_contents($envFilePath, $content) !== false) {
-        // Также обновляем environment variables для текущего запроса
-        putenv("AIRTABLE_PAT=$token");
-        $_ENV['AIRTABLE_PAT'] = $token;
-        $_SERVER['AIRTABLE_PAT'] = $token;
-        respond(true, ['message' => 'Airtable token saved successfully']);
-    } else {
-        respond(false, ['error' => 'Failed to save token file. Check permissions.'], 500);
+    if (file_put_contents($file, $content, LOCK_EX) === false) {
+        respond(false, ['error' => 'Cannot write token file'], 500);
     }
+
+    respond(true, ['message' => 'Airtable token saved successfully']);
 } else {
     respond(false, ['error' => 'Invalid request method'], 405);
 }
