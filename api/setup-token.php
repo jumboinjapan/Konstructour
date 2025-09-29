@@ -9,17 +9,17 @@ function respond($ok, $data = [], $code = 200) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
-    $token = trim($input['token'] ?? '');
+    $token = isset($input['token']) ? trim($input['token']) : '';
 
-    if (!$token || strncmp($token, 'pat', 3) !== 0) {
-        respond(false, ['error' => 'Invalid token format'], 400);
+    if (!preg_match('/^pat[0-9A-Za-z_]{20,}$/', $token)) {
+        respond(false, ['error' => 'Invalid PAT format'], 400);
     }
 
-    // тот же путь, что в _airtable-common.php
-    $file = __DIR__ . '/airtable.env.local';
-    $content = "AIRTABLE_PAT=" . $token . "\n";
+    $dir = __DIR__ . '/../.secrets';
+    @mkdir($dir, 0770, true);
+    $file = $dir . '/airtable_pat.txt';
 
-    if (file_put_contents($file, $content, LOCK_EX) === false) {
+    if (file_put_contents($file, $token, LOCK_EX) === false) {
         respond(false, ['error' => 'Cannot write token file'], 500);
     }
 
