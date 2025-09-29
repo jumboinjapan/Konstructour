@@ -13,8 +13,8 @@ function air_cfg() {
   $apiKey = trim(getenv('AIRTABLE_API_KEY') ?: '');
   if ($apiKey === '') $apiKey = _read_pat_from_file();
 
-  // строгая валидация — чтобы поймать "кавычки" и \n
-  if ($apiKey === '' || !preg_match('/^pat[0-9A-Za-z._-]{20,}$/', $apiKey)) {
+  // строгая валидация: начинаем с pat и минимум 20 непробельных символов далее
+  if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
     throw new Exception('Airtable token missing or malformed (expect starts with "pat" and no quotes/newlines).');
   }
 
