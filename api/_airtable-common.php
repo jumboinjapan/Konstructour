@@ -11,7 +11,10 @@ function _read_pat_from_file() {
 
 function air_cfg() {
   $apiKey = trim(getenv('AIRTABLE_API_KEY') ?: '');
-  if ($apiKey === '') $apiKey = _read_pat_from_file();
+  // если переменная окружения отсутствует ИЛИ выглядит некорректно — пробуем файл
+  if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
+    $apiKey = _read_pat_from_file();
+  }
 
   // строгая валидация: начинаем с pat и минимум 20 непробельных символов далее
   if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
