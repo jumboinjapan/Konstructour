@@ -10,6 +10,37 @@ try {
   $cfg = air_cfg();
   $results = [];
 
+  // Подключаемся к базе данных
+  $dbPath = getenv('SQLITE_PATH') ?: (__DIR__.'/../data/constructour.db');
+  @mkdir(dirname($dbPath), 0775, true);
+  $pdo = new PDO('sqlite:' . $dbPath, null, null, [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+  ]);
+
+  // Создаем таблицы
+  $pdo->exec("CREATE TABLE IF NOT EXISTS regions (
+    id TEXT PRIMARY KEY,
+    name_ru TEXT NOT NULL,
+    name_en TEXT,
+    business_id TEXT,
+    airtable_id TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )");
+  
+  $pdo->exec("CREATE TABLE IF NOT EXISTS cities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    business_id TEXT NOT NULL UNIQUE,
+    name_ru TEXT NOT NULL,
+    name_en TEXT,
+    region TEXT,
+    lat REAL, lng REAL, place_id TEXT,
+    airtable_id TEXT UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )");
+
   // === ЗАГРУЖАЕМ РЕГИОНЫ ===
   $allowedRegions = ['REG-0001','REG-0002','REG-0003','REG-0004','REG-0005','REG-0006','REG-0007','REG-0008','REG-0009'];
   
@@ -36,6 +67,16 @@ try {
   }
   $results['regions'] = $regions;
 
+  // Сохраняем регионы в базу данных
+  $pdo->beginTransaction();
+  $insReg = $pdo->prepare('INSERT OR REPLACE INTO regions (id,name_ru,name_en,business_id,airtable_id,updated_at) VALUES (?,?,?,?,?,?)');
+  foreach ($regions as $r) {
+    if ($r['id'] !== '') {
+      $insReg->execute([$r['id'], $r['name_ru'], $r['name_en'], $r['id'], $r['airtable_id'], gmdate('c')]);
+    }
+  }
+  $pdo->commit();
+
   // === ЗАГРУЖАЕМ ГОРОДА ===
   $params = ['pageSize'=>100];
   [$code,$out,$err,$url] = air_call('GET','tblbSajWkzI8X7M4U', null, $params);
@@ -57,6 +98,19 @@ try {
     ];
   }
   $results['cities'] = $cities;
+
+  // Сохраняем города в базу данных
+  $pdo->beginTransaction();
+  $insCity = $pdo->prepare('INSERT OR REPLACE INTO cities (business_id,name_ru,name_en,region,lat,lng,place_id,airtable_id,updated_at) VALUES (?,?,?,?,?,?,?,?,?)');
+  foreach ($cities as $c) {
+    if ($c['business_id'] !== '') {
+      $insCity->execute([
+        $c['business_id'], $c['name_ru'], $c['name_en'], $c['region'],
+        $c['lat'], $c['lng'], $c['place_id'], $c['airtable_id'], gmdate('c')
+      ]);
+    }
+  }
+  $pdo->commit();
 
   // === ЗАГРУЖАЕМ POI ===
   $params = ['pageSize'=>100];
@@ -84,13 +138,14 @@ try {
 
   ok([
     'ok' => true,
-    'message' => 'Данные успешно загружены из Airtable',
+    'message' => 'Данные успешно загружены и сохранены в базу данных',
     'data' => $results,
     'summary' => [
       'regions_count' => count($regions),
       'cities_count' => count($cities),
       'pois_count' => count($results['pois']),
-      'loaded_at' => gmdate('c')
+      'loaded_at' => gmdate('c'),
+      'saved_to_db' => true
     ]
   ]);
 
