@@ -1,6 +1,29 @@
 <?php
 // Простой Pull из Airtable - только загрузка карточек
 header('Content-Type: application/json; charset=utf-8');
+
+// Загружаем токен из файла
+$tokenFile = __DIR__ . '/airtable.env.local';
+if (file_exists($tokenFile)) {
+    $lines = file($tokenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, 'AIRTABLE_PAT=') === 0) {
+            $token = substr($line, 12);
+            putenv("AIRTABLE_API_KEY=$token");
+            $_ENV['AIRTABLE_API_KEY'] = $token;
+            $_SERVER['AIRTABLE_API_KEY'] = $token;
+            break;
+        }
+    }
+}
+
+// Отладка токена
+$debugToken = getenv('AIRTABLE_API_KEY');
+if (empty($debugToken)) {
+    echo json_encode(['ok'=>false,'error'=>'Token not loaded from file', 'file'=>$tokenFile, 'exists'=>file_exists($tokenFile)]);
+    exit;
+}
+
 require_once __DIR__.'/_airtable-common.php';
 
 function ok($p){ echo json_encode($p, JSON_UNESCAPED_UNICODE); exit; }
@@ -42,7 +65,7 @@ try {
   
   $parts = [];
   foreach ($allowedRegions as $v) {
-    $parts[] = "{fldwlHyd89p3lRsQe}='" . addslashes($v) . "'";
+    $parts[] = "{A ID}='" . addslashes($v) . "'";
   }
   $formula = 'OR('.implode(',', $parts).')';
   
@@ -55,9 +78,9 @@ try {
   foreach (($j['records']??[]) as $rec){
     $f = $rec['fields'] ?? [];
     $regions[] = [
-      'id' => $f['fldwlHyd89p3lRsQe'] ?? '',
-      'name_ru' => $f['Name (RU)'] ?? '',
-      'name_en' => $f['Name (EN)'] ?? '',
+      'id' => $f['A ID'] ?? '',
+      'name_ru' => $f['A Name (RU)'] ?? '',
+      'name_en' => $f['A Name (EN)'] ?? '',
       'airtable_id' => $rec['id']
     ];
   }

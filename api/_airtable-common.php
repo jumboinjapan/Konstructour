@@ -21,10 +21,12 @@ function _possible_pat_paths(): array {
 function _read_pat_from_file() {
   foreach (_possible_pat_paths() as $file) {
     if (is_readable($file)) {
-      $raw = file_get_contents($file);
-      if ($raw !== false) {
-        $val = trim($raw);
-        if ($val !== '') return $val;
+      $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+      foreach ($lines as $line) {
+        if (strpos($line, 'AIRTABLE_PAT=') === 0) {
+          $val = trim(substr($line, 13)); // 13 символов для 'AIRTABLE_PAT='
+          if ($val !== '') return $val;
+        }
       }
     }
   }
@@ -37,6 +39,7 @@ function air_cfg() {
   if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
     $apiKey = _read_pat_from_file();
   }
+
 
   // строгая валидация: начинаем с pat и минимум 20 непробельных символов далее
   if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
