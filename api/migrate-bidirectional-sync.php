@@ -87,48 +87,32 @@ try {
   $val = $stmt->execute() && ($row = $stmt->fetch()) ? $row['value'] : null;
   if ($val === null) {
     $pdo->prepare("INSERT INTO sync_state(key,value) VALUES('last_sync_at','1970-01-01T00:00:00Z')")->execute();
-    $changes[] = 'init last_sync_at';
+    $changes[] = 'seed sync_state.last_sync_at';
   }
 
-  // 7) Заполняем identifier для существующих записей без него
-  $stmt = $pdo->query("SELECT id, business_id FROM regions WHERE identifier IS NULL OR identifier = ''");
-  $regions = $stmt->fetchAll();
-  foreach ($regions as $region) {
-    $identifier = $region['business_id'] ?: 'REG-' . str_pad($region['id'], 4, '0', STR_PAD_LEFT);
-    $pdo->prepare("UPDATE regions SET identifier = ? WHERE id = ?")
-        ->execute([$identifier, $region['id']]);
-  }
-  if (!empty($regions)) {
-    $changes[] = 'populate ' . count($regions) . ' identifiers';
-  }
-
-  // 8) Обновляем updated_at для записей без него
-  $stmt = $pdo->query("SELECT COUNT(*) as cnt FROM regions WHERE updated_at IS NULL OR updated_at = ''");
-  $count = $stmt->fetch()['cnt'];
-  if ($count > 0) {
-    $pdo->exec("UPDATE regions SET updated_at = datetime('now', 'utc') WHERE updated_at IS NULL OR updated_at = ''");
-    $changes[] = "set updated_at for $count records";
+  // 7) Бэкомпат: если есть строки без updated_at — проставим текущее время
+  $stmt = $pdo->query("SELECT COUNT(*) AS c FROM regions WHERE (updated_at IS NULL OR updated_at='')");
+  $c = (int)($stmt->fetch()['c'] ?? 0);
+  if ($c > 0) {
+    $now = gmdate('c'); // ISO8601 UTC
+    $pdo->prepare("UPDATE regions SET updated_at=? WHERE (updated_at IS NULL OR updated_at='')")->execute([$now]);
+    $changes[] = "backfill regions.updated_at for {$c} rows";
   }
 
   $pdo->commit();
 
   echo json_encode([
     'success' => true,
-    'message' => 'Migration completed successfully',
-    'changes' => $changes
-  ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    'db_path' => $dbPath,
+    'changes' => $changes,
+  ], JSON_UNESCAPED_UNICODE);
 
-} catch (Exception $e) {
-  if (isset($pdo)) {
-    $pdo->rollBack();
-  }
-  
+} catch (Throwable $e) {
+  if ($pdo && $pdo->inTransaction()) $pdo->rollBack();
   http_response_code(500);
   echo json_encode([
     'success' => false,
-    'error' => $e->getMessage(),
-    'file' => $e->getFile(),
-    'line' => $e->getLine()
-  ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    'error'   => $e->getMessage(),
+  ], JSON_UNESCAPED_UNICODE);
 }
 ?>
