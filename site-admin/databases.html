@@ -3173,23 +3173,23 @@
             console.log('🔄 Полное зеркалирование с Airtable...');
             
             // Полный запуск синка (регионы + города) через GET с ?full=1
-            // Используем чистый синхронизатор
-            const syncUrl = '/api/clean-sync.php?full=1';
+            // Простой Pull из Airtable
+            const pullUrl = '/api/pull-airtable.php';
 
-            console.log('🔄 Запускаем чистую синхронизацию...');
-            const res = await fetch(syncUrl, { method: 'GET' });
+            console.log('🔄 Загружаем данные из Airtable...');
+            const res = await fetch(pullUrl, { method: 'GET' });
             const data = await res.json();
             
             if (!res.ok || !data || data.ok === false) {
               const msg = (data && (data.error || (data.summary===null && 'Server error'))) || `HTTP ${res.status}: ${res.statusText}`;
-              throw new Error(msg + ` [${syncUrl}]`);
+              throw new Error(msg + ` [${pullUrl}]`);
             }
             
-            const s = data.summary || {};
+            const summary = data.summary || {};
             const totals = {
-              regions: s.regions || {},
-              cities: s.cities || {},
-              totals: s.totals || {}
+              regions: summary.regions_count || 0,
+              cities: summary.cities_count || 0,
+              pois: summary.pois_count || 0
             };
             
             // Обновляем UI надёжно: чистим кэш и жёстко перезагружаем страницу,
@@ -3200,11 +3200,12 @@
             // Покажем результат перед перезагрузкой, затем перезагрузим страницу
             
             // Показываем суммарный результат + сравнение количества городов
-            // Показываем результат синхронизации
-            let message = `Синхронизация завершена!\n\n`;
-            message += `Регионы: загружено ${totals.regions.pulled}, обновлено ${totals.regions.updated}, создано ${totals.regions.created}, удалено ${totals.regions.deleted}\n`;
-            message += `Города: загружено ${totals.cities.pulled}, обновлено ${totals.cities.updated}, создано ${totals.cities.created}\n\n`;
-            message += `Итого: Регионы ${totals.totals.regions_local}/${totals.totals.regions_remote}, Города ${totals.totals.cities_local}/${totals.totals.cities_remote}`;
+            // Показываем результат загрузки
+            let message = `Данные загружены из Airtable!\n\n`;
+            message += `Регионы: ${totals.regions}\n`;
+            message += `Города: ${totals.cities}\n`;
+            message += `POI: ${totals.pois}\n\n`;
+            message += `Загружено: ${summary.loaded_at}`;
             console.log(`✅ Зеркалирование завершено: ${message}`);
             
             if (window.osNotify) {
