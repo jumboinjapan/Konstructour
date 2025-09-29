@@ -69,7 +69,7 @@ try {
   }
   $formula = 'OR('.implode(',', $parts).')';
   
-  $params = ['pageSize'=>100, 'filterByFormula'=>$formula];
+  $params = ['pageSize'=>100];
   [$code,$out,$err,$url] = air_call('GET','', null, $params);
   if ($code>=400) fail("Airtable regions $code", ['url'=>$url]);
   
@@ -78,9 +78,9 @@ try {
   foreach (($j['records']??[]) as $rec){
     $f = $rec['fields'] ?? [];
     $regions[] = [
-      'id' => $f['A ID'] ?? '',
-      'name_ru' => $f['A Name (RU)'] ?? '',
-      'name_en' => $f['A Name (EN)'] ?? '',
+      'id' => $f['ID'] ?? '',
+      'name_ru' => $f['Name (RU)'] ?? '',
+      'name_en' => $f['Name (EN)'] ?? '',
       'airtable_id' => $rec['id']
     ];
   }
@@ -106,10 +106,10 @@ try {
   foreach (($j['records']??[]) as $rec){
     $f = $rec['fields'] ?? [];
     $cities[] = [
-      'business_id' => $f['A ID'] ?? '',
-      'name_ru' => $f['A Name (RU)'] ?? '',
-      'name_en' => $f['A Name (EN)'] ?? '',
-      'region' => $f['Regions'] ?? ''
+      'business_id' => $f['ID'] ?? '',
+      'name_ru' => $f['Name (RU)'] ?? '',
+      'name_en' => $f['Name (EN)'] ?? '',
+      'region' => is_array($f['Regions'] ?? null) ? implode(',', $f['Regions']) : ($f['Regions'] ?? '')
     ];
   }
   $results['cities'] = $cities;
