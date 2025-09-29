@@ -16,6 +16,17 @@ if (file_exists($envFile)) {
     }
 }
 
+// Также загружаем из config.php как fallback
+$config = include 'config.php';
+if (!$pat = getenv('AIRTABLE_PAT')) {
+    $pat = $config['airtable_registry']['api_key'] ?? null;
+    if ($pat && $pat !== 'PLACEHOLDER_FOR_REAL_API_KEY') {
+        putenv("AIRTABLE_PAT=$pat");
+        $_ENV['AIRTABLE_PAT'] = $pat;
+        $_SERVER['AIRTABLE_PAT'] = $pat;
+    }
+}
+
 function respond($ok, $data = [], $code = 200) {
     http_response_code($code);
     echo json_encode(['ok' => $ok] + $data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -23,10 +34,10 @@ function respond($ok, $data = [], $code = 200) {
 }
 
 function makeAirtableRequest($url, $data = [], $method = 'GET') {
-    $pat = getenv('AIRTABLE_PAT') ?: 'PLACEHOLDER_FOR_REAL_API_KEY';
+    $pat = getenv('AIRTABLE_PAT');
     
-    if ($pat === 'PLACEHOLDER_FOR_REAL_API_KEY') {
-        throw new Exception('Airtable token not configured');
+    if (!$pat || $pat === 'PLACEHOLDER_FOR_REAL_API_KEY') {
+        throw new Exception('Airtable token not configured. Please set up token first.');
     }
     
     $ch = curl_init();
