@@ -25,7 +25,9 @@ function air_cfg() {
 
 function air_call($method, $path = '', $payload = null, $query = []) {
   $cfg = air_cfg();
-  $base = "https://api.airtable.com/v0/{$cfg['base_id']}";
+  // meta/* эндпоинты живут на корне /v0 без baseId
+  $isMeta = is_string($path) && str_starts_with($path, 'meta/');
+  $base = $isMeta ? 'https://api.airtable.com/v0' : "https://api.airtable.com/v0/{$cfg['base_id']}";
   $url  = rtrim($base, '/');
   if ($path === '' || $path === null) {
     $url .= '/' . $cfg['table_id'];
