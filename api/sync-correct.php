@@ -77,11 +77,6 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                 $fields = $record['fields'];
                 $airtableId = $record['id'];
                 
-                // Ищем существующий регион по Airtable ID
-                $existing = $db->getConnection()->prepare("SELECT * FROM regions WHERE airtable_id = ?");
-                $existing->execute([$airtableId]);
-                $existingRegion = $existing->fetch(PDO::FETCH_ASSOC);
-                
                 $regionData = [
                     'name_ru' => $fields['Name (RU)'] ?? '',
                     'name_en' => $fields['Name (EN)'] ?? '',
@@ -90,19 +85,24 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                     'airtable_updated_at' => date('Y-m-d H:i:s')
                 ];
                 
+                // Ищем существующий регион по Business ID
+                $existing = $db->getConnection()->prepare("SELECT * FROM regions WHERE business_id = ?");
+                $existing->execute([$regionData['business_id']]);
+                $existingRegion = $existing->fetch(PDO::FETCH_ASSOC);
+                
                 if ($existingRegion) {
                     // Обновляем существующий регион
                     $update = $db->getConnection()->prepare("
                         UPDATE regions 
-                        SET name_ru = ?, name_en = ?, business_id = ?, airtable_updated_at = ?
-                        WHERE airtable_id = ?
+                        SET name_ru = ?, name_en = ?, airtable_id = ?, airtable_updated_at = ?
+                        WHERE business_id = ?
                     ");
                     $update->execute([
                         $regionData['name_ru'],
                         $regionData['name_en'],
-                        $regionData['business_id'],
+                        $regionData['airtable_id'],
                         $regionData['airtable_updated_at'],
-                        $airtableId
+                        $regionData['business_id']
                     ]);
                     $results['updates']++;
                 } else {
@@ -152,11 +152,6 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                     continue;
                 }
                 
-                // Ищем существующий город
-                $existing = $db->getConnection()->prepare("SELECT * FROM cities WHERE airtable_id = ?");
-                $existing->execute([$airtableId]);
-                $existingCity = $existing->fetch(PDO::FETCH_ASSOC);
-                
                 $cityData = [
                     'name_ru' => $fields['Name (RU)'] ?? '',
                     'name_en' => $fields['Name (EN)'] ?? '',
@@ -166,20 +161,25 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                     'airtable_updated_at' => date('Y-m-d H:i:s')
                 ];
                 
+                // Ищем существующий город по Business ID
+                $existing = $db->getConnection()->prepare("SELECT * FROM cities WHERE business_id = ?");
+                $existing->execute([$cityData['business_id']]);
+                $existingCity = $existing->fetch(PDO::FETCH_ASSOC);
+                
                 if ($existingCity) {
                     // Обновляем существующий город
                     $update = $db->getConnection()->prepare("
                         UPDATE cities 
-                        SET name_ru = ?, name_en = ?, business_id = ?, region_id = ?, airtable_updated_at = ?
-                        WHERE airtable_id = ?
+                        SET name_ru = ?, name_en = ?, region_id = ?, airtable_id = ?, airtable_updated_at = ?
+                        WHERE business_id = ?
                     ");
                     $update->execute([
                         $cityData['name_ru'],
                         $cityData['name_en'],
-                        $cityData['business_id'],
                         $cityData['region_id'],
+                        $cityData['airtable_id'],
                         $cityData['airtable_updated_at'],
-                        $airtableId
+                        $cityData['business_id']
                     ]);
                     $results['updates']++;
                 } else {
@@ -230,43 +230,46 @@ function syncFromAirtable($db, $pat, $baseId, $tables) {
                     continue;
                 }
                 
-                // Ищем существующий POI
-                $existing = $db->getConnection()->prepare("SELECT * FROM pois WHERE airtable_id = ?");
-                $existing->execute([$airtableId]);
-                $existingPoi = $existing->fetch(PDO::FETCH_ASSOC);
-                
                 $poiData = [
                     'name_ru' => $fields['Name (RU)'] ?? '',
                     'name_en' => $fields['Name (EN)'] ?? '',
+                    'business_id' => $fields['ID'] ?? '',
                     'city_id' => $cityId,
                     'airtable_id' => $airtableId,
                     'airtable_updated_at' => date('Y-m-d H:i:s')
                 ];
                 
+                // Ищем существующий POI по Business ID
+                $existing = $db->getConnection()->prepare("SELECT * FROM pois WHERE business_id = ?");
+                $existing->execute([$poiData['business_id']]);
+                $existingPoi = $existing->fetch(PDO::FETCH_ASSOC);
+                
                 if ($existingPoi) {
                     // Обновляем существующий POI
                     $update = $db->getConnection()->prepare("
                         UPDATE pois 
-                        SET name_ru = ?, name_en = ?, city_id = ?, airtable_updated_at = ?
-                        WHERE airtable_id = ?
+                        SET name_ru = ?, name_en = ?, city_id = ?, airtable_id = ?, airtable_updated_at = ?
+                        WHERE business_id = ?
                     ");
                     $update->execute([
                         $poiData['name_ru'],
                         $poiData['name_en'],
                         $poiData['city_id'],
+                        $poiData['airtable_id'],
                         $poiData['airtable_updated_at'],
-                        $airtableId
+                        $poiData['business_id']
                     ]);
                     $results['updates']++;
                 } else {
                     // Создаем новый POI
                     $insert = $db->getConnection()->prepare("
-                        INSERT INTO pois (name_ru, name_en, city_id, airtable_id, airtable_updated_at, local_updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        INSERT INTO pois (name_ru, name_en, business_id, city_id, airtable_id, airtable_updated_at, local_updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
                     ");
                     $insert->execute([
                         $poiData['name_ru'],
                         $poiData['name_en'],
+                        $poiData['business_id'],
                         $poiData['city_id'],
                         $airtableId,
                         $poiData['airtable_updated_at'],
@@ -315,8 +318,8 @@ function syncToAirtable($db, $pat, $baseId, $tables) {
         
         foreach ($cities as $city) {
             try {
-                // Получаем Airtable ID региона
-                $regionQuery = $db->getConnection()->prepare("SELECT airtable_id FROM regions WHERE id = ?");
+                // Получаем Airtable ID региона по business_id
+                $regionQuery = $db->getConnection()->prepare("SELECT airtable_id FROM regions WHERE business_id = ?");
                 $regionQuery->execute([$city['region_id']]);
                 $region = $regionQuery->fetch(PDO::FETCH_ASSOC);
                 
@@ -346,8 +349,8 @@ function syncToAirtable($db, $pat, $baseId, $tables) {
         
         foreach ($pois as $poi) {
             try {
-                // Получаем Airtable ID города
-                $cityQuery = $db->getConnection()->prepare("SELECT airtable_id FROM cities WHERE id = ?");
+                // Получаем Airtable ID города по business_id
+                $cityQuery = $db->getConnection()->prepare("SELECT airtable_id FROM cities WHERE business_id = ?");
                 $cityQuery->execute([$poi['city_id']]);
                 $city = $cityQuery->fetch(PDO::FETCH_ASSOC);
                 
