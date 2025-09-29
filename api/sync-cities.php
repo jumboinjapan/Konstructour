@@ -36,13 +36,13 @@ try {
   if ($full) $lastSync = '1970-01-01T00:00:00Z';
 
   // ==== Airtable list ====
-  $cfg = air_cfg($TABLE_ID_CITIES);
+  $cfg = air_cfg($TABLE_ID_CITIES); // не используется напрямую в air_call
   $pulled = 0; $offset=null; $remote = [];
   do {
     $params = ['pageSize'=>100];
     if (!$full && $F_UPDATED) $params['filterByFormula'] = "VALUE({$F_UPDATED}) > VALUE(\"{$lastSync}\")";
     if ($offset) $params['offset']=$offset;
-    [$code,$out,$err,$url] = air_call($cfg, 'GET', '', null, $params);
+    [$code,$out,$err,$url] = air_call('GET', '', null, $params);
     if ($code>=400) {
       http_response_code(500);
       echo json_encode(['ok'=>false,'error'=>"Airtable $code on list",'url'=>$url,'details'=>json_decode($out,true)?:$out,'summary'=>null], JSON_UNESCAPED_UNICODE);
@@ -114,10 +114,10 @@ try {
       $F_DELETED => !!$loc['is_deleted']
     ];
     if ($loc['airtable_id']) {
-      [$c,$o,$e,$u] = air_call($cfg, 'PATCH', $loc['airtable_id'], ['fields'=>$fields]);
+      [$c,$o,$e,$u] = air_call('PATCH', $loc['airtable_id'], ['fields'=>$fields]);
       if ($c>=400) continue; $updated_air++;
     } else {
-      [$c,$o,$e,$u] = air_call($cfg, 'POST', '', ['fields'=>$fields]);
+      [$c,$o,$e,$u] = air_call('POST', '', ['fields'=>$fields]);
       if ($c>=400) continue; $resp = json_decode($o,true);
       if (!empty($resp['id'])) $pdo->prepare("UPDATE cities SET airtable_id=? WHERE identifier=?")->execute([$resp['id'],$loc['identifier']]);
       $pushed++;
