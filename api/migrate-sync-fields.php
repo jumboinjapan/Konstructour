@@ -10,11 +10,11 @@ function migrateSyncFields() {
         // Добавляем поля для отслеживания времени синхронизации
         $migrations = [
             "ALTER TABLE regions ADD COLUMN airtable_updated_at DATETIME",
-            "ALTER TABLE regions ADD COLUMN local_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "ALTER TABLE regions ADD COLUMN local_updated_at DATETIME",
             "ALTER TABLE cities ADD COLUMN airtable_updated_at DATETIME",
-            "ALTER TABLE cities ADD COLUMN local_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "ALTER TABLE cities ADD COLUMN local_updated_at DATETIME",
             "ALTER TABLE pois ADD COLUMN airtable_updated_at DATETIME",
-            "ALTER TABLE pois ADD COLUMN local_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+            "ALTER TABLE pois ADD COLUMN local_updated_at DATETIME"
         ];
         
         foreach ($migrations as $sql) {
