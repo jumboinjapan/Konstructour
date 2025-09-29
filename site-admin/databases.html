@@ -1802,6 +1802,18 @@
             return;
           }
           
+          // Игнорируем клики по кнопкам меню с тремя точками
+          if (e.target.closest('button[data-menu]')) {
+            console.log('Click on menu button, ignoring');
+            return;
+          }
+          
+          // Игнорируем клики по содержимому меню
+          if (e.target.closest('[data-menu-content]')) {
+            console.log('Click on menu content, ignoring');
+            return;
+          }
+          
           // Игнорируем клики по ссылкам в хлебных крошках
           if (e.target.closest('[data-level]')) {
             console.log('Click on breadcrumb, ignoring');
@@ -1963,14 +1975,10 @@
             return;
           }
           
-          // Ищем клик вне меню для его закрытия
-          const menuContent = e.target.closest('[data-menu-content]');
-          if (!menuContent) {
-            // Закрываем все меню
-            document.querySelectorAll('[data-menu-content]').forEach(menu => {
-              menu.classList.add('hidden');
-            });
-          }
+          // Закрываем все меню при клике вне их
+          document.querySelectorAll('[data-menu-content]').forEach(menu => {
+            menu.classList.add('hidden');
+          });
         };
         
         document.addEventListener('click', window.menuHandler);
