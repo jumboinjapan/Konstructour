@@ -2028,8 +2028,8 @@
         statusIcon.className = 'fas fa-spinner fa-spin mr-1';
         
         try {
-          // Запускаем двустороннюю синхронизацию
-          const response = await fetch('/api/sync-api-fixed.php?action=sync', {
+          // Запускаем правильную синхронизацию (тестовая версия)
+          const response = await fetch('/api/sync-correct-test.php?action=sync', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
@@ -2038,11 +2038,21 @@
           
           if (result.ok) {
             // Успешная синхронизация
-            statusText.textContent = `Синхронизация завершена: +${result.airtable_to_local} из Airtable, +${result.local_to_airtable} в Airtable, ${result.updates} обновлений`;
+            const results = result.results || {};
+            const fromAirtable = results.airtable_to_local || 0;
+            const toAirtable = results.local_to_airtable || 0;
+            const updates = results.updates || 0;
+            const errors = results.errors || [];
+            
+            statusText.textContent = `Синхронизация завершена: +${fromAirtable} из Airtable, +${toAirtable} в Airtable, ${updates} обновлений`;
             statusIcon.className = 'fas fa-check-circle mr-1 text-green-500';
             
             // Показываем уведомление
-            showNotification('Синхронизация успешна', 'Данные синхронизированы с Airtable', 'success');
+            let message = `Синхронизировано: +${fromAirtable} из Airtable, +${toAirtable} в Airtable, ${updates} обновлений`;
+            if (errors.length > 0) {
+              message += ` (${errors.length} ошибок)`;
+            }
+            showNotification('Синхронизация завершена', message, errors.length > 0 ? 'warning' : 'success');
             
             // Обновляем данные на странице
             await refreshData();
