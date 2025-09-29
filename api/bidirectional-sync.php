@@ -2,6 +2,7 @@
 // Двусторонняя синхронизация между локальной БД и Airtable
 require_once 'database.php';
 require_once 'config.php';
+require_once 'sync-logger.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -137,14 +138,18 @@ function deleteAirtableRecord($baseId, $tableId, $pat, $recordId) {
 try {
     $db = new Database();
     $config = include 'config.php';
+    $logger = new SyncLogger();
     
     // Airtable settings
     $baseId = 'apppwhjFN82N9zNqm';
     $pat = getenv('AIRTABLE_PAT') ?: 'PLACEHOLDER_FOR_REAL_API_KEY';
     
     if ($pat === 'PLACEHOLDER_FOR_REAL_API_KEY') {
+        $logger->log('sync_start', 'system', null, 'error', 'Airtable token not configured');
         respond(false, ['error' => 'Airtable token not configured'], 400);
     }
+    
+    $logger->log('sync_start', 'system', null, 'info', 'Bidirectional sync started');
     
     $action = $_GET['action'] ?? 'full';
     $results = [
@@ -348,9 +353,20 @@ try {
         }
     }
     
+    // Логируем результаты синхронизации
+    $logger->log('sync_complete', 'system', null, 'success', 
+        "Sync completed: {$results['airtable_to_local']} from Airtable, {$results['local_to_airtable']} to Airtable, {$results['updates']} updates",
+        $results
+    );
+    
     respond(true, $results);
     
 } catch (Exception $e) {
+    $logger->log('sync_error', 'system', null, 'error', $e->getMessage(), [
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
+    ]);
     respond(false, ['error' => $e->getMessage()], 500);
 }
 ?>
