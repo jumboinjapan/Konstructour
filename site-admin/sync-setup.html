@@ -46,7 +46,18 @@
                     <i class="fas fa-cloud mr-2"></i>
                     Шаг 2: Настройка Airtable
                 </h2>
-                <p class="text-white/80 mb-4">Создаем необходимые поля в Airtable</p>
+                <p class="text-white/80 mb-4">Сначала настройте токен, затем создайте поля</p>
+                
+                <!-- Форма токена -->
+                <div class="mb-4">
+                    <input type="password" id="airtable-token" placeholder="patXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" 
+                           class="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50">
+                    <button id="save-token" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                        <i class="fas fa-key mr-2"></i>
+                        Сохранить токен
+                    </button>
+                </div>
+                
                 <button id="setup-airtable" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
                     <i class="fas fa-magic mr-2"></i>
                     Настроить поля
@@ -152,6 +163,40 @@
             } finally {
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-cogs mr-2"></i>Запустить миграцию';
+            }
+        });
+
+        // Сохранение токена Airtable
+        document.getElementById('save-token').addEventListener('click', async function() {
+            const token = document.getElementById('airtable-token').value;
+            if (!token) {
+                alert('Пожалуйста, введите токен Airtable');
+                return;
+            }
+            
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Сохранение...';
+            log('Сохранение токена Airtable...', 'info');
+            
+            try {
+                const response = await fetch('/api/setup-token.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+                const result = await response.json();
+                
+                if (result.ok) {
+                    log('Токен сохранен успешно', 'success');
+                    document.getElementById('airtable-token').value = '';
+                } else {
+                    throw new Error(result.error || 'Неизвестная ошибка');
+                }
+            } catch (error) {
+                log('Ошибка сохранения токена: ' + error.message, 'error');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-key mr-2"></i>Сохранить токен';
             }
         });
 
