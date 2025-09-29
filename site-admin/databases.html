@@ -1626,84 +1626,45 @@
         }
       }
 
-        // Предзагрузка POI для региона - загружаем параллельно и неблокирующе
+        // Предзагрузка только счетчиков POI для региона - загружаем параллельно и неблокирующе
       async function preloadPoisCountsForRegion(region){
         try{
           const list = citiesByRegion[region.id] || [];
           if (!list.length) return;
-          
-          // Полная очистка poisByCity для предотвращения "перетекания" POI между регионами
-          Object.keys(poisByCity).forEach(key => {
-            delete poisByCity[key];
-          });
-          
-          // Инициализируем пустые массивы для всех городов текущего региона
-          list.forEach(city => {
-            poisByCity[city.id] = [];
-          });
             
-          console.log('Loading POI for region:', region.name, 'Total cities:', list.length);
+          console.log('Loading POI counts for region:', region.name, 'Total cities:', list.length);
           
-          // Загружаем POI параллельно для всех городов
-          const loadPromises = list.map(async (city) => {
-            try {
-              const res = await fetch(`/api/data-api.php?action=pois&city_id=${city.id}`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-              });
-              const j = await res.json();
-              const items = j.ok ? (j.items || []) : [];
-              
-              const pois = items.map(record => ({
-                id: record.id,
-                name: record.name_ru || '—',
-                type: record.category || '',
-                name_en: record.name_en || '',
-                place_id: record.place_id || '',
-                published: record.published || false,
-                poi_id: record.business_id || '',
-                region: record.region_id ? [record.region_id] : []
-              }));
-              
-              // Сортируем POI по ID в порядке возрастания (создаем новый массив)
-              const sortedPois = [...pois].sort((a, b) => {
-                const getNumericId = (id) => {
-                  const match = id.match(/(\d+)$/);
-                  return match ? parseInt(match[1], 10) : 0;
-                };
-                return getNumericId(a.id) - getNumericId(b.id);
-              });
-              
-              poisByCity[city.id] = sortedPois;
-              console.log(`Loaded ${pois.length} POI for city ${city.name}`);
-              
-              // Обновляем UI после загрузки каждого города
-              if (level === 'cities') {
-                // Обновляем только счетчик для этого города
+          // Загружаем только счетчики POI одним запросом для всего региона
+          try {
+            const res = await fetch(`/api/data-api.php?action=city-stats&region_id=${region.id}`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const j = await res.json();
+            const cityStats = j.ok ? (j.city_stats || {}) : {};
+            
+            // Обновляем счетчики в UI если мы на уровне городов
+            if (level === 'cities') {
+              list.forEach(city => {
+                const count = cityStats[city.id] || 0;
                 const cityElement = document.querySelector(`[data-go="pois"][data-id="${city.id}"]`);
                 if (cityElement) {
                   const countElement = cityElement.querySelector('.text-xs.font-medium');
                   if (countElement) {
-                    countElement.textContent = pois.length;
+                    countElement.textContent = count;
                   }
                 }
-              }
-              
-              return pois.length;
-            } catch (e) {
-              console.warn(`Error loading POI for city ${city.name}:`, e);
-              poisByCity[city.id] = [];
-              return 0;
+                console.log(`POI count for city ${city.name}: ${count}`);
+              });
             }
-          });
-          
-          // Ждем завершения всех загрузок параллельно
-          await Promise.all(loadPromises);
-          
-          console.log('All POI loaded for region:', region.name);
+            
+            console.log('POI counts loaded for region:', region.name);
+          } catch (error) {
+            console.warn('Failed to load POI counts for region:', region.name, error);
+          }
           
         }catch(e){
-            console.error('Error preloading POI for region:', region.name, e);
+            console.error('Error preloading POI counts for region:', region.name, e);
           }
       }
 
