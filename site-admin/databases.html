@@ -2190,11 +2190,10 @@
         if (!confirmed) return;
         
         try {
-          const res = await fetch('/api/data-api.php', {
+          const res = await fetch('/api/data-api.php?action=delete-region', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: 'delete-region',
               id: id
             })
           });
@@ -2275,11 +2274,10 @@
         if (!confirmed) return;
         
         try {
-          const res = await fetch('/api/data-api.php', {
+          const res = await fetch('/api/data-api.php?action=delete-city', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: 'delete-city',
               id: id
             })
           });
@@ -2361,11 +2359,10 @@
         if (!confirmed) return;
         
         try {
-          const res = await fetch('/api/data-api.php', {
+          const res = await fetch('/api/data-api.php?action=delete-poi', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: 'delete-poi',
               id: id
             })
           });
