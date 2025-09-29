@@ -907,6 +907,22 @@
       const LS_REGIONS_KEY = 'konstructour_regions_cache_v1';
       function loadRegionsCache(){ try{ const s=localStorage.getItem(LS_REGIONS_KEY); return s?JSON.parse(s):[]; }catch(_e){ return []; } }
       function saveRegionsCache(list){ try{ localStorage.setItem(LS_REGIONS_KEY, JSON.stringify(Array.isArray(list)?list:[])); }catch(_e){} }
+      
+      // Индикатор загрузки
+      function showLoadingIndicator(message = 'Загрузка...') {
+        const indicator = document.createElement('div');
+        indicator.id = 'loading-indicator';
+        indicator.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2';
+        indicator.innerHTML = `<i class="fas fa-spinner fa-spin"></i>${message}`;
+        document.body.appendChild(indicator);
+      }
+      
+      function hideLoadingIndicator() {
+        const indicator = document.getElementById('loading-indicator');
+        if (indicator) {
+          indicator.remove();
+        }
+      }
 
       let level = 'regions';
       let selectedRegion = null;
@@ -1639,8 +1655,8 @@
             const res = await fetch(`/api/data-api.php?action=city-stats&region_id=${region.id}`, {
               method: 'GET',
               headers: { 'Content-Type': 'application/json' }
-            });
-            const j = await res.json();
+              });
+              const j = await res.json();
             const cityStats = j.ok ? (j.city_stats || {}) : {};
             
             // Обновляем счетчики в UI если мы на уровне городов
@@ -3314,30 +3330,46 @@
         console.log('Инициализация системы...');
         
         try {
-        // Сначала рендерим карточки регионов с нулевыми счетчиками для мгновенного отображения
+        // 1. Сначала загружаем данные из кэша для мгновенного отображения
+        regions = loadRegionsCache();
+        console.log('Загружено из кэша:', regions.length, 'регионов');
+        
+        // 2. Сразу рендерим карточки регионов (даже если данных нет)
         renderRegions();
         
-        // Настраиваем обработчики событий сразу после рендеринга
+        // 3. Показываем индикатор загрузки, если данных нет
+        if (!regions.length) {
+          showLoadingIndicator('Загрузка регионов...');
+        }
+        
+        // 3. Настраиваем обработчики событий сразу после рендеринга
         setupNavigationHandler();
         setupActionButtonsHandler();
         setupMenuHandler();
         
-        // Сначала проверяем актуальность данных
+        // 4. Проверяем актуальность данных в фоне
         await checkDataFreshness();
         
         // Если данные не загружены после проверки, загружаем их
         if (!regions.length) {
           console.log('Загрузка регионов...');
-          await syncRegionsFromAirtable();
-          if (!regions.length){ await loadRegionsViaProxy(); }
+        await syncRegionsFromAirtable();
+        if (!regions.length){ await loadRegionsViaProxy(); }
           if (!regions.length) {
             renderRegions();
             return;
           }
+          // Обновляем UI после загрузки актуальных данных
+          renderRegions();
+          hideLoadingIndicator();
         }
         
         // Загружаем счетчики городов для регионов асинхронно
-        loadRegionCounts();
+        loadRegionCounts().then(() => {
+          // Обновляем UI после загрузки счетчиков
+          renderRegions();
+          hideLoadingIndicator();
+        });
         
         // Если города не загружены, загружаем их асинхронно
         if (Object.keys(citiesByRegion).length === 0) {
