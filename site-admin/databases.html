@@ -1493,18 +1493,15 @@
           const j = await res.json();
           if (j.ok && j.stats) {
             // Обновляем счетчики городов для каждого региона
-            Object.keys(citiesByRegion).forEach(regionId => {
-              const region = regions.find(r => r.id === regionId);
-              if (region) {
-                const cityCount = j.stats.cities_by_region[regionId] || 0;
-                // Обновляем счетчик в UI если мы на уровне регионов
-                if (level === 'regions') {
-                  const regionElement = document.querySelector(`[data-go="cities"][data-id="${regionId}"]`);
-                  if (regionElement) {
-                    const countElement = regionElement.querySelector('.text-xs.font-medium');
-                    if (countElement) {
-                      countElement.textContent = cityCount;
-                    }
+            regions.forEach(region => {
+              const cityCount = j.stats.cities_by_region[region.id] || 0;
+              // Обновляем счетчик в UI если мы на уровне регионов
+              if (level === 'regions') {
+                const regionElement = document.querySelector(`[data-go="cities"][data-id="${region.id}"]`);
+                if (regionElement) {
+                  const countElement = regionElement.querySelector('.text-xs.font-medium');
+                  if (countElement) {
+                    countElement.textContent = cityCount;
                   }
                 }
               }
@@ -3356,56 +3353,60 @@
         console.log('Инициализация системы...');
         
         try {
-          // Сначала проверяем актуальность данных
-          await checkDataFreshness();
-          
-          // Если данные не загружены после проверки, загружаем их
+        // Сначала рендерим карточки регионов с нулевыми счетчиками для мгновенного отображения
+        renderRegions();
+        
+        // Настраиваем обработчики событий сразу после рендеринга
+        setupNavigationHandler();
+        setupActionButtonsHandler();
+        setupMenuHandler();
+        
+        // Сначала проверяем актуальность данных
+        await checkDataFreshness();
+        
+        // Если данные не загружены после проверки, загружаем их
+        if (!regions.length) {
+          console.log('Загрузка регионов...');
+          await syncRegionsFromAirtable();
+          if (!regions.length){ await loadRegionsViaProxy(); }
           if (!regions.length) {
-            console.log('Загрузка регионов...');
-        await syncRegionsFromAirtable();
-        if (!regions.length){ await loadRegionsViaProxy(); }
-            if (!regions.length) {
-              renderRegions();
-              return;
+            renderRegions();
+            return;
+          }
+        }
+        
+        // Загружаем счетчики городов для регионов асинхронно
+        loadRegionCounts();
+        
+        // Если города не загружены, загружаем их асинхронно
+        if (Object.keys(citiesByRegion).length === 0) {
+          console.log('Загрузка городов для всех регионов...');
+          for (const region of regions) {
+            await loadCitiesForRegion(region);
+          }
+        }
+        
+        // Если POI не загружены, загружаем их асинхронно
+        if (Object.keys(poisByCity).length === 0) {
+          console.log('Загрузка POI для всех городов...');
+          for (const region of regions) {
+            const cities = citiesByRegion[region.id] || [];
+            for (const city of cities) {
+              await loadPoisForCity(city);
             }
           }
-          
-          // Если города не загружены, загружаем их
-          if (Object.keys(citiesByRegion).length === 0) {
-            console.log('Загрузка городов для всех регионов...');
-            for (const region of regions) {
-              await loadCitiesForRegion(region);
-            }
-          }
-          
-          // Если POI не загружены, загружаем их
-          if (Object.keys(poisByCity).length === 0) {
-            console.log('Загрузка POI для всех городов...');
-            for (const region of regions) {
-              const cities = citiesByRegion[region.id] || [];
-              for (const city of cities) {
-                await loadPoisForCity(city);
-              }
-            }
-          }
-          
-          // Отображаем регионы с правильными счетчиками
-          console.log('Данные готовы:');
-          console.log('regions:', regions.length);
-          console.log('citiesByRegion:', Object.keys(citiesByRegion).length, 'регионов с городами');
-          console.log('poisByCity:', Object.keys(poisByCity).length, 'городов с POI');
-          
-          renderRegions();
-          console.log('Система готова к работе');
+        }
+        
+        console.log('Данные готовы:');
+        console.log('regions:', regions.length);
+        console.log('citiesByRegion:', Object.keys(citiesByRegion).length, 'регионов с городами');
+        console.log('poisByCity:', Object.keys(poisByCity).length, 'городов с POI');
+        
+        console.log('Система готова к работе');
         } catch (error) {
           console.error('Ошибка инициализации:', error);
           renderRegions();
         }
-        
-        // Настраиваем обработчик кликов ПОСЛЕ загрузки данных
-        setupNavigationHandler();
-        setupActionButtonsHandler();
-        setupMenuHandler();
         
         // Обработчик кликов для хлебных крошек
         setupBreadcrumbHandler();
