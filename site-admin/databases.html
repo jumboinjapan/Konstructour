@@ -1508,7 +1508,7 @@
           });
           const j = await res.json();
           if (j.ok && j.stats) {
-            // Обновляем счетчики городов для каждого региона
+            // Обновляем счетчики городов для каждого региона плавно
             regions.forEach(region => {
               const cityCount = j.stats.cities_by_region[region.id] || 0;
               // Обновляем счетчик в UI если мы на уровне регионов
@@ -1517,7 +1517,19 @@
                 if (regionElement) {
                   const countElement = regionElement.querySelector('.text-xs.font-medium');
                   if (countElement) {
-                    countElement.textContent = cityCount;
+                    // Плавное обновление счетчика без сброса
+                    const currentCount = parseInt(countElement.textContent) || 0;
+                    if (currentCount !== cityCount) {
+                      // Добавляем анимацию обновления
+                      countElement.style.transition = 'all 0.3s ease';
+                      countElement.style.transform = 'scale(1.1)';
+                      countElement.textContent = cityCount;
+                      
+                      // Возвращаем к нормальному размеру
+                      setTimeout(() => {
+                        countElement.style.transform = 'scale(1)';
+                      }, 300);
+                    }
                   }
                 }
               }
@@ -1538,7 +1550,7 @@
           });
           const j = await res.json();
           if (j.ok && j.stats) {
-            // Обновляем счетчики POI для каждого города
+            // Обновляем счетчики POI для каждого города плавно
             Object.keys(j.stats).forEach(cityId => {
               const poiCount = j.stats[cityId] || 0;
               // Обновляем счетчик в UI если мы на уровне городов
@@ -1547,7 +1559,19 @@
                 if (cityElement) {
                   const countElement = cityElement.querySelector('.text-xs.font-medium');
                   if (countElement) {
-                    countElement.textContent = poiCount;
+                    // Плавное обновление счетчика без сброса
+                    const currentCount = parseInt(countElement.textContent) || 0;
+                    if (currentCount !== poiCount) {
+                      // Добавляем анимацию обновления
+                      countElement.style.transition = 'all 0.3s ease';
+                      countElement.style.transform = 'scale(1.1)';
+                      countElement.textContent = poiCount;
+                      
+                      // Возвращаем к нормальному размеру
+                      setTimeout(() => {
+                        countElement.style.transform = 'scale(1)';
+                      }, 300);
+                    }
                   }
                 }
               }
@@ -3366,8 +3390,7 @@
         
         // Загружаем счетчики городов для регионов асинхронно
         loadRegionCounts().then(() => {
-          // Обновляем UI после загрузки счетчиков
-          renderRegions();
+          // Счетчики уже обновлены в loadRegionCounts, не нужно перерендеривать
           hideLoadingIndicator();
         });
         
