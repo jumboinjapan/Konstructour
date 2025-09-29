@@ -3,12 +3,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__.'/_airtable-common.php';
 
-$F_ID = getenv('AIR_F_ID') ?: 'fldwlHyd89p3lRsQe'; // Business ID
-$F_RU = getenv('AIR_F_RU') ?: 'Name (RU)';
-$F_EN = getenv('AIR_F_EN') ?: 'Name (EN)';
-$F_UPDATED = getenv('AIR_R_UPDATED') ?: 'updated_at';
-$F_DELETED = getenv('AIR_R_DELETED') ?: 'is_deleted';
-
 function ok($p){ echo json_encode($p, JSON_UNESCAPED_UNICODE); exit; }
 function fail($m,$e=[]){ http_response_code(500); echo json_encode(['ok'=>false,'error'=>$m]+$e, JSON_UNESCAPED_UNICODE); exit; }
 
@@ -25,6 +19,7 @@ try {
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
   ]);
+  
   // ensure schema regions
   $pdo->exec("CREATE TABLE IF NOT EXISTS regions (
     id TEXT PRIMARY KEY,
@@ -44,7 +39,12 @@ try {
   // подтягиваем только 9 ID (жёсткое зеркало)
   $allowed = ['REG-0001','REG-0002','REG-0003','REG-0004','REG-0005','REG-0006','REG-0007','REG-0008','REG-0009'];
   if (!empty($_GET['ids'])) $allowed = array_values(array_filter(array_map('trim', explode(',', $_GET['ids']))));
-  $parts = array_map(fn($v)=>"{${F_ID}}='".addslashes($v)."'", $allowed);
+  
+  // Создаем фильтр для Airtable (используем жестко закодированное имя поля)
+  $parts = [];
+  foreach ($allowed as $v) {
+    $parts[] = "{fldwlHyd89p3lRsQe}='" . addslashes($v) . "'";
+  }
   $formula = 'OR('.implode(',', $parts).')';
 
   // pull from Airtable
@@ -58,10 +58,10 @@ try {
     foreach (($j['records']??[]) as $rec){
       $f = $rec['fields'] ?? [];
       $remote[] = [
-        'id'        => strval($f[$F_ID] ?? ''),
-        'name_ru'   => strval($f[$F_RU] ?? ''),
-        'name_en'   => strval($f[$F_EN] ?? ''),
-        'updated_at'=> strval($f[$F_UPDATED] ?? $rec['createdTime'])
+        'id'        => strval($f['fldwlHyd89p3lRsQe'] ?? ''),  // Business ID
+        'name_ru'   => strval($f['Name (RU)'] ?? ''),
+        'name_en'   => strval($f['Name (EN)'] ?? ''),
+        'updated_at'=> strval($f['updated_at'] ?? $rec['createdTime'])
       ];
     }
     $pulled += count($j['records'] ?? []);
@@ -74,6 +74,7 @@ try {
   $upd = $pdo->prepare('UPDATE regions SET name_ru=?,name_en=?,business_id=?,updated_at=? WHERE id=?');
 
   $pdo->beginTransaction();
+  $updated_local = 0;
   foreach ($remote as $r){
     if ($r['id']==='') continue;
     $sel->execute([$r['id']]);
@@ -81,18 +82,33 @@ try {
     if ($row){
       if ($row['name_ru']!==$r['name_ru'] || $row['name_en']!==$r['name_en'] || $row['updated_at']!==$r['updated_at']){
         $upd->execute([$r['name_ru'],$r['name_en'],$r['id'],$r['updated_at'],$r['id']]);
+        $updated_local++;
       }
     } else {
       $ins->execute([$r['id'],$r['name_ru'],$r['name_en'],$r['id'],$r['updated_at']]);
+      $updated_local++;
     }
   }
   // delete others not in allowed
   $in = "('".implode("','", array_map('addslashes', $allowed))."')";
-  $pdo->exec("DELETE FROM regions WHERE id NOT IN $in");
+  $deleted_local = $pdo->exec("DELETE FROM regions WHERE id NOT IN $in");
   $pdo->commit();
 
+  // Считаем итоговые количества
+  $local_total = $pdo->query("SELECT COUNT(*) as cnt FROM regions")->fetch()['cnt'];
+  $remote_total = count($remote);
+
   $setState->execute([gmdate('c')]);
-  ok(['ok'=>true,'summary'=>['pulled'=>$pulled,'kept'=>count($allowed),'deleted'=>'done']]);
+  ok([
+    'ok'=>true,
+    'summary'=>[
+      'pulled'=>$pulled,
+      'updated_local'=>$updated_local,
+      'deleted_local'=>$deleted_local,
+      'remote_total'=>$remote_total,
+      'local_total'=>$local_total
+    ]
+  ]);
 
 } catch (Throwable $e) {
   fail($e->getMessage(), ['summary'=>null]);
