@@ -18,11 +18,14 @@ function loadEnv($filePath) {
             $key = trim($key);
             $value = trim($value);
             
-            // Устанавливаем переменную окружения только если она не установлена
-            if (!getenv($key)) {
-                putenv("$key=$value");
-                $_ENV[$key] = $value;
-                $_SERVER[$key] = $value;
+            // Устанавливаем переменную окружения (перезаписываем если уже установлена)
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+            
+            // Отладочная информация
+            if ($key === 'AIRTABLE_PAT') {
+                error_log("Loaded AIRTABLE_PAT: $value");
             }
         }
     }
@@ -30,9 +33,17 @@ function loadEnv($filePath) {
     return true;
 }
 
-// Загружаем переменные окружения из файлов
+// Загружаем переменные окружения из файлов (в порядке приоритета)
 loadEnv(__DIR__ . '/airtable.env.local');
 loadEnv(__DIR__ . '/airtable.env');
 loadEnv(__DIR__ . '/.env');
 loadEnv(__DIR__ . '/.env.local');
+
+// Отладочная информация
+if (getenv('AIRTABLE_PAT') && getenv('AIRTABLE_PAT') !== 'your_airtable_token_here') {
+    // Токен загружен успешно
+} else {
+    // Токен не загружен, показываем отладочную информацию
+    error_log('AIRTABLE_PAT not loaded from env files');
+}
 ?>
