@@ -53,7 +53,8 @@ try {
 
   $response = [
     'ok'=>true,
-    'message'=>'Доступ к базе и таблице подтверждён. Поля можно настраивать.'
+    'message'=>'Доступ к базе и таблице подтверждён. Поля можно настраивать.',
+    'existing_fields'=>[]
   ];
   if (isset($metaInfo)) $response['meta'] = $metaInfo;
   echo json_encode($response, JSON_UNESCAPED_UNICODE);
