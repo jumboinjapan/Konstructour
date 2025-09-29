@@ -7,7 +7,8 @@ try {
   $cfg = air_cfg();
 
   // 1) Пингуем метаданные — не трогает схему, показывает 401/403 честно
-  [$code,$out,$err,$url,$h,$t] = air_call('GET', 'meta/bases', null, ['limit'=>1]);
+  // meta/bases не принимает limit → без параметров
+  [$code,$out,$err,$url,$h,$t] = air_call('GET', 'meta/bases');
   $json = json_decode($out, true);
 
   if ($code === 401) {
