@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $token = isset($input['token']) ? trim($input['token']) : '';
 
-    if (!preg_match('/^pat[0-9A-Za-z_]{20,}$/', $token)) {
+    if (!preg_match('/^pat[0-9A-Za-z._-]{20,}$/', $token)) {
         respond(false, ['error' => 'Invalid PAT format'], 400);
     }
 
