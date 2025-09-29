@@ -33,7 +33,6 @@ try {
     business_id TEXT NOT NULL UNIQUE,
     name_ru TEXT NOT NULL,
     name_en TEXT,
-    region TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )");
@@ -94,11 +93,11 @@ try {
 
   // Сохраняем города в базу данных
   $pdo->beginTransaction();
-  $insCity = $pdo->prepare('INSERT OR REPLACE INTO cities (business_id,name_ru,name_en,region,updated_at) VALUES (?,?,?,?,?)');
+  $insCity = $pdo->prepare('INSERT OR REPLACE INTO cities (business_id,name_ru,name_en,updated_at) VALUES (?,?,?,?)');
   foreach ($cities as $c) {
     if ($c['business_id'] !== '') {
       $insCity->execute([
-        $c['business_id'], $c['name_ru'], $c['name_en'], $c['region'], gmdate('c')
+        $c['business_id'], $c['name_ru'], $c['name_en'], gmdate('c')
       ]);
     }
   }
