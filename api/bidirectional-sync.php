@@ -31,10 +31,14 @@ function ok($payload){ echo json_encode($payload, JSON_UNESCAPED_UNICODE); exit;
 function fail($msg, $extra=[]){ http_response_code(500); echo json_encode(['ok'=>false,'error'=>$msg]+$extra, JSON_UNESCAPED_UNICODE); exit; }
 
 try {
+  $t0_ms = (int) round(microtime(true) * 1000);
+  $startedIso = gmdate('c');
+  $full = ((isset($_GET['full']) && $_GET['full'] === '1') || (isset($_POST['full']) && $_POST['full'] === '1'));
+
   // 0) Проверим конфиг Airtable/токен и доступ к таблице
   $cfg = air_cfg(); // выбросит понятную ошибку, если токен некорректен/не найден
   // Пингуем таблицу (list 1)
-  [$code,$out,$err,$url] = air_call('GET','', null, ['pageSize'=>1]);
+  [$code,$out,$err,$url] = air_call('GET','', null, ['pageSize'=> $full ? 100 : 1]);
   if ($code === 401) fail('Airtable 401 (PAT rejected)', ['where'=>'list','url'=>$url, 'air_resp'=>json_decode($out,true)?:$out]);
   if ($code === 403) fail('Airtable 403 (no access to base/table)', ['where'=>'list','url'=>$url, 'air_resp'=>json_decode($out,true)?:$out]);
   if ($code >= 400)  fail("Airtable $code", ['where'=>'list','url'=>$url, 'air_resp'=>json_decode($out,true)?:$out]);
@@ -57,19 +61,27 @@ try {
     ];
   }
 
+  $summary = [
+    'started_at'    => $startedIso,
+    'finished_at'   => gmdate('c'),
+    'duration_ms'   => (int) (round(microtime(true) * 1000) - $t0_ms),
+    'pulled'        => isset($j['records']) ? count($j['records']) : 0,
+    'pushed'        => 0,
+    'updated_local' => 0,
+    'updated_air'   => 0,
+    'deleted_local' => 0,
+    'deleted_air'   => 0
+  ];
+
   ok([
     'ok' => true,
-    'summary' => [
-      'sync_time' => gmdate('c'),
-      'airtable_changes' => 0,
-      'local_changes' => 0
-    ],
+    'summary' => $summary,
     'note' => 'Токен сконфигурирован, доступ к таблице есть. Это “smoke test”. Полный апсерт включим после подтверждения.',
     'field_mapping' => ['ID'=>$F_ID, 'RU'=>$F_RU, 'EN'=>$F_EN],
     'airtable_sample' => $sample
   ]);
 
 } catch (Throwable $e) {
-  fail($e->getMessage());
+  fail($e->getMessage(), ['summary'=>null]);
 }
 ?>

@@ -3171,21 +3171,17 @@
           try {
             console.log('🔄 Полное зеркалирование с Airtable...');
             
-            // Запускаем двустороннюю синхронизацию
+            // Запускаем двустороннюю синхронизацию (POST; поддержка full)
             const syncRes = await fetch('/api/bidirectional-sync.php', {
-              method: 'GET',
+              method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
             
-            if (!syncRes.ok) {
-              throw new Error(`HTTP ${syncRes.status}: ${syncRes.statusText}`);
-            }
-            
-            const syncData = await syncRes.json();
-            console.log('Результат зеркалирования:', syncData);
-            
-            if (!syncData.ok) {
-              throw new Error(syncData.error || 'Ошибка синхронизации');
+            let syncData = null;
+            try { syncData = await syncRes.json(); } catch(_) {}
+            if (!syncRes.ok || !syncData || syncData.ok === false) {
+              const msg = (syncData && (syncData.error || (syncData.summary===null && 'Server error'))) || `HTTP ${syncRes.status}: ${syncRes.statusText}`;
+              throw new Error(msg);
             }
             
             // Полностью перезагружаем все данные
@@ -3212,9 +3208,9 @@
             renderRegions();
             loadRegionCounts();
             
-            // Показываем результат
-            const results = syncData.results.summary;
-            const message = `Создано: ${results.total_created}, Обновлено: ${results.total_updated}, Удалено: ${results.total_deleted}`;
+            // Показываем результат (унифицированный контракт)
+            const s = syncData.summary || {};
+            const message = `Pull: ${s.pulled||0}, Push: ${s.pushed||0}, Updated(L): ${s.updated_local||0}, Updated(A): ${s.updated_air||0}, Deleted(L): ${s.deleted_local||0}, Deleted(A): ${s.deleted_air||0}`;
             console.log(`✅ Зеркалирование завершено: ${message}`);
             
             if (window.osNotify) {
