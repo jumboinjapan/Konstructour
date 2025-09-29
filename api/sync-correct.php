@@ -377,16 +377,8 @@ try {
     $db = new Database();
     $config = include 'config.php';
     
-    // Читаем токен из файла airtable.env.local
-    $pat = 'PLACEHOLDER_FOR_REAL_API_KEY';
-    $envFile = __DIR__ . '/airtable.env.local';
-    
-    if (file_exists($envFile)) {
-        $envContent = file_get_contents($envFile);
-        if (preg_match('/AIRTABLE_PAT=([^\s\n\r]+)/', $envContent, $matches)) {
-            $pat = trim($matches[1]);
-        }
-    }
+    // Читаем токен из конфигурации
+    $pat = $config['airtable_registry']['api_key'] ?? 'PLACEHOLDER_FOR_REAL_API_KEY';
     
     $baseId = 'apppwhjFN82N9zNqm';
     
