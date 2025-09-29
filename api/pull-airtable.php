@@ -17,11 +17,23 @@ if (file_exists($tokenFile)) {
     }
 }
 
-// Отладка токена
+// Проверяем, что токен загружен
 $debugToken = getenv('AIRTABLE_API_KEY');
 if (empty($debugToken)) {
-    echo json_encode(['ok'=>false,'error'=>'Token not loaded from file', 'file'=>$tokenFile, 'exists'=>file_exists($tokenFile)]);
-    exit;
+    // Если токен не загружен через переменную окружения, попробуем загрузить напрямую
+    $tokenFile = __DIR__ . '/airtable.env.local';
+    if (file_exists($tokenFile)) {
+        $lines = file($tokenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            if (strpos($line, 'AIRTABLE_PAT=') === 0) {
+                $token = trim(substr($line, 13));
+                putenv("AIRTABLE_API_KEY=$token");
+                $_ENV['AIRTABLE_API_KEY'] = $token;
+                $_SERVER['AIRTABLE_API_KEY'] = $token;
+                break;
+            }
+        }
+    }
 }
 
 require_once __DIR__.'/_airtable-common.php';
