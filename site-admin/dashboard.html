@@ -144,7 +144,6 @@
                         <label class="text-gray-600">Автообновление:
                             <select id="autoRefreshHealth" class="ml-2 border rounded px-2 py-1 text-xs">
                                 <option value="0">Выкл</option>
-                                <option value="15000">15 сек</option>
                                 <option value="30000">30 сек</option>
                                 <option value="60000">1 мин</option>
                                 <option value="300000">5 мин</option>
@@ -348,7 +347,15 @@
       const perfKey = 'kt_health_perf_history';
       const setDot = (el, cls) => { el.classList.remove('ok','err','warn'); el.classList.add(cls); };
       const fmt = v => typeof v==='number' ? v.toString() : (v ?? '—');
-      const now = () => new Date().toLocaleString();
+      const now = () => new Date().toLocaleString('ru-RU', {
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'Europe/Moscow'
+      });
       
       // Performance tracking
       let performanceHistory = JSON.parse(localStorage.getItem(perfKey) || '[]');
@@ -358,10 +365,14 @@
       function loadAuto(){ return parseInt(localStorage.getItem(autoKey)||'0',10); }
 
       async function fetchJson(u, opts={}){
-        const r = await fetch(u, Object.assign({ cache:'no-store' }, opts));
-        const txt = await r.text();
-        try{ return { status:r.status, json: JSON.parse(txt), raw: txt }; }
-        catch{ return { status:r.status, json:null, raw: txt }; }
+        try {
+          const r = await fetch(u, Object.assign({ cache:'no-store' }, opts));
+          const txt = await r.text();
+          try{ return { status:r.status, json: JSON.parse(txt), raw: txt }; }
+          catch{ return { status:r.status, json:null, raw: txt }; }
+        } catch (e) {
+          return { status: 0, json: null, raw: `Network error: ${e.message}` };
+        }
       }
 
       async function runHealth(){
@@ -402,7 +413,7 @@
         const j = out.json || {};
         const ok = !!j.ok;
         setDot(dot, ok?'ok':'err');
-        const s = ok ? `regions:${j.regions ?? '—'} cities:${j.cities ?? '—'} pois:${j.pois ?? '—'}` : (j.error || `HTTP ${out.status}`);
+        const s = ok ? `regions:${j.regions ?? '—'} cities:${j.cities ?? '—'} pois:${j.pois ?? '—'}` : (j.error || j.message || `HTTP ${out.status}`);
         $('#syncResult').textContent = s;
       }
 
@@ -419,10 +430,11 @@
         const responseTime = Math.round(endTime - startTime);
         
         // Add to performance history
+        const success = !!(out.json?.ok && (out.json?.auth === true || out.json?.auth === undefined));
         performanceHistory.push({
           timestamp: Date.now(),
           responseTime: responseTime,
-          success: out.json?.ok || false,
+          success: success,
           status: out.status
         });
         
@@ -455,10 +467,12 @@
         chart.innerHTML = '';
         
         const recent = performanceHistory.slice(-10);
-        const maxTime = Math.max(...recent.map(entry => entry.responseTime), 100);
+        if (recent.length === 0) return;
+        
+        const maxTime = Math.max(100, ...recent.map(entry => entry.responseTime || 0));
         
         recent.forEach(entry => {
-          const height = Math.round((entry.responseTime / maxTime) * 100);
+          const height = Math.round(((entry.responseTime || 0) / maxTime) * 100);
           const color = entry.success ? '#10b981' : '#ef4444';
           const bar = document.createElement('div');
           bar.style.height = `${height}%`;
@@ -466,7 +480,7 @@
           bar.style.flex = '1';
           bar.style.borderRadius = '2px';
           bar.style.minHeight = '4px';
-          bar.title = `${entry.responseTime}ms (${entry.success ? 'OK' : 'FAIL'})`;
+          bar.title = `${entry.responseTime || 0}ms (${entry.success ? 'OK' : 'FAIL'})`;
           chart.appendChild(bar);
         });
       }
