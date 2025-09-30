@@ -21,10 +21,11 @@ function _possible_pat_paths(): array {
 function _read_pat_from_file() {
   foreach (_possible_pat_paths() as $file) {
     if (is_readable($file)) {
-      $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-      foreach ($lines as $line) {
-        if (strpos($line, 'AIRTABLE_PAT=') === 0) {
-          $val = trim(substr($line, 13)); // 13 символов для 'AIRTABLE_PAT='
+      $content = file_get_contents($file);
+      if ($content !== false) {
+        // Используем regex для более надежного извлечения токена
+        if (preg_match('/AIRTABLE_PAT=([^\r\n]+)/', $content, $matches)) {
+          $val = trim($matches[1]);
           if ($val !== '') return $val;
         }
       }
