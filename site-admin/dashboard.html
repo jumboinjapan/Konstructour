@@ -233,6 +233,7 @@
                     <div class="flex gap-2">
                         <a href="health-dashboard.html" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">Полный дашборд</a>
                         <button id="btnTokenRotate" class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200">Rotate Token</button>
+                        <button id="btnQuickFix" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">🔧 Quick Fix</button>
                     </div>
                 </div>
             </div>
@@ -261,6 +262,81 @@
             </div>
         </main>
     </div>
+
+    <!-- Quick Fix Modal -->
+    <div id="quickFixModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">🔧 Quick Fix - Airtable Token</h3>
+                <button id="closeQuickFix" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h4 class="text-sm font-medium text-yellow-800">Проблема обнаружена</h4>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Airtable токен отсутствует или недействителен. Введите новый PAT токен для восстановления работы.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Airtable PAT Token</label>
+                        <input 
+                            type="password" 
+                            id="quickFixToken" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="patYOUR_TOKEN_HERE"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">Введите ваш Airtable Personal Access Token</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Admin Token</label>
+                        <input 
+                            type="password" 
+                            id="quickFixAdminToken" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Ваш админ токен"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">Требуется для авторизации операции</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Слот для сохранения</label>
+                        <select id="quickFixSlot" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="current">Current (активный)</option>
+                            <option value="next">Next (резервный)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-500">
+                    <span id="quickFixStatus">Готов к установке</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="cancelQuickFix" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        Отмена
+                    </button>
+                    <button id="applyQuickFix" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                        <i class="fas fa-wrench mr-1"></i>Исправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/admin-auth.js?v=20250923-errlog1"></script>
     <script src="../js/admin-dashboard.js?v=20250923-errlog1"></script>
     
@@ -433,6 +509,64 @@
         }
       }
 
+      // Quick Fix functionality
+      function showQuickFixModal() {
+        $('#quickFixModal').classList.remove('hidden');
+        $('#quickFixToken').focus();
+      }
+
+      function hideQuickFixModal() {
+        $('#quickFixModal').classList.add('hidden');
+        $('#quickFixToken').value = '';
+        $('#quickFixAdminToken').value = '';
+        $('#quickFixSlot').value = 'current';
+        $('#quickFixStatus').textContent = 'Готов к установке';
+      }
+
+      async function applyQuickFix() {
+        const token = $('#quickFixToken').value.trim();
+        const adminToken = $('#quickFixAdminToken').value.trim();
+        const slot = $('#quickFixSlot').value;
+        
+        if (!token || !adminToken) {
+          $('#quickFixStatus').textContent = 'Заполните все поля';
+          return;
+        }
+        
+        if (!token.match(/^pat\.[A-Za-z0-9_\-]{20,}$/)) {
+          $('#quickFixStatus').textContent = 'Неверный формат PAT токена';
+          return;
+        }
+        
+        $('#quickFixStatus').textContent = 'Проверяем токен...';
+        $('#applyQuickFix').disabled = true;
+        
+        try {
+          const out = await fetchJson('../api/set-token-api.php', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Admin-Token': adminToken
+            },
+            body: JSON.stringify({ token: token, slot: slot })
+          });
+          
+          if (out.json?.ok) {
+            $('#quickFixStatus').textContent = '✅ Токен установлен успешно!';
+            setTimeout(() => {
+              hideQuickFixModal();
+              runAll(); // Refresh dashboard
+            }, 1500);
+          } else {
+            $('#quickFixStatus').textContent = '❌ Ошибка: ' + (out.json?.error || 'Unknown error');
+          }
+        } catch (e) {
+          $('#quickFixStatus').textContent = '❌ Ошибка: ' + e.message;
+        } finally {
+          $('#applyQuickFix').disabled = false;
+        }
+      }
+
       // UI bindings
       $('#btnRefreshHealth').addEventListener('click', runAll);
       $('#btnShowHealth').addEventListener('click', ()=> $('#hAirtRaw').classList.toggle('hidden'));
@@ -440,7 +574,17 @@
       $('#btnSync').addEventListener('click', ()=> $('#syncRaw').classList.toggle('hidden'));
       $('#btnPerf').addEventListener('click', ()=> $('#perfRaw').classList.toggle('hidden'));
       $('#btnTokenRotate').addEventListener('click', rotateToken);
+      $('#btnQuickFix').addEventListener('click', showQuickFixModal);
+      $('#closeQuickFix').addEventListener('click', hideQuickFixModal);
+      $('#cancelQuickFix').addEventListener('click', hideQuickFixModal);
+      $('#applyQuickFix').addEventListener('click', applyQuickFix);
       $('#autoRefreshHealth').addEventListener('change', (e)=>{ const ms = parseInt(e.target.value,10)||0; saveAuto(ms); schedule(ms); });
+
+      // Quick Fix modal keyboard shortcuts
+      $('#quickFixModal').addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideQuickFixModal();
+        if (e.key === 'Enter' && e.ctrlKey) applyQuickFix();
+      });
 
       // auto-refresh machinery
       let timer = null;
