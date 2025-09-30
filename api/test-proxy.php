@@ -8,6 +8,7 @@ require_once __DIR__.'/_airtable-common.php';
 try {
   $provider = $_GET['provider'] ?? '';
   $baseId = $_GET['base_id'] ?? '';
+  $tableId = $_GET['table_id'] ?? '';
   
   if ($provider !== 'airtable') {
     http_response_code(400);
@@ -35,8 +36,11 @@ try {
     exit;
   }
   
+  // Используем переданный table_id или дефолтный из конфигурации
+  $targetTableId = $tableId ?: $cfg['table_id'];
+  
   // Тестируем подключение к Airtable
-  [$code, $out, $err, $url] = air_call('GET', '', null, ['pageSize' => 1]);
+  [$code, $out, $err, $url] = air_call('GET', $targetTableId, null, ['pageSize' => 1]);
   
   if ($out === false || $err) {
     http_response_code(500);
@@ -77,7 +81,7 @@ try {
     'ok' => true,
     'message' => 'Airtable proxy test successful',
     'base_id' => $cfg['base_id'],
-    'table_id' => $cfg['table_id'],
+    'table_id' => $targetTableId,
     'records_count' => count($json['records'] ?? []),
     'sample_record' => $json['records'][0] ?? null
   ], JSON_UNESCAPED_UNICODE);
