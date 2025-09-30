@@ -35,7 +35,7 @@ function _read_pat_from_file() {
 }
 
 function air_cfg() {
-  $apiKey = trim(getenv('AIRTABLE_API_KEY') ?: '');
+  $apiKey = trim(getenv('AIRTABLE_PAT') ?: '');
   // если переменная окружения отсутствует ИЛИ выглядит некорректно — пробуем файл
   if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
     $apiKey = _read_pat_from_file();
