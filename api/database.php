@@ -102,16 +102,34 @@ class Database {
     }
     
     public function saveRegion($data) {
+        // Сначала пытаемся обновить существующую запись
         $stmt = $this->db->prepare("
-            INSERT OR REPLACE INTO regions (id, name_ru, name_en, business_id, updated_at) 
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            UPDATE regions 
+            SET name_ru = ?, name_en = ?, business_id = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
         ");
-        return $stmt->execute([
-            $data['id'],
+        $stmt->execute([
             $data['name_ru'],
             $data['name_en'] ?? null,
-            $data['business_id'] ?? null
+            $data['business_id'] ?? null,
+            $data['id']
         ]);
+        
+        // Если запись не была обновлена, вставляем новую
+        if ($stmt->rowCount() === 0) {
+            $stmt = $this->db->prepare("
+                INSERT INTO regions (id, name_ru, name_en, business_id, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ");
+            return $stmt->execute([
+                $data['id'],
+                $data['name_ru'],
+                $data['name_en'] ?? null,
+                $data['business_id'] ?? null
+            ]);
+        }
+        
+        return true;
     }
     
     // Cities methods
