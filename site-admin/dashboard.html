@@ -231,7 +231,6 @@
                     </div>
                     <div class="flex gap-2">
                         <a href="health-dashboard.html" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">Полный дашборд</a>
-                        <button id="btnTokenRotate" class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200">Rotate Token</button>
                         <button id="btnQuickFix" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">🔧 Quick Fix</button>
                     </div>
                 </div>
@@ -502,38 +501,7 @@
         console.log('✅ Health Dashboard widget: Refresh completed');
       }
 
-      async function rotateToken(){
-        const newToken = prompt('Enter new Airtable PAT token:');
-        if (!newToken) return;
-        
-        if (!newToken.match(/^pat\.[A-Za-z0-9_\-]{20,}$/)) {
-          alert('Invalid PAT format. Must start with "pat." and be at least 20 characters.');
-          return;
-        }
-        
-        try {
-          const adminToken = prompt('Enter admin token:');
-          if (!adminToken) return;
-          
-          const out = await fetchJson('../api/config-store-secure.php', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'X-Admin-Token': adminToken
-            },
-            body: JSON.stringify({ airtable: { api_key: newToken } })
-          });
-          
-          if (out.json?.ok) {
-            alert('Token saved to next slot successfully!');
-            runAll();
-          } else {
-            alert('Failed to save token: ' + (out.json?.error || 'Unknown error'));
-          }
-        } catch (e) {
-          alert('Failed to rotate token: ' + e.message);
-        }
-      }
+      // rotateToken function removed - token rotation not needed
 
       // Quick Fix functionality
       function showQuickFixModal() {
@@ -599,7 +567,7 @@
       $('#btnParity').addEventListener('click', ()=> $('#parRaw').classList.toggle('hidden'));
       $('#btnSync').addEventListener('click', ()=> $('#syncRaw').classList.toggle('hidden'));
       $('#btnPerf').addEventListener('click', ()=> $('#perfRaw').classList.toggle('hidden'));
-      $('#btnTokenRotate').addEventListener('click', rotateToken);
+      // btnTokenRotate event listener removed
       $('#btnQuickFix').addEventListener('click', showQuickFixModal);
       $('#closeQuickFix').addEventListener('click', hideQuickFixModal);
       $('#cancelQuickFix').addEventListener('click', hideQuickFixModal);
