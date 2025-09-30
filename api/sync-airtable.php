@@ -64,8 +64,17 @@ function syncFromAirtable() {
                 'type' => $record['fields']['Type'] ?? 'city',
                 'region_id' => $regionId
             ];
-            $db->saveCity($data);
-            $results['cities']++;
+            
+            // Отладочная информация
+            error_log("City: " . $data['name_ru'] . " | Region ID: " . ($regionId ?? 'NULL') . " | Fields: " . json_encode(array_keys($record['fields'])));
+            
+            try {
+                $db->saveCity($data);
+                $results['cities']++;
+            } catch (Exception $e) {
+                error_log("Error saving city " . $data['name_ru'] . ": " . $e->getMessage());
+                $results['errors'][] = "Error saving city " . $data['name_ru'] . ": " . $e->getMessage();
+            }
         }
         
         // Sync POI - СТРОГО ТОЛЬКО ПО BUSINESS ID
