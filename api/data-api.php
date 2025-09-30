@@ -1,9 +1,7 @@
 <?php
 // Data API for admin panel
-if (php_sapi_name() !== 'cli') {
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store');
-}
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
 require_once 'database.php';
 
@@ -14,7 +12,7 @@ function respond($ok, $data = [], $code = 200) {
 }
 
 $db = new Database();
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
 try {
@@ -71,117 +69,6 @@ try {
             if ($method === 'POST') {
                 // This will be handled by sync script
                 respond(true, ['message' => 'Sync initiated']);
-            }
-            break;
-            
-        case 'update-region':
-            if ($method === 'POST') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                $id = $data['id'] ?? '';
-                $updateData = $data['data'] ?? [];
-                
-                if (!$id) {
-                    respond(false, ['error' => 'Region ID required'], 400);
-                }
-                
-                $result = $db->updateRegion($id, $updateData);
-                if ($result) {
-                    respond(true, ['message' => 'Region updated']);
-                } else {
-                    respond(false, ['error' => 'Failed to update region'], 500);
-                }
-            }
-            break;
-            
-        case 'delete-region':
-            if ($method === 'POST') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                $id = $data['id'] ?? '';
-                
-                if (!$id) {
-                    respond(false, ['error' => 'Region ID required'], 400);
-                }
-                
-                $result = $db->deleteRegion($id);
-                if ($result) {
-                    respond(true, ['message' => 'Region deleted']);
-                } else {
-                    respond(false, ['error' => 'Failed to delete region'], 500);
-                }
-            }
-            break;
-            
-        case 'update-city':
-            if ($method === 'POST') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                $id = $data['id'] ?? '';
-                $updateData = $data['data'] ?? [];
-                
-                if (!$id) {
-                    respond(false, ['error' => 'City ID required'], 400);
-                }
-                
-                $result = $db->updateCity($id, $updateData);
-                if ($result) {
-                    respond(true, ['message' => 'City updated']);
-                } else {
-                    respond(false, ['error' => 'Failed to update city'], 500);
-                }
-            }
-            break;
-            
-        case 'delete-city':
-            if ($method === 'POST') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                $id = $data['id'] ?? '';
-                
-                if (!$id) {
-                    respond(false, ['error' => 'City ID required'], 400);
-                }
-                
-                $result = $db->deleteCity($id);
-                if ($result) {
-                    respond(true, ['message' => 'City deleted']);
-                } else {
-                    respond(false, ['error' => 'Failed to delete city'], 500);
-                }
-            }
-            break;
-            
-        case 'update-poi':
-            if ($method === 'POST') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                $id = $data['id'] ?? '';
-                $updateData = $data['data'] ?? [];
-                
-                if (!$id) {
-                    respond(false, ['error' => 'POI ID required'], 400);
-                }
-                
-                $result = $db->updatePoi($id, $updateData);
-                if ($result) {
-                    respond(true, ['message' => 'POI updated']);
-                } else {
-                    respond(false, ['error' => 'Failed to update POI'], 500);
-                }
-            }
-            break;
-            
-        case 'delete-poi':
-            if ($method === 'POST') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                $id = $data['id'] ?? '';
-                
-                if (!$id) {
-                    respond(false, ['error' => 'POI ID required'], 400);
-                }
-                
-                $result = $db->deletePoi($id);
-                if ($result) {
-                    respond(true, ['message' => 'POI deleted']);
-                } else {
-                    respond(false, ['error' => 'Failed to delete POI'], 500);
-                }
             }
             break;
             

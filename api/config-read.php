@@ -5,7 +5,7 @@ header('Cache-Control: no-store');
 
 function respond($ok, $data=[], $code=200){ http_response_code($code); echo json_encode(['ok'=>$ok]+$data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); exit; }
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') respond(false, ['error'=>'Invalid method'], 405);
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') respond(false, ['error'=>'Invalid method'], 405);
 // Allow http on localhost/127.0.0.1 for local admin usage
 $ref = $_SERVER['HTTP_REFERER'] ?? '';
 $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') ? 'https' : 'http';

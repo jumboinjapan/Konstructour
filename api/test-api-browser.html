@@ -18,7 +18,6 @@
     
     <script>
         async function testAPI() {
-            console.log('Starting API tests...');
             const results = document.getElementById('results');
             let html = '';
             
@@ -45,89 +44,6 @@
                     <h3>❌ Ошибка подключения</h3>
                     <p>${e.message}</p>
                 </div>`;
-            }
-            
-            // Test Airtable Connection
-            try {
-                console.log('Testing Airtable API...');
-                const res = await fetch('/api/airtable-ping.php');
-                console.log('Airtable response status:', res.status);
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
-                
-                const data = await res.json();
-                console.log('Airtable response data:', data);
-                
-                if (data.ok) {
-                    html += `<div class="test success">
-                        <h3>✅ Airtable подключение работает</h3>
-                        <p>Base ID: ${data.base_id}</p>
-                        <p>Table ID: ${data.table_id}</p>
-                        <p>Token: ${data.token_preview}</p>
-                        <p>Записей в выборке: ${data.sample.length}</p>
-                    </div>`;
-                } else {
-                    html += `<div class="test error">
-                        <h3>❌ Ошибка Airtable</h3>
-                        <p>Код: ${data.code || 'N/A'}</p>
-                        <p>Ошибка: ${data.details || data.error || 'Неизвестная ошибка'}</p>
-                        <p>Подсказка: ${data.hint || ''}</p>
-                        <p>Детали: ${JSON.stringify(data, null, 2)}</p>
-                    </div>`;
-                }
-            } catch (e) {
-                console.error('Airtable test error:', e);
-                html += `<div class="test error">
-                    <h3>❌ Ошибка подключения к Airtable</h3>
-                    <p>Ошибка: ${e.message}</p>
-                    <p>Тип: ${e.name}</p>
-                </div>`;
-            }
-            
-            // Test Airtable Tables
-            const tables = [
-                { name: 'Страны', tableId: 'tble0eh9mstZeBKxM', viewId: 'viw4xRveasCiSwUzF' },
-                { name: 'Регионы', tableId: 'tblbSajWkzI8X7M4U', viewId: 'viwQKtna9sVP4kb2K' },
-                { name: 'Города', tableId: 'tblHaHc9NV0mA8bSa', viewId: 'viwWMNPxORlN0hpV8' },
-                { name: 'POI', tableId: 'tblVCmFcHRpXUT24y', viewId: 'viwttimtGAX67EyZt' }
-            ];
-            
-            for (const table of tables) {
-                try {
-                    console.log(`Testing ${table.name} table...`);
-                    const res = await fetch(`/api/test-proxy.php?provider=airtable&base_id=apppwhjFN82N9zNqm&table_id=${table.tableId}`);
-                    
-                    if (!res.ok) {
-                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                    }
-                    
-                    const data = await res.json();
-                    console.log(`${table.name} response:`, data);
-                    
-                    if (data.ok) {
-                        html += `<div class="test success">
-                            <h3>✅ Таблица "${table.name}" работает</h3>
-                            <p>Table ID: ${table.tableId}</p>
-                            <p>View ID: ${table.viewId}</p>
-                            <p>Записей в выборке: ${data.records_count || 0}</p>
-                            ${data.sample_record ? `<p>Пример записи: ${JSON.stringify(data.sample_record.fields || {}, null, 2)}</p>` : ''}
-                        </div>`;
-                    } else {
-                        html += `<div class="test error">
-                            <h3>❌ Ошибка таблицы "${table.name}"</h3>
-                            <p>Ошибка: ${data.error || 'Неизвестная ошибка'}</p>
-                            <p>Детали: ${JSON.stringify(data, null, 2)}</p>
-                        </div>`;
-                    }
-                } catch (e) {
-                    console.error(`${table.name} test error:`, e);
-                    html += `<div class="test error">
-                        <h3>❌ Ошибка подключения к таблице "${table.name}"</h3>
-                        <p>Ошибка: ${e.message}</p>
-                    </div>`;
-                }
             }
             
             // Test regions

@@ -4,12 +4,7 @@ class Database {
     private $db;
     
     public function __construct() {
-        // ЕДИНЫЙ путь к БД, общий с sync-скриптами (/data/constructour.db)
-        $dbPath = __DIR__ . '/../data/constructour.db';
-        if (!is_dir(dirname($dbPath))) {
-            @mkdir(dirname($dbPath), 0775, true);
-        }
-        $this->db = new PDO('sqlite:' . $dbPath);
+        $this->db = new PDO('sqlite:' . __DIR__ . '/konstructour.db');
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->initTables();
     }
@@ -232,82 +227,6 @@ class Database {
         $stmt = $this->db->query("SELECT MAX(timestamp) as last_sync FROM sync_log");
         $result = $stmt->fetch();
         return $result['last_sync'] ?? null;
-    }
-    
-    // Update methods
-    public function updateRegion($id, $data) {
-        $stmt = $this->db->prepare("
-            UPDATE regions 
-            SET name_ru = ?, name_en = ?, business_id = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ");
-        return $stmt->execute([
-            $data['name_ru'] ?? '',
-            $data['name_en'] ?? '',
-            $data['business_id'] ?? '',
-            $id
-        ]);
-    }
-    
-    public function updateCity($id, $data) {
-        $stmt = $this->db->prepare("
-            UPDATE cities 
-            SET name_ru = ?, name_en = ?, business_id = ?, type = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ");
-        return $stmt->execute([
-            $data['name_ru'] ?? '',
-            $data['name_en'] ?? '',
-            $data['business_id'] ?? '',
-            $data['type'] ?? 'city',
-            $id
-        ]);
-    }
-    
-    public function updatePoi($id, $data) {
-        $stmt = $this->db->prepare("
-            UPDATE pois 
-            SET name_ru = ?, name_en = ?, category = ?, description_ru = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ");
-        return $stmt->execute([
-            $data['name_ru'] ?? '',
-            $data['name_en'] ?? '',
-            $data['category'] ?? '',
-            $data['description'] ?? '',
-            $id
-        ]);
-    }
-    
-    // Delete methods
-    public function deleteRegion($id) {
-        // First delete all related cities and POIs
-        $this->db->exec("DELETE FROM tickets WHERE poi_id IN (SELECT id FROM pois WHERE city_id IN (SELECT id FROM cities WHERE region_id = '$id'))");
-        $this->db->exec("DELETE FROM pois WHERE city_id IN (SELECT id FROM cities WHERE region_id = '$id')");
-        $this->db->exec("DELETE FROM cities WHERE region_id = '$id'");
-        
-        // Then delete the region
-        $stmt = $this->db->prepare("DELETE FROM regions WHERE id = ?");
-        return $stmt->execute([$id]);
-    }
-    
-    public function deleteCity($id) {
-        // First delete all related POIs
-        $this->db->exec("DELETE FROM tickets WHERE poi_id IN (SELECT id FROM pois WHERE city_id = '$id')");
-        $this->db->exec("DELETE FROM pois WHERE city_id = '$id'");
-        
-        // Then delete the city
-        $stmt = $this->db->prepare("DELETE FROM cities WHERE id = ?");
-        return $stmt->execute([$id]);
-    }
-    
-    public function deletePoi($id) {
-        // First delete all related tickets
-        $this->db->exec("DELETE FROM tickets WHERE poi_id = '$id'");
-        
-        // Then delete the POI
-        $stmt = $this->db->prepare("DELETE FROM pois WHERE id = ?");
-        return $stmt->execute([$id]);
     }
     
     // Clear all data

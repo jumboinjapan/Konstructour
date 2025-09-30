@@ -91,8 +91,8 @@
               <button id="db_fab_add" class="btn-japanese rounded-full w-12 h-12 flex items-center justify-center shadow-lg" title="Добавить">
                 <i class="fas fa-plus"></i>
               </button>
-              <button id="db_sync_new" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-colors" title="Зеркалировать с Airtable">
-                <i class="fas fa-arrows-rotate"></i>
+              <button id="db_fab_sync" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-colors" title="Синхронизировать с Airtable">
+                <i class="fas fa-sync-alt"></i>
               </button>
             </div>
           </div>
@@ -907,22 +907,6 @@
       const LS_REGIONS_KEY = 'konstructour_regions_cache_v1';
       function loadRegionsCache(){ try{ const s=localStorage.getItem(LS_REGIONS_KEY); return s?JSON.parse(s):[]; }catch(_e){ return []; } }
       function saveRegionsCache(list){ try{ localStorage.setItem(LS_REGIONS_KEY, JSON.stringify(Array.isArray(list)?list:[])); }catch(_e){} }
-      
-      // Индикатор загрузки
-      function showLoadingIndicator(message = 'Загрузка...') {
-        const indicator = document.createElement('div');
-        indicator.id = 'loading-indicator';
-        indicator.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2';
-        indicator.innerHTML = `<i class="fas fa-spinner fa-spin"></i>${message}`;
-        document.body.appendChild(indicator);
-      }
-      
-      function hideLoadingIndicator() {
-        const indicator = document.getElementById('loading-indicator');
-        if (indicator) {
-          indicator.remove();
-        }
-      }
 
       let level = 'regions';
       let selectedRegion = null;
@@ -1107,19 +1091,8 @@
           dlog('region-card', {id:r.id, name:r.name, count});
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
               '+(r.rid ? '<span class="ml-2 px-3 py-1 text-sm rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
-              <div class="relative">\
-                <button data-menu="region" data-id="'+r.id+'" title="Действия" class="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-100"><i class="fas fa-ellipsis-v"></i></button>\
-                <div data-menu-content="region-'+r.id+'" class="hidden absolute right-0 top-8 bg-white/90 backdrop-blur-sm border border-red-200 rounded-lg shadow-lg z-50 p-1">\
-                  <div class="flex items-center gap-1">\
-                    <button data-act="edit-region" data-id="'+r.id+'" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded transition-colors" title="Редактировать">\
-                      <i class="fas fa-pen text-sm"></i>\
-                    </button>\
-                    <button data-act="del-region" data-id="'+r.id+'" class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-100 rounded transition-colors" title="Удалить">\
-                      <i class="fas fa-trash text-sm"></i>\
-                    </button>\
-                  </div>\
-                </div>\
-              </div>\
+              <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
+              <button data-act="del-region" data-id="'+r.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>\
             </div>';
           const inner = '<div class="flex items-center justify-between">\
               <div class="flex items-center gap-2">\
@@ -1146,8 +1119,6 @@
         
         // Переустанавливаем обработчик кликов после рендеринга
         setupNavigationHandler();
-        setupActionButtonsHandler();
-        setupMenuHandler();
         
         // Загружаем только счетчики городов в фоне
         loadRegionCounts();
@@ -1282,19 +1253,8 @@
           console.log(`City ${c.name} (${c.id}) pill count: ${count}, poisByCity[${c.id}]:`, poisByCity[c.id]);
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
               (c.code ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+c.code+'</span>' : '')+
-              '<div class="relative">\
-                <button data-menu="city" data-id="'+c.id+'" title="Действия" class="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-100"><i class="fas fa-ellipsis-v"></i></button>\
-                <div data-menu-content="city-'+c.id+'" class="hidden absolute right-0 top-8 bg-white/90 backdrop-blur-sm border border-red-200 rounded-lg shadow-lg z-50 p-1">\
-                  <div class="flex items-center gap-1">\
-                    <button data-act="edit-city" data-id="'+c.id+'" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded transition-colors" title="Редактировать">\
-                      <i class="fas fa-pen text-sm"></i>\
-                    </button>\
-                    <button data-act="del-city" data-id="'+c.id+'" class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-100 rounded transition-colors" title="Удалить">\
-                      <i class="fas fa-trash text-sm"></i>\
-                    </button>\
-                  </div>\
-                </div>\
-              </div>'+
+              '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+              '<button data-act="del-city" data-id="'+c.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
             '</div>';
           const inner = '<div class="flex items-center justify-between">\
               <div class="flex items-center gap-2">\
@@ -1314,8 +1274,6 @@
         
         // Переустанавливаем обработчик кликов после рендеринга
         setupNavigationHandler();
-        setupActionButtonsHandler();
-        setupMenuHandler();
       }
 
       async function renderPois(){
@@ -1370,19 +1328,6 @@
           
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
               (p.poi_id ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+p.poi_id+'</span>' : '')+
-              '<div class="relative">\
-                <button data-menu="poi" data-id="'+p.id+'" title="Действия" class="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-100"><i class="fas fa-ellipsis-v"></i></button>\
-                <div data-menu-content="poi-'+p.id+'" class="hidden absolute right-0 top-8 bg-white/90 backdrop-blur-sm border border-red-200 rounded-lg shadow-lg z-50 p-1">\
-                  <div class="flex items-center gap-1">\
-                    <button data-act="edit-poi" data-id="'+p.id+'" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded transition-colors" title="Редактировать">\
-                      <i class="fas fa-pen text-sm"></i>\
-                    </button>\
-                    <button data-act="del-poi" data-id="'+p.id+'" class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-100 rounded transition-colors" title="Удалить">\
-                      <i class="fas fa-trash text-sm"></i>\
-                    </button>\
-                  </div>\
-                </div>\
-              </div>'+
             '</div>';
           
           const inner = '<div class="flex items-center justify-between">\
@@ -1406,8 +1351,6 @@
         
         // Переустанавливаем обработчик кликов после рендеринга
         setupNavigationHandler();
-        setupActionButtonsHandler();
-        setupMenuHandler();
       }
 
       // Функция для отображения деталей POI
@@ -1508,27 +1451,18 @@
           });
           const j = await res.json();
           if (j.ok && j.stats) {
-            // Обновляем счетчики городов для каждого региона плавно
-            regions.forEach(region => {
-              const cityCount = j.stats.cities_by_region[region.id] || 0;
-              // Обновляем счетчик в UI если мы на уровне регионов
-              if (level === 'regions') {
-                const regionElement = document.querySelector(`[data-go="cities"][data-id="${region.id}"]`);
-                if (regionElement) {
-                  const countElement = regionElement.querySelector('.text-xs.font-medium');
-                  if (countElement) {
-                    // Плавное обновление счетчика без сброса
-                    const currentCount = parseInt(countElement.textContent) || 0;
-                    if (currentCount !== cityCount) {
-                      // Добавляем анимацию обновления
-                      countElement.style.transition = 'all 0.3s ease';
-                      countElement.style.transform = 'scale(1.1)';
+            // Обновляем счетчики городов для каждого региона
+            Object.keys(citiesByRegion).forEach(regionId => {
+              const region = regions.find(r => r.id === regionId);
+              if (region) {
+                const cityCount = j.stats.cities_by_region[regionId] || 0;
+                // Обновляем счетчик в UI если мы на уровне регионов
+                if (level === 'regions') {
+                  const regionElement = document.querySelector(`[data-go="cities"][data-id="${regionId}"]`);
+                  if (regionElement) {
+                    const countElement = regionElement.querySelector('.text-xs.font-medium');
+                    if (countElement) {
                       countElement.textContent = cityCount;
-                      
-                      // Возвращаем к нормальному размеру
-                      setTimeout(() => {
-                        countElement.style.transform = 'scale(1)';
-                      }, 300);
                     }
                   }
                 }
@@ -1550,7 +1484,7 @@
           });
           const j = await res.json();
           if (j.ok && j.stats) {
-            // Обновляем счетчики POI для каждого города плавно
+            // Обновляем счетчики POI для каждого города
             Object.keys(j.stats).forEach(cityId => {
               const poiCount = j.stats[cityId] || 0;
               // Обновляем счетчик в UI если мы на уровне городов
@@ -1559,19 +1493,7 @@
                 if (cityElement) {
                   const countElement = cityElement.querySelector('.text-xs.font-medium');
                   if (countElement) {
-                    // Плавное обновление счетчика без сброса
-                    const currentCount = parseInt(countElement.textContent) || 0;
-                    if (currentCount !== poiCount) {
-                      // Добавляем анимацию обновления
-                      countElement.style.transition = 'all 0.3s ease';
-                      countElement.style.transform = 'scale(1.1)';
-                      countElement.textContent = poiCount;
-                      
-                      // Возвращаем к нормальному размеру
-                      setTimeout(() => {
-                        countElement.style.transform = 'scale(1)';
-                      }, 300);
-                    }
+                    countElement.textContent = poiCount;
                   }
                 }
               }
@@ -1666,45 +1588,84 @@
         }
       }
 
-        // Предзагрузка только счетчиков POI для региона - загружаем параллельно и неблокирующе
+        // Предзагрузка POI для региона - загружаем параллельно и неблокирующе
       async function preloadPoisCountsForRegion(region){
         try{
           const list = citiesByRegion[region.id] || [];
           if (!list.length) return;
-            
-          console.log('Loading POI counts for region:', region.name, 'Total cities:', list.length);
           
-          // Загружаем только счетчики POI одним запросом для всего региона
-          try {
-            const res = await fetch(`/api/data-api.php?action=city-stats&region_id=${region.id}`, {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' }
+          // Полная очистка poisByCity для предотвращения "перетекания" POI между регионами
+          Object.keys(poisByCity).forEach(key => {
+            delete poisByCity[key];
+          });
+          
+          // Инициализируем пустые массивы для всех городов текущего региона
+          list.forEach(city => {
+            poisByCity[city.id] = [];
+          });
+            
+          console.log('Loading POI for region:', region.name, 'Total cities:', list.length);
+          
+          // Загружаем POI параллельно для всех городов
+          const loadPromises = list.map(async (city) => {
+            try {
+              const res = await fetch(`/api/data-api.php?action=pois&city_id=${city.id}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
               });
               const j = await res.json();
-            const cityStats = j.ok ? (j.city_stats || {}) : {};
-            
-            // Обновляем счетчики в UI если мы на уровне городов
-            if (level === 'cities') {
-              list.forEach(city => {
-                const count = cityStats[city.id] || 0;
+              const items = j.ok ? (j.items || []) : [];
+              
+              const pois = items.map(record => ({
+                id: record.id,
+                name: record.name_ru || '—',
+                type: record.category || '',
+                name_en: record.name_en || '',
+                place_id: record.place_id || '',
+                published: record.published || false,
+                poi_id: record.business_id || '',
+                region: record.region_id ? [record.region_id] : []
+              }));
+              
+              // Сортируем POI по ID в порядке возрастания (создаем новый массив)
+              const sortedPois = [...pois].sort((a, b) => {
+                const getNumericId = (id) => {
+                  const match = id.match(/(\d+)$/);
+                  return match ? parseInt(match[1], 10) : 0;
+                };
+                return getNumericId(a.id) - getNumericId(b.id);
+              });
+              
+              poisByCity[city.id] = sortedPois;
+              console.log(`Loaded ${pois.length} POI for city ${city.name}`);
+              
+              // Обновляем UI после загрузки каждого города
+              if (level === 'cities') {
+                // Обновляем только счетчик для этого города
                 const cityElement = document.querySelector(`[data-go="pois"][data-id="${city.id}"]`);
                 if (cityElement) {
                   const countElement = cityElement.querySelector('.text-xs.font-medium');
                   if (countElement) {
-                    countElement.textContent = count;
+                    countElement.textContent = pois.length;
                   }
                 }
-                console.log(`POI count for city ${city.name}: ${count}`);
-              });
+              }
+              
+              return pois.length;
+            } catch (e) {
+              console.warn(`Error loading POI for city ${city.name}:`, e);
+              poisByCity[city.id] = [];
+              return 0;
             }
-            
-            console.log('POI counts loaded for region:', region.name);
-          } catch (error) {
-            console.warn('Failed to load POI counts for region:', region.name, error);
-          }
+          });
+          
+          // Ждем завершения всех загрузок параллельно
+          await Promise.all(loadPromises);
+          
+          console.log('All POI loaded for region:', region.name);
           
         }catch(e){
-            console.error('Error preloading POI counts for region:', region.name, e);
+            console.error('Error preloading POI for region:', region.name, e);
           }
       }
 
@@ -1731,11 +1692,6 @@
             </div>';
           return card(actions, inner);
         }).join('') || '<div class="text-gray-500">Нет билетов. Нажмите + чтобы добавить.</div>';
-        
-        // Переустанавливаем обработчик кликов после рендеринга
-        setupNavigationHandler();
-        setupActionButtonsHandler();
-        setupMenuHandler();
       }
 
       // Функция настройки обработчика кликов для хлебных крошек
@@ -1803,18 +1759,6 @@
           // Игнорируем клики по кнопкам действий внутри карточек
           if (e.target.closest('button[data-act]')) {
             console.log('Click on action button, ignoring');
-            return;
-          }
-          
-          // Игнорируем клики по кнопкам меню с тремя точками
-          if (e.target.closest('button[data-menu]')) {
-            console.log('Click on menu button, ignoring');
-            return;
-          }
-          
-          // Игнорируем клики по содержимому меню
-          if (e.target.closest('[data-menu-content]')) {
-            console.log('Click on menu content, ignoring');
             return;
           }
           
@@ -1921,7 +1865,7 @@
           const act = btn.getAttribute('data-act');
           const id = btn.getAttribute('data-id');
           
-          console.log('Action button clicked:', { act, id, button: btn, text: btn.textContent });
+          console.log('Action button clicked:', { act, id });
           
           if (act === 'edit-region') {
             await editRegion(id);
@@ -1945,629 +1889,6 @@
         document.addEventListener('click', window.actionButtonsHandler);
       } // Конец функции setupActionButtonsHandler
 
-      // Функция настройки обработчика меню с тремя точками
-      function setupMenuHandler() {
-        console.log('Setting up menu handler...');
-        
-        // Удаляем предыдущий обработчик если он был
-        if (window.menuHandler) {
-          document.removeEventListener('click', window.menuHandler);
-        }
-        
-        window.menuHandler = function(e) {
-          // Ищем кнопку меню с data-menu
-          const menuBtn = e.target.closest('button[data-menu]');
-          if (menuBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const menuType = menuBtn.getAttribute('data-menu');
-            const id = menuBtn.getAttribute('data-id');
-            const menuContent = document.querySelector(`[data-menu-content="${menuType}-${id}"]`);
-            
-            console.log('Menu button clicked:', { menuType, id, menuContent: !!menuContent });
-            
-            if (menuContent) {
-              // Закрываем все другие меню
-              document.querySelectorAll('[data-menu-content]').forEach(menu => {
-                if (menu !== menuContent) {
-                  menu.classList.add('hidden');
-                }
-              });
-              
-              // Переключаем текущее меню
-              menuContent.classList.toggle('hidden');
-              
-              // Проверяем содержимое меню
-              const buttons = menuContent.querySelectorAll('button[data-act]');
-              console.log('Menu content buttons:', buttons.length, Array.from(buttons).map(b => b.getAttribute('data-act')));
-            }
-            return;
-          }
-          
-          // Закрываем все меню при клике вне их
-          document.querySelectorAll('[data-menu-content]').forEach(menu => {
-            menu.classList.add('hidden');
-          });
-        };
-        
-        document.addEventListener('click', window.menuHandler);
-      } // Конец функции setupMenuHandler
-
-      // Функции для редактирования и удаления
-      async function editRegion(id) {
-        const region = regions.find(r => r.id === id);
-        if (!region) return;
-        
-        const data = await openEditRegionModal(region);
-        if (!data) return;
-        
-        try {
-          const res = await fetch('/api/data-api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'update-region',
-              id: id,
-              data: {
-                name_ru: data.ru,
-                name_en: data.en
-              }
-            })
-          });
-          
-          const j = await res.json();
-          if (j.ok) {
-            // Обновляем локальные данные
-            region.name = data.ru;
-            region.rid = data.rid || region.rid;
-            
-            // Перерендерим регионы
-            renderRegions();
-            
-            if (window.osNotify) {
-              window.osNotify('Сохранено', 'Регион обновлен');
-            }
-          } else {
-            throw new Error(j.error || 'Ошибка обновления');
-          }
-        } catch (e) {
-          console.error('Error updating region:', e);
-          alert('Не удалось обновить регион: ' + e.message);
-        }
-      }
-
-      async function deleteRegion(id) {
-        const region = regions.find(r => r.id === id);
-        if (!region) return;
-        
-        const confirmed = await openDeleteConfirmModal(
-          'Удалить регион?',
-          `Вы уверены, что хотите удалить регион "${region.name}"?`,
-          region.name
-        );
-        
-        if (!confirmed) return;
-        
-        try {
-          const res = await fetch('/api/data-api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'delete-region',
-              id: id
-            })
-          });
-          
-          const j = await res.json();
-          if (j.ok) {
-            // Удаляем из локальных данных
-            regions = regions.filter(r => r.id !== id);
-            delete citiesByRegion[id];
-            
-            // Перерендерим регионы
-            renderRegions();
-            
-            if (window.osNotify) {
-              window.osNotify('Удалено', 'Регион удален');
-            }
-          } else {
-            throw new Error(j.error || 'Ошибка удаления');
-          }
-        } catch (e) {
-          console.error('Error deleting region:', e);
-          alert('Не удалось удалить регион: ' + e.message);
-        }
-      }
-
-      async function editCity(id) {
-        const city = citiesByRegion[selectedRegion.id]?.find(c => c.id === id);
-        if (!city) return;
-        
-        const data = await openEditCityModal(city);
-        if (!data) return;
-        
-        try {
-          const res = await fetch('/api/data-api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'update-city',
-              id: id,
-              data: {
-                name_ru: data.ru,
-                name_en: data.en,
-                type: data.type
-              }
-            })
-          });
-          
-          const j = await res.json();
-          if (j.ok) {
-            // Обновляем локальные данные
-            city.name = data.ru;
-            city.code = data.code || city.code;
-            city.type = data.type;
-            
-            // Перерендерим города
-            renderCities();
-            
-            if (window.osNotify) {
-              window.osNotify('Сохранено', 'Город обновлен');
-            }
-          } else {
-            throw new Error(j.error || 'Ошибка обновления');
-          }
-        } catch (e) {
-          console.error('Error updating city:', e);
-          alert('Не удалось обновить город: ' + e.message);
-        }
-      }
-
-      async function deleteCity(id) {
-        const city = citiesByRegion[selectedRegion.id]?.find(c => c.id === id);
-        if (!city) return;
-        
-        const confirmed = await openDeleteConfirmModal(
-          'Удалить город?',
-          `Вы уверены, что хотите удалить город "${city.name}"?`,
-          city.name
-        );
-        
-        if (!confirmed) return;
-        
-        try {
-          const res = await fetch('/api/data-api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'delete-city',
-              id: id
-            })
-          });
-          
-          const j = await res.json();
-          if (j.ok) {
-            // Удаляем из локальных данных
-            citiesByRegion[selectedRegion.id] = citiesByRegion[selectedRegion.id].filter(c => c.id !== id);
-            delete poisByCity[id];
-            
-            // Перерендерим города
-            renderCities();
-            
-            if (window.osNotify) {
-              window.osNotify('Удалено', 'Город удален');
-            }
-          } else {
-            throw new Error(j.error || 'Ошибка удаления');
-          }
-        } catch (e) {
-          console.error('Error deleting city:', e);
-          alert('Не удалось удалить город: ' + e.message);
-        }
-      }
-
-      async function editPoi(id) {
-        const poi = poisByCity[selectedCity.id]?.find(p => p.id === id);
-        if (!poi) return;
-        
-        const data = await openEditPoiModal(poi);
-        if (!data) return;
-        
-        try {
-          const res = await fetch('/api/data-api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'update-poi',
-              id: id,
-              data: {
-                name_ru: data.ru,
-                name_en: data.en,
-                category: data.category,
-                description: data.description
-              }
-            })
-          });
-          
-          const j = await res.json();
-          if (j.ok) {
-            // Обновляем локальные данные
-            poi.name = data.ru;
-            poi.name_en = data.en;
-            poi.type = data.category;
-            
-            // Перерендерим POI
-            renderPois();
-            
-            if (window.osNotify) {
-              window.osNotify('Сохранено', 'POI обновлен');
-            }
-          } else {
-            throw new Error(j.error || 'Ошибка обновления');
-          }
-        } catch (e) {
-          console.error('Error updating POI:', e);
-          alert('Не удалось обновить POI: ' + e.message);
-        }
-      }
-
-      async function deletePoi(id) {
-        const poi = poisByCity[selectedCity.id]?.find(p => p.id === id);
-        if (!poi) return;
-        
-        const confirmed = await openDeleteConfirmModal(
-          'Удалить POI?',
-          `Вы уверены, что хотите удалить POI "${poi.name}"?`,
-          poi.name
-        );
-        
-        if (!confirmed) return;
-        
-        try {
-          const res = await fetch('/api/data-api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'delete-poi',
-              id: id
-            })
-          });
-          
-          const j = await res.json();
-          if (j.ok) {
-            // Удаляем из локальных данных
-            poisByCity[selectedCity.id] = poisByCity[selectedCity.id].filter(p => p.id !== id);
-            
-            // Перерендерим POI
-            renderPois();
-            
-            if (window.osNotify) {
-              window.osNotify('Удалено', 'POI удален');
-            }
-          } else {
-            throw new Error(j.error || 'Ошибка удаления');
-          }
-        } catch (e) {
-          console.error('Error deleting POI:', e);
-          alert('Не удалось удалить POI: ' + e.message);
-        }
-      }
-
-      async function editTicket(id) {
-        const ticket = ticketsByPoi[selectedPoi.id]?.find(t => t.id === id);
-        if (!ticket) return;
-        
-        const data = await openEditTicketModal(ticket);
-        if (!data) return;
-        
-        try {
-          // Обновляем локальные данные
-          ticket.category = data.category;
-          ticket.price = data.price;
-          ticket.currency = data.currency;
-          ticket.note = data.note;
-          
-          // Перерендерим билеты
-          renderTickets();
-          
-          if (window.osNotify) {
-            window.osNotify('Сохранено', 'Билет обновлен');
-          }
-        } catch (e) {
-          console.error('Error updating ticket:', e);
-          alert('Не удалось обновить билет: ' + e.message);
-        }
-      }
-
-      async function deleteTicket(id) {
-        const ticket = ticketsByPoi[selectedPoi.id]?.find(t => t.id === id);
-        if (!ticket) return;
-        
-        const confirmed = await openDeleteConfirmModal(
-          'Удалить билет?',
-          `Вы уверены, что хотите удалить билет "${ticket.category}"?`,
-          ticket.category
-        );
-        
-        if (!confirmed) return;
-        
-        try {
-          // Удаляем из локальных данных
-          ticketsByPoi[selectedPoi.id] = ticketsByPoi[selectedPoi.id].filter(t => t.id !== id);
-          
-          // Перерендерим билеты
-          renderTickets();
-          
-          if (window.osNotify) {
-            window.osNotify('Удалено', 'Билет удален');
-          }
-        } catch (e) {
-          console.error('Error deleting ticket:', e);
-          alert('Не удалось удалить билет: ' + e.message);
-        }
-      }
-
-      // Модальное окно подтверждения удаления в стиле Liquid Glass
-      async function openDeleteConfirmModal(title, message, itemName) {
-        return new Promise(resolve => {
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
-          wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-            <div class="relative bg-white rounded-xl shadow-2xl p-6 w-80 border border-gray-200">
-              <div class="text-center">
-                <h3 class="text-lg font-semibold text-gray-900 mb-3">${title}</h3>
-                <p class="text-gray-700 mb-6 text-sm">${message}</p>
-                <div class="flex justify-center gap-4">
-                  <button id="delete_cancel" class="w-28 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">
-                    Отмена
-                  </button>
-                  <button id="delete_confirm" class="w-28 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium">
-                    Удалить
-                  </button>
-                </div>
-              </div>
-            </div>
-          `;
-          
-          document.body.appendChild(wrap);
-          
-          function done(val) {
-            document.body.removeChild(wrap);
-            resolve(val);
-          }
-          
-          wrap.querySelector('#delete_cancel').onclick = () => done(false);
-          wrap.querySelector('#delete_confirm').onclick = () => done(true);
-          
-          wrap.addEventListener('click', e => {
-            if (e.target === wrap.firstChild) done(false);
-          });
-          
-          document.addEventListener('keydown', function onEsc(ev) {
-            if (ev.key === 'Escape') {
-              document.removeEventListener('keydown', onEsc);
-              try { document.body.removeChild(wrap); } catch {}
-              resolve(false);
-            }
-          });
-        });
-      }
-
-      // Модальные окна для редактирования
-      async function openEditRegionModal(region) {
-        return new Promise(resolve => {
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
-          wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-            <div class="relative bg-white rounded-xl shadow-2xl p-6 w-80 border border-gray-200">
-              <div class="text-lg text-gray-800 mb-4">Редактировать регион</div>
-              <input id="edit_region_ru" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Название региона" value="${region.name || ''}"/>
-              <div class="flex justify-center gap-4">
-                <button id="edit_region_cancel" class="w-28 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">
-                  Отмена
-                </button>
-                <button id="edit_region_save" class="w-28 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium">
-                  Сохранить
-                </button>
-              </div>
-            </div>
-          `;
-          
-          document.body.appendChild(wrap);
-          
-          function done(val) {
-            document.body.removeChild(wrap);
-            resolve(val);
-          }
-          
-          wrap.querySelector('#edit_region_cancel').onclick = () => done(null);
-          wrap.querySelector('#edit_region_save').onclick = () => {
-            const ru = wrap.querySelector('#edit_region_ru').value.trim();
-            
-            if (!ru) {
-              alert('Введите название региона');
-              return;
-            }
-            
-            done({ ru, en: ru, rid: region.rid });
-          };
-          
-          wrap.addEventListener('click', e => {
-            if (e.target === wrap.firstChild) done(null);
-          });
-          
-          document.addEventListener('keydown', function onEsc(ev) {
-            if (ev.key === 'Escape') {
-              document.removeEventListener('keydown', onEsc);
-              try { document.body.removeChild(wrap); } catch {}
-              resolve(null);
-            }
-          });
-        });
-      }
-
-      async function openEditCityModal(city) {
-        return new Promise(resolve => {
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
-          wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-            <div class="relative bg-white rounded-xl shadow-2xl p-6 w-80 border border-gray-200">
-              <div class="text-lg text-gray-800 mb-4">Редактировать город</div>
-              <input id="edit_city_ru" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Название города" value="${city.name || ''}"/>
-              <div class="flex justify-center gap-4">
-                <button id="edit_city_cancel" class="w-28 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">
-                  Отмена
-                </button>
-                <button id="edit_city_save" class="w-28 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium">
-                  Сохранить
-                </button>
-              </div>
-            </div>
-          `;
-          
-          document.body.appendChild(wrap);
-          
-          function done(val) {
-            document.body.removeChild(wrap);
-            resolve(val);
-          }
-          
-          wrap.querySelector('#edit_city_cancel').onclick = () => done(null);
-          wrap.querySelector('#edit_city_save').onclick = () => {
-            const ru = wrap.querySelector('#edit_city_ru').value.trim();
-            
-            if (!ru) {
-              alert('Введите название города');
-              return;
-            }
-            
-            done({ ru, en: ru, code: city.code, type: city.type });
-          };
-          
-          wrap.addEventListener('click', e => {
-            if (e.target === wrap.firstChild) done(null);
-          });
-          
-          document.addEventListener('keydown', function onEsc(ev) {
-            if (ev.key === 'Escape') {
-              document.removeEventListener('keydown', onEsc);
-              try { document.body.removeChild(wrap); } catch {}
-              resolve(null);
-            }
-          });
-        });
-      }
-
-      async function openEditPoiModal(poi) {
-        return new Promise(resolve => {
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
-          wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-            <div class="relative bg-white rounded-xl shadow-2xl p-6 w-80 border border-gray-200">
-              <div class="text-lg text-gray-800 mb-4">Редактировать POI</div>
-              <input id="edit_poi_ru" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Название POI" value="${poi.name || ''}"/>
-              <div class="flex justify-center gap-4">
-                <button id="edit_poi_cancel" class="w-28 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">
-                  Отмена
-                </button>
-                <button id="edit_poi_save" class="w-28 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium">
-                  Сохранить
-                </button>
-              </div>
-            </div>
-          `;
-          
-          document.body.appendChild(wrap);
-          
-          function done(val) {
-            document.body.removeChild(wrap);
-            resolve(val);
-          }
-          
-          wrap.querySelector('#edit_poi_cancel').onclick = () => done(null);
-          wrap.querySelector('#edit_poi_save').onclick = () => {
-            const ru = wrap.querySelector('#edit_poi_ru').value.trim();
-            
-            if (!ru) {
-              alert('Введите название POI');
-              return;
-            }
-            
-            done({ ru, en: ru, category: poi.type, description: poi.description });
-          };
-          
-          wrap.addEventListener('click', e => {
-            if (e.target === wrap.firstChild) done(null);
-          });
-          
-          document.addEventListener('keydown', function onEsc(ev) {
-            if (ev.key === 'Escape') {
-              document.removeEventListener('keydown', onEsc);
-              try { document.body.removeChild(wrap); } catch {}
-              resolve(null);
-            }
-          });
-        });
-      }
-
-      async function openEditTicketModal(ticket) {
-        return new Promise(resolve => {
-          const wrap = document.createElement('div');
-          wrap.className = 'fixed inset-0 z-50 flex items-center justify-center';
-          wrap.innerHTML = `
-            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-            <div class="relative bg-white rounded-xl shadow-2xl p-6 w-80 border border-gray-200">
-              <div class="text-lg text-gray-800 mb-4">Редактировать билет</div>
-              <input id="edit_ticket_category" class="w-full px-4 py-3 bg-white/80 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Категория билета" value="${ticket.category || ''}"/>
-              <div class="flex justify-center gap-4">
-                <button id="edit_ticket_cancel" class="w-28 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">
-                  Отмена
-                </button>
-                <button id="edit_ticket_save" class="w-28 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium">
-                  Сохранить
-                </button>
-              </div>
-            </div>
-          `;
-          
-          document.body.appendChild(wrap);
-          
-          function done(val) {
-            document.body.removeChild(wrap);
-            resolve(val);
-          }
-          
-          wrap.querySelector('#edit_ticket_cancel').onclick = () => done(null);
-          wrap.querySelector('#edit_ticket_save').onclick = () => {
-            const category = wrap.querySelector('#edit_ticket_category').value.trim();
-            
-            if (!category) {
-              alert('Введите категорию билета');
-              return;
-            }
-            
-            done({ category, price: ticket.price, currency: ticket.currency, note: ticket.note });
-          };
-          
-          wrap.addEventListener('click', e => {
-            if (e.target === wrap.firstChild) done(null);
-          });
-          
-          document.addEventListener('keydown', function onEsc(ev) {
-            if (ev.key === 'Escape') {
-              document.removeEventListener('keydown', onEsc);
-              try { document.body.removeChild(wrap); } catch {}
-              resolve(null);
-            }
-          });
-        });
-      }
-
       // Breadcrumbs обработчик удален - теперь используется setupBreadcrumbHandler
 
       // Back button
@@ -2579,7 +1900,98 @@
       });
 
       // Card action buttons
-      // Старый обработчик кнопок удален - теперь используется setupActionButtonsHandler()
+      cards.addEventListener('click', async function(e){
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        e.stopPropagation();
+        const act = btn.getAttribute('data-act');
+        const id = btn.getAttribute('data-id');
+        if (act==='edit-region'){
+          const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){
+            const old = r.name; r.name=n.trim(); renderRegions();
+            try{
+              await fetch('/api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                body: JSON.stringify({ scope:'regions', action:'update', data:{ id: r.id, name: r.name } })
+              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+              if (window.osNotify) window.osNotify('Обновлено','Регион переименован');
+            }catch(e){ r.name = old; renderRegions(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+          }
+        } else if (act==='del-region'){
+          const r = regions.find(x=>x.id===id);
+          regions = regions.filter(x=>x.id!==id); delete citiesByRegion[id]; renderRegions();
+          if (r) deleteRegionOnServer(r);
+        } else if (act==='edit-city'){
+          const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города/локации:', c.name); if(n){
+            const old=c.name; c.name=n.trim(); await renderCities();
+            try{
+              await fetch('/api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                body: JSON.stringify({ scope:'cities', action:'update', data:{ id: c.id, name: c.name } })
+              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+              if (window.osNotify) window.osNotify('Обновлено','Название сохранено');
+            }catch(e){ c.name=old; await renderCities(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+          }
+        } else if (act==='del-city'){
+          const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; await renderCities();
+        } else if (act==='edit-poi'){
+            // Открываем форму редактирования POI
+            const list = poisByCity[selectedCity.id]||[];
+            const poi = list.find(x=>x.id===id);
+            if (!poi) return;
+            
+            const data = await openCreatePOIModal(poi);
+            if (!data) return;
+            
+            try {
+              // Обновляем локальные данные
+              Object.assign(poi, {
+                name: data.name_ru,
+                name_en: data.name_en,
+                type: data.cats_ru[0] || poi.type,
+                categories_ru: data.cats_ru,
+                categories_en: data.cats_en,
+                prefecture_ru: data.pref_ru,
+                prefecture_en: data.pref_en,
+                place_id: data.place_id,
+                website: data.website,
+                hours: data.hours,
+                description_ru: data.desc_ru,
+                description_en: data.desc_en,
+                published: data.published,
+                notes: data.notes
+              });
+              
+              // Обновляем отображение
+              if (level === 'poi-details') {
+                renderPOIDetails();
+              } else {
+                await renderPois();
+              }
+              
+              if (window.osNotify) {
+                window.osNotify('POI обновлён', data.name_ru);
+              }
+            } catch(e) {
+              alert('Не удалось обновить POI: ' + (e.message || 'Неизвестная ошибка'));
+            }
+            return;
+        } else if (act==='view-tickets'){
+          // Переходим к билетам POI
+          const list = poisByCity[selectedCity.id]||[];
+          selectedPoi = list.find(x=>x.id===id) || null;
+          if (selectedPoi) {
+            push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
+            renderTickets();
+          }
+        } else if (act==='del-poi'){
+          const list = poisByCity[selectedCity.id]||[]; poisByCity[selectedCity.id] = list.filter(x=>x.id!==id); delete ticketsByPoi[id]; await renderPois();
+        } else if (act==='edit-ticket'){
+          const list = ticketsByPoi[selectedPoi.id]||[]; const t = list.find(x=>x.id===id); if(!t) return; const c=prompt('Категория:', t.category)||t.category; const p=prompt('Цена (¥):', String(t.price))||String(t.price); const n=prompt('Примечание:', t.note||'')||t.note; t.category=c.trim(); t.price=parseInt(p,10)||t.price; t.note=n.trim(); renderTickets();
+        } else if (act==='del-ticket'){
+          const list = ticketsByPoi[selectedPoi.id]||[]; ticketsByPoi[selectedPoi.id] = list.filter(x=>x.id!==id); renderTickets();
+        }
+      });
 
       // Floating add button
       function genId(prefix, n){ return prefix+'-'+String(n).padStart(3,'0'); }
@@ -3161,71 +2573,108 @@
         }
       });
 
-      // Обработчик кнопки синхронизации - полное зеркалирование Airtable
-      const syncBtn = document.getElementById('db_sync_new');
+      // Обработчик кнопки синхронизации
+      const syncBtn = document.getElementById('db_fab_sync');
       if (syncBtn) {
         syncBtn.addEventListener('click', async function() {
-          console.log('🔄 Кнопка синхронизации нажата!');
           this.disabled = true;
           this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
           
           try {
-            console.log('🔄 Полное зеркалирование с Airtable...');
+            console.log('🔄 Синхронизация с Airtable...');
             
-            // Полный запуск синка (регионы + города) через GET с ?full=1
-            // Простой Pull из Airtable
-            const pullUrl = '/api/pull-airtable.php';
-
-            console.log('🔄 Загружаем данные из Airtable...');
-            const res = await fetch(pullUrl, { method: 'GET' });
-            const data = await res.json();
+            // Сохраняем текущее состояние
+            const currentLevel = level;
+            const currentRegion = selectedRegion;
+            const currentCity = selectedCity;
             
-            if (!res.ok || !data || data.ok === false) {
-              const msg = (data && (data.error || (data.summary===null && 'Server error'))) || `HTTP ${res.status}: ${res.statusText}`;
-              throw new Error(msg + ` [${pullUrl}]`);
-            }
+            // Запускаем синхронизацию с Airtable
+            const syncRes = await fetch('/api/sync-airtable.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            const syncData = await syncRes.json();
+            console.log('Результат синхронизации:', syncData);
             
-            const summary = data.summary || {};
-            const totals = {
-              regions: summary.regions_count || 0,
-              cities: summary.cities_count || 0,
-              pois: summary.pois_count || 0
-            };
-            
-            // Обновляем UI надёжно: чистим кэш и жёстко перезагружаем страницу,
-            // чтобы отрисовать данные из обновлённой БД
-            if (typeof clearAllCache === 'function') {
-              try { clearAllCache(); } catch(_) {}
-            }
-            // Покажем результат перед перезагрузкой, затем перезагрузим страницу
-            
-            // Показываем суммарный результат + сравнение количества городов
-            // Показываем результат загрузки
-            let message = `Данные загружены из Airtable!\n\n`;
-            message += `Регионы: ${totals.regions}\n`;
-            message += `Города: ${totals.cities}\n`;
-            message += `POI: ${totals.pois}\n\n`;
-            message += `Загружено: ${summary.loaded_at}`;
-            console.log(`✅ Зеркалирование завершено: ${message}`);
-            
-            if (window.osNotify) {
-              window.osNotify('Синхронизация завершена', message);
+            if (currentLevel === 'cities' && currentRegion) {
+              console.log(`📍 Обновляем города для региона: ${currentRegion.name}`);
+              
+              // Перезагружаем города из серверной БД
+              await loadCitiesForRegion(currentRegion, true);
+              
+              // Предзагружаем POI для подсчета в пилюлях
+              const cities = citiesByRegion[currentRegion.id] || [];
+              for (const city of cities) {
+                await loadPoisForCity(city, true);
+              }
+              
+              // Восстанавливаем состояние
+              selectedRegion = currentRegion;
+              await renderCities();
+              console.log(`✅ Обновление городов завершено: ${cities.length} городов`);
+              
+            } else if (currentLevel === 'pois' && currentCity) {
+              console.log(`📍 Обновляем POI для города: ${currentCity.name}`);
+              
+              // Перезагружаем POI из серверной БД
+              await loadPoisForCity(currentCity, true);
+              
+              // Восстанавливаем состояние
+              selectedRegion = currentRegion;
+              selectedCity = currentCity;
+              await renderPois();
+              
+              const poiCount = poisByCity[currentCity.id]?.length || 0;
+              console.log(`✅ Обновление POI завершено: ${poiCount} POI`);
+              
             } else {
-              alert(`Синхронизация завершена:\n${message}`);
+              console.log('🌍 Полная синхронизация всех данных...');
+              
+              // Перезагружаем все данные из серверной БД
+              await syncRegionsFromAirtable();
+              console.log(`✅ Регионы загружены: ${regions.length}`);
+              
+              // Перезагружаем города для всех регионов
+              for (const region of regions) {
+                await loadCitiesForRegion(region, true);
+                const cities = citiesByRegion[region.id] || [];
+                console.log(`✅ Города для ${region.name}: ${cities.length}`);
+              }
+              
+              // Перезагружаем POI для всех городов
+              let totalPOI = 0;
+              for (const region of regions) {
+                const cities = citiesByRegion[region.id] || [];
+                for (const city of cities) {
+                  await loadPoisForCity(city, true);
+                  const poiCount = poisByCity[city.id]?.length || 0;
+                  totalPOI += poiCount;
+                }
+              }
+              
+              // Восстанавливаем состояние после полной синхронизации
+              if (currentLevel === 'cities' && currentRegion) {
+                selectedRegion = currentRegion;
+                await renderCities();
+              } else if (currentLevel === 'pois' && currentCity && currentRegion) {
+                selectedRegion = currentRegion;
+                selectedCity = currentCity;
+                await renderPois();
+              } else {
+                renderRegions();
+              }
+              console.log(`✅ Полная синхронизация завершена: ${totalPOI} POI всего`);
             }
-            // Жёсткая перезагрузка данных
-            setTimeout(() => { location.reload(); }, 300);
+            
+            // Успешное завершение
+            this.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+              this.innerHTML = '<i class="fas fa-sync-alt"></i>';
+            }, 2000);
             
           } catch (error) {
-            console.error('❌ Ошибка зеркалирования:', error);
+            console.error('❌ Ошибка синхронизации:', error);
             this.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-            
-            if (window.osNotify) {
-              window.osNotify('Ошибка синхронизации', error.message);
-            } else {
-              alert('Ошибка синхронизации: ' + error.message);
-            }
-            
             setTimeout(() => {
               this.innerHTML = '<i class="fas fa-sync-alt"></i>';
             }, 3000);
@@ -3317,75 +2766,54 @@
         console.log('Инициализация системы...');
         
         try {
-        // 1. Сначала загружаем данные из кэша для мгновенного отображения
-        regions = loadRegionsCache();
-        console.log('Загружено из кэша:', regions.length, 'регионов');
-        
-        // 2. Сразу рендерим карточки регионов (даже если данных нет)
-        renderRegions();
-        
-        // 3. Показываем индикатор загрузки, если данных нет
-        if (!regions.length) {
-          showLoadingIndicator('Загрузка регионов...');
-        }
-        
-        // 3. Настраиваем обработчики событий сразу после рендеринга
-        setupNavigationHandler();
-        setupActionButtonsHandler();
-        setupMenuHandler();
-        
-        // 4. Проверяем актуальность данных в фоне
-        await checkDataFreshness();
-        
-        // Если данные не загружены после проверки, загружаем их
-        if (!regions.length) {
-          console.log('Загрузка регионов...');
+          // Сначала проверяем актуальность данных
+          await checkDataFreshness();
+          
+          // Если данные не загружены после проверки, загружаем их
+          if (!regions.length) {
+            console.log('Загрузка регионов...');
         await syncRegionsFromAirtable();
         if (!regions.length){ await loadRegionsViaProxy(); }
-          if (!regions.length) {
-            renderRegions();
-            return;
-          }
-          // Обновляем UI после загрузки актуальных данных
-          renderRegions();
-          hideLoadingIndicator();
-        }
-        
-        // Загружаем счетчики городов для регионов асинхронно
-        loadRegionCounts().then(() => {
-          // Счетчики уже обновлены в loadRegionCounts, не нужно перерендеривать
-          hideLoadingIndicator();
-        });
-        
-        // Если города не загружены, загружаем их асинхронно
-        if (Object.keys(citiesByRegion).length === 0) {
-          console.log('Загрузка городов для всех регионов...');
-          for (const region of regions) {
-            await loadCitiesForRegion(region);
-          }
-        }
-        
-        // Если POI не загружены, загружаем их асинхронно
-        if (Object.keys(poisByCity).length === 0) {
-          console.log('Загрузка POI для всех городов...');
-          for (const region of regions) {
-            const cities = citiesByRegion[region.id] || [];
-            for (const city of cities) {
-              await loadPoisForCity(city);
+            if (!regions.length) {
+              renderRegions();
+              return;
             }
           }
-        }
-        
-        console.log('Данные готовы:');
-        console.log('regions:', regions.length);
-        console.log('citiesByRegion:', Object.keys(citiesByRegion).length, 'регионов с городами');
-        console.log('poisByCity:', Object.keys(poisByCity).length, 'городов с POI');
-        
-        console.log('Система готова к работе');
+          
+          // Если города не загружены, загружаем их
+          if (Object.keys(citiesByRegion).length === 0) {
+            console.log('Загрузка городов для всех регионов...');
+            for (const region of regions) {
+              await loadCitiesForRegion(region);
+            }
+          }
+          
+          // Если POI не загружены, загружаем их
+          if (Object.keys(poisByCity).length === 0) {
+            console.log('Загрузка POI для всех городов...');
+            for (const region of regions) {
+              const cities = citiesByRegion[region.id] || [];
+              for (const city of cities) {
+                await loadPoisForCity(city);
+              }
+            }
+          }
+          
+          // Отображаем регионы с правильными счетчиками
+          console.log('Данные готовы:');
+          console.log('regions:', regions.length);
+          console.log('citiesByRegion:', Object.keys(citiesByRegion).length, 'регионов с городами');
+          console.log('poisByCity:', Object.keys(poisByCity).length, 'городов с POI');
+          
+          renderRegions();
+          console.log('Система готова к работе');
         } catch (error) {
           console.error('Ошибка инициализации:', error);
           renderRegions();
         }
+        
+        // Настраиваем обработчик кликов ПОСЛЕ загрузки данных
+        setupNavigationHandler();
         
         // Обработчик кликов для хлебных крошек
         setupBreadcrumbHandler();

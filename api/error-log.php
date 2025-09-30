@@ -1,9 +1,7 @@
 <?php
 // Lightweight event/error log API (JSONL store)
-if (php_sapi_name() !== 'cli') {
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store');
-}
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
 $LOG_FILE = __DIR__.'/.events_log.jsonl';
 
@@ -31,7 +29,7 @@ function read_events(){
   return $out;
 }
 
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 if (!$action) respond(false, ['error'=>'Missing action'], 400);
 
