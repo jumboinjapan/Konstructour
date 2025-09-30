@@ -382,6 +382,7 @@
           return;
         }
         setDot(dot,'warn');
+        console.log('🔍 runHealth: Making API request to health-airtable.php...');
         const out = await fetchJson('../api/health-airtable.php');
         console.log('🔍 runHealth: API response:', out);
         $('#hAirtRaw').textContent = out.raw || '';
@@ -397,7 +398,10 @@
       }
 
       async function runParity(){
-        const dot = $('#parDot'); setDot(dot,'warn');
+        const dot = $('#parDot'); 
+        console.log('🔍 runParity: Starting...', dot);
+        setDot(dot,'warn');
+        console.log('🔍 runParity: Making API request to data-parity.php...');
         const out = await fetchJson('../api/data-parity.php');
         $('#parRaw').textContent = out.raw || '';
         const j = out.json || {};
@@ -415,7 +419,10 @@
       }
 
       async function runSyncProbe(){
-        const dot = $('#syncDot'); setDot(dot,'warn');
+        const dot = $('#syncDot'); 
+        console.log('🔍 runSyncProbe: Starting...', dot);
+        setDot(dot,'warn');
+        console.log('🔍 runSyncProbe: Making API request to cron-sync.php...');
         const out = await fetchJson('../api/cron-sync.php');
         $('#syncRaw').textContent = out.raw || '';
         const j = out.json || {};
@@ -426,10 +433,13 @@
       }
 
       async function runPerformance(){
-        const dot = $('#perfDot'); setDot(dot,'warn');
+        const dot = $('#perfDot'); 
+        console.log('🔍 runPerformance: Starting...', dot);
+        setDot(dot,'warn');
         const startTime = performance.now();
         
         // Run a quick whoami test for performance measurement
+        console.log('🔍 runPerformance: Making API request to test-proxy-secure.php...');
         const out = await fetchJson('../api/test-proxy-secure.php?provider=airtable',{
           method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ whoami:true })
         });
