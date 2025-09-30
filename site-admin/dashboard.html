@@ -354,7 +354,7 @@
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        timeZone: 'Europe/Moscow'
+        timeZone: 'Asia/Tokyo'
       });
       
       // Performance tracking
@@ -377,7 +377,7 @@
 
       async function runHealth(){
         const dot = $('#hAirtDot'); setDot(dot,'warn');
-        const out = await fetchJson('../api/health-airtable.php');
+        const out = await fetchJson('/api/health-airtable.php');
         $('#hAirtRaw').textContent = out.raw || '';
         const j = out.json || {};
         const ok = !!j.ok;
@@ -390,7 +390,7 @@
 
       async function runParity(){
         const dot = $('#parDot'); setDot(dot,'warn');
-        const out = await fetchJson('../api/data-parity.php');
+        const out = await fetchJson('/api/data-parity.php');
         $('#parRaw').textContent = out.raw || '';
         const j = out.json || {};
         const ok = !!j.ok;
@@ -408,7 +408,7 @@
 
       async function runSyncProbe(){
         const dot = $('#syncDot'); setDot(dot,'warn');
-        const out = await fetchJson('../api/cron-sync.php');
+        const out = await fetchJson('/api/cron-sync.php');
         $('#syncRaw').textContent = out.raw || '';
         const j = out.json || {};
         const ok = !!j.ok;
@@ -422,7 +422,7 @@
         const startTime = performance.now();
         
         // Run a quick whoami test for performance measurement
-        const out = await fetchJson('../api/test-proxy-secure.php?provider=airtable',{
+        const out = await fetchJson('/api/test-proxy-secure.php?provider=airtable',{
           method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ whoami:true })
         });
         
@@ -486,8 +486,15 @@
       }
 
       async function runAll(){
-        await Promise.allSettled([runHealth(), runParity(), runSyncProbe(), runPerformance()]);
+        console.log('🔄 Health Dashboard widget: Starting refresh...');
+        const results = await Promise.allSettled([runHealth(), runParity(), runSyncProbe(), runPerformance()]);
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`❌ Health widget error in function ${index}:`, result.reason);
+          }
+        });
         $('#lastUpdate').textContent = now();
+        console.log('✅ Health Dashboard widget: Refresh completed');
       }
 
       async function rotateToken(){
@@ -503,7 +510,7 @@
           const adminToken = prompt('Enter admin token:');
           if (!adminToken) return;
           
-          const out = await fetchJson('../api/config-store-secure.php', {
+          const out = await fetchJson('/api/config-store-secure.php', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -556,7 +563,7 @@
         $('#applyQuickFix').disabled = true;
         
         try {
-          const out = await fetchJson('../api/set-token-api.php', {
+          const out = await fetchJson('/api/set-token-api.php', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
