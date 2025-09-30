@@ -69,8 +69,7 @@ jobs:
           echo '✅ Directory created with proper permissions'
           
           # Create secret file with REAL Airtable PAT
-          sudo bash -c 'cat > /var/konstructour/secrets/airtable.json <<EOF
-{
+          sudo bash -c 'echo "{
   \"current\": {
     \"token\": \"${{ secrets.AIRTABLE_PAT }}\",
     \"since\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
@@ -79,8 +78,7 @@ jobs:
     \"token\": null,
     \"since\": null
   }
-}
-EOF'
+}" > /var/konstructour/secrets/airtable.json'
           sudo chown www-data:www-data /var/konstructour/secrets/airtable.json
           sudo chmod 600 /var/konstructour/secrets/airtable.json
           echo '✅ Secret file created with Airtable PAT'
