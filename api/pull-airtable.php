@@ -36,6 +36,24 @@ if (empty($debugToken)) {
     }
 }
 
+// Отладка для веб-интерфейса
+if (isset($_SERVER['HTTP_HOST'])) {
+    $finalToken = getenv('AIRTABLE_API_KEY');
+    if (empty($finalToken)) {
+        echo json_encode([
+            'ok' => false, 
+            'error' => 'Token still not loaded after fallback',
+            'debug' => [
+                'file_exists' => file_exists($tokenFile),
+                'file_content' => file_exists($tokenFile) ? file_get_contents($tokenFile) : 'File not found',
+                'env_var' => getenv('AIRTABLE_API_KEY'),
+                'server_var' => $_SERVER['AIRTABLE_API_KEY'] ?? 'Not set'
+            ]
+        ]);
+        exit;
+    }
+}
+
 require_once __DIR__.'/_airtable-common.php';
 
 function ok($p){ echo json_encode($p, JSON_UNESCAPED_UNICODE); exit; }
