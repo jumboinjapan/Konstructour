@@ -15,9 +15,20 @@
     .dot.ok{ background:var(--ok);} .dot.err{ background:var(--err);} .dot.warn{ background:var(--warn);} 
     .spin{ border:2px solid #a78bfa; border-top-color:transparent; border-radius:9999px; width:12px; height:12px; animation:spin .9s linear infinite; display:inline-block; }
     @keyframes spin{ to{ transform:rotate(360deg);} }
-    .card{ @apply bg-white rounded-xl shadow p-5; }
+    .card{
+      background:#fff;
+      border-radius:0.75rem;            /* ~rounded-xl */
+      box-shadow:0 1px 2px rgba(0,0,0,.05), 0 1px 1px rgba(0,0,0,.03); /* ~shadow */
+      padding:1.25rem;                  /* ~p-5 */
+    }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .kbd{ @apply px-1.5 py-0.5 rounded bg-gray-100 border text-xs; }
+    .kbd{
+      padding:0.125rem 0.375rem;        /* px-1.5 py-0.5 */
+      border-radius:0.25rem;
+      background:#f3f4f6;               /* gray-100 */
+      border:1px solid #e5e7eb;         /* gray-200 */
+      font-size:0.75rem;                /* text-xs */
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -157,7 +168,6 @@
           <li>Ошибки авторизации: ищите метки <span class="kbd">AIRT/AUTH fail 401</span> в логах.</li>
           <li>Промоушн ключа: <span class="kbd">AIRT/PROMOTE next→current</span>.</li>
           <li>Лимиты Airtable: <span class="kbd">429</span> + backoff. Проверьте <span class="kbd">Retry-After</span>.</li>
-          <li>Rate limiting: <span class="kbd">429</span> + backoff. Проверьте <span class="kbd">Retry-After</span>.</li>
         </ul>
       </div>
     </section>
@@ -195,15 +205,23 @@
 
   async function runHealth(){
     const dot = $('#hAirtDot'); setDot(dot,'warn');
+    const startTime = performance.now();
     const out = await fetchJson(url('/api/health-airtable.php'));
+    const endTime = performance.now();
+    const realLatency = Math.round(endTime - startTime);
+    
     $('#hAirtRaw').textContent = out.raw || '';
     const j = out.json || {};
     const ok = !!j.ok;
     setDot(dot, ok?'ok':'err');
     const auth = j.auth ? `${j.auth.current? 'current✔' : 'current✖'} / ${j.auth.next? 'next✔':'next✖'}` : '—';
     $('#hAirtAuth').textContent = auth;
-    const lat = j.latency_ms != null ? j.latency_ms : (j.metrics && j.metrics.latency_ms);
-    $('#hAirtLatency').textContent = fmt(lat);
+    
+    // Show real latency, with server RTT as secondary info
+    const serverLatency = j.latency_ms != null ? j.latency_ms : (j.metrics && j.metrics.latency_ms);
+    const latencyText = serverLatency ? `${realLatency}ms (server: ${serverLatency}ms)` : `${realLatency}ms`;
+    $('#hAirtLatency').textContent = latencyText;
+    
     const rate = j.rate ? `${j.rate.remaining ?? '—'} left` + (j.rate.reset_at? `, reset ${j.rate.reset_at}`:'' ) : '—';
     $('#hAirtRate').textContent = rate;
   }
@@ -227,16 +245,28 @@
     $('#parRaw').textContent = out.raw || '';
     const j = out.json || {};
     const ok = !!j.ok;
-    let warn = false;
-    if (j.orphans){
-      const sum = (j.orphans.city_orphans||0)+(j.orphans.poi_city_orphans||0)+(j.orphans.poi_region_orphans||0);
-      warn = sum>0;
-    }
-    setDot(dot, ok ? (warn?'warn':'ok') : 'err');
-    const counts = j.sqlite_counts ? `${j.sqlite_counts.regions ?? '—'}/${j.sqlite_counts.cities ?? '—'}/${j.sqlite_counts.pois ?? '—'}` : '—';
+
+    // Поддерживаем обе формы: counts.sqlite.* ИЛИ sqlite_counts.*
+    const countsObj = (j.counts && j.counts.sqlite) ? j.counts.sqlite : (j.sqlite_counts || {});
+    const orphansObj = j.orphans || j.sqlite_orphans || {};
+
+    // Суммируем сирот, учитывая оба наименования полей
+    const sumOrphans =
+      (orphansObj.city ?? orphansObj.city_orphans ?? 0) +
+      (orphansObj.poi_city ?? orphansObj.poi_city_orphans ?? 0) +
+      (orphansObj.poi_region ?? orphansObj.poi_region_orphans ?? 0);
+
+    setDot(dot, ok ? (sumOrphans > 0 ? 'warn' : 'ok') : 'err');
+
+    const counts = countsObj
+      ? `${countsObj.regions ?? '—'}/${countsObj.cities ?? '—'}/${countsObj.pois ?? '—'}`
+      : '—';
     $('#parCounts').textContent = counts;
-    const orph = j.orphans ? `c:${j.orphans.city_orphans||0} • poi→city:${j.orphans.poi_city_orphans||0} • poi→region:${j.orphans.poi_region_orphans||0}` : '—';
-    $('#parOrphans').textContent = orph;
+
+    const orphText = `c:${(orphansObj.city ?? orphansObj.city_orphans) || 0} • ` +
+                     `poi→city:${(orphansObj.poi_city ?? orphansObj.poi_city_orphans) || 0} • ` +
+                     `poi→region:${(orphansObj.poi_region ?? orphansObj.poi_region_orphans) || 0}`;
+    $('#parOrphans').textContent = ok ? orphText : '—';
   }
 
   async function runSyncProbe(){
@@ -273,6 +303,22 @@
     } else {
       promoteBtn.classList.add('hidden');
     }
+    
+    // If just promoted, refresh other cards
+    if (j.reason === 'next_promoted') {
+      await runWho();
+      await runHealth();
+    }
+    
+    // Update rotate button state (traffic light)
+    const rotateBtn = $('#btnRotate');
+    if (j.auth?.next) {
+      rotateBtn.className = 'px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200';
+      rotateBtn.textContent = 'Rotate Token (Next Available)';
+    } else {
+      rotateBtn.className = 'px-3 py-1 text-xs bg-gray-100 text-gray-500 rounded cursor-not-allowed';
+      rotateBtn.textContent = 'Rotate Token (No Next)';
+    }
   }
 
   async function runPerformance(){
@@ -288,10 +334,12 @@
     const responseTime = Math.round(endTime - startTime);
     
     // Add to performance history
+    const j = out.json || {};
+    const success = !!(j.ok && (j.auth === true || j.auth === undefined));
     performanceHistory.push({
       timestamp: Date.now(),
       responseTime: responseTime,
-      success: out.json?.ok || false,
+      success,
       status: out.status
     });
     
@@ -324,20 +372,18 @@
   function updatePerformanceChart(){
     const chart = $('#perfChart');
     chart.innerHTML = '';
-    
     const recent = performanceHistory.slice(-10);
-    const maxTime = Math.max(...recent.map(entry => entry.responseTime), 100);
-    
+    if (recent.length === 0) return;
+    const maxTime = Math.max(100, ...recent.map(e => e.responseTime || 0));
     recent.forEach(entry => {
-      const height = Math.round((entry.responseTime / maxTime) * 100);
-      const color = entry.success ? '#10b981' : '#ef4444';
+      const height = Math.round(((entry.responseTime || 0) / maxTime) * 100);
       const bar = document.createElement('div');
       bar.style.height = `${height}%`;
-      bar.style.backgroundColor = color;
+      bar.style.backgroundColor = entry.success ? '#10b981' : '#ef4444';
       bar.style.flex = '1';
       bar.style.borderRadius = '2px';
       bar.style.minHeight = '4px';
-      bar.title = `${entry.responseTime}ms (${entry.success ? 'OK' : 'FAIL'})`;
+      bar.title = `${entry.responseTime ?? 0}ms (${entry.success ? 'OK' : 'FAIL'})`;
       chart.appendChild(bar);
     });
   }
