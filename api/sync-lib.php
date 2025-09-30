@@ -10,13 +10,8 @@ function saveRegion(PDO $db, array $r): void {
     $bid = (string)($r['business_id'] ?? '');
 
     $stmt = $db->prepare("
-        INSERT INTO regions (id, name_ru, name_en, business_id, created_at, updated_at)
+        INSERT OR REPLACE INTO regions (id, name_ru, name_en, business_id, created_at, updated_at)
         VALUES (:id, :nr, :ne, :bid, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT(id) DO UPDATE SET
-            name_ru=excluded.name_ru,
-            name_en=excluded.name_en,
-            business_id=excluded.business_id,
-            updated_at=CURRENT_TIMESTAMP
     ");
     $stmt->execute([':id'=>$id, ':nr'=>$nr, ':ne'=>$ne, ':bid'=>$bid]);
 }
@@ -37,15 +32,8 @@ function saveCity(PDO $db, array $c): void {
     }
 
     $stmt = $db->prepare("
-        INSERT INTO cities (id, name_ru, name_en, business_id, type, region_id, created_at, updated_at)
+        INSERT OR REPLACE INTO cities (id, name_ru, name_en, business_id, type, region_id, created_at, updated_at)
         VALUES (:id, :nr, :ne, :bid, :type, :rid, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT(id) DO UPDATE SET
-            name_ru=excluded.name_ru,
-            name_en=excluded.name_en,
-            business_id=excluded.business_id,
-            type=excluded.type,
-            region_id=excluded.region_id,
-            updated_at=CURRENT_TIMESTAMP
     ");
     $stmt->execute([':id'=>$id, ':nr'=>$nr, ':ne'=>$ne, ':bid'=>$bid, ':type'=>$type, ':rid'=>$rid]);
 }
@@ -81,21 +69,8 @@ function savePoi(PDO $db, array $p): void {
     }
 
     $stmt = $db->prepare("
-        INSERT INTO pois (id, name_ru, name_en, category, place_id, published, business_id, city_id, region_id, description, latitude, longitude, created_at, updated_at)
+        INSERT OR REPLACE INTO pois (id, name_ru, name_en, category, place_id, published, business_id, city_id, region_id, description, latitude, longitude, created_at, updated_at)
         VALUES (:id, :nr, :ne, :cat, :pl, :pub, :bid, :cid, :rid, :desc, :lat, :lng, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT(id) DO UPDATE SET
-            name_ru=excluded.name_ru,
-            name_en=excluded.name_en,
-            category=excluded.category,
-            place_id=excluded.place_id,
-            published=excluded.published,
-            business_id=excluded.business_id,
-            city_id=excluded.city_id,
-            region_id=excluded.region_id,
-            description=excluded.description,
-            latitude=excluded.latitude,
-            longitude=excluded.longitude,
-            updated_at=CURRENT_TIMESTAMP
     ");
     $stmt->bindValue(':id',$id);
     $stmt->bindValue(':nr',$nr);
