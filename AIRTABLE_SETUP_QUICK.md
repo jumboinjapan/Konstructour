@@ -43,7 +43,7 @@ sudo chmod 700 /var/konstructour/secrets
 export ADMIN_TOKEN="<ВАШ_ADMIN_TOKEN>"
 export PAT="patYOUR_TOKEN_HERE"
 
-curl -sS -X POST https://<ваш-домен>/api/config-store-secure.php \
+curl -sS -X POST https://konstructour.com/api/config-store-secure.php \
   -H "Content-Type: application/json" \
   -H "X-Admin-Token: $ADMIN_TOKEN" \
   -d "{\"airtable\":{\"api_key\":\"$PAT\"}}"
@@ -51,19 +51,19 @@ curl -sS -X POST https://<ваш-домен>/api/config-store-secure.php \
 
 ### 3. Промоут токена
 ```bash
-curl -sS -X POST https://<ваш-домен>/api/test-proxy-secure.php?provider=airtable \
+curl -sS -X POST https://konstructour.com/api/test-proxy-secure.php?provider=airtable \
   -H "Content-Type: application/json" \
   -d '{"whoami":true}'
 ```
 
 ### 4. Проверка health
 ```bash
-curl -sS https://<ваш-домен>/api/health-airtable.php
+curl -sS https://konstructour.com/api/health-airtable.php
 ```
 
 ### 5. Обновление дашборда
-- Откройте `/site-admin/health-dashboard.html`
-- Укажите базовый URL с протоколом
+- Откройте `https://konstructour.com/site-admin/health-dashboard.html`
+- Укажите базовый URL: `https://konstructour.com`
 - Нажмите "Сохранить URL" → "Обновить"
 
 ---

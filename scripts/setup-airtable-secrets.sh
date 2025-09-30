@@ -86,7 +86,7 @@ else
     echo "   Загружаем PAT в слот NEXT..."
     
     # Определение домена
-    echo "   Введите ваш домен (например, https://konstructour.com):"
+    echo "   Введите ваш домен (по умолчанию https://konstructour.com):"
     read -r DOMAIN
     
     if [ -z "$DOMAIN" ]; then
@@ -173,8 +173,8 @@ echo
 echo "=== Настройка завершена ==="
 echo
 echo "Следующие шаги:"
-echo "1. Откройте Health Dashboard: $DOMAIN/site-admin/health-dashboard.html"
-echo "2. Укажите базовый URL: $DOMAIN"
+echo "1. Откройте Health Dashboard: https://konstructour.com/site-admin/health-dashboard.html"
+echo "2. Укажите базовый URL: https://konstructour.com"
 echo "3. Нажмите 'Сохранить URL' → 'Обновить'"
 echo "4. Проверьте, что карточки стали зелеными"
 echo
