@@ -18,6 +18,7 @@
     
     <script>
         async function testAPI() {
+            console.log('Starting API tests...');
             const results = document.getElementById('results');
             let html = '';
             
@@ -48,8 +49,16 @@
             
             // Test Airtable
             try {
+                console.log('Testing Airtable API...');
                 const res = await fetch('/api/airtable-ping.php');
+                console.log('Airtable response status:', res.status);
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
                 const data = await res.json();
+                console.log('Airtable response data:', data);
                 
                 if (data.ok) {
                     html += `<div class="test success">
@@ -65,12 +74,15 @@
                         <p>Код: ${data.code || 'N/A'}</p>
                         <p>Ошибка: ${data.details || data.error || 'Неизвестная ошибка'}</p>
                         <p>Подсказка: ${data.hint || ''}</p>
+                        <p>Детали: ${JSON.stringify(data, null, 2)}</p>
                     </div>`;
                 }
             } catch (e) {
+                console.error('Airtable test error:', e);
                 html += `<div class="test error">
                     <h3>❌ Ошибка подключения к Airtable</h3>
-                    <p>${e.message}</p>
+                    <p>Ошибка: ${e.message}</p>
+                    <p>Тип: ${e.name}</p>
                 </div>`;
             }
             
