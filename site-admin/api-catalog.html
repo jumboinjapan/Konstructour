@@ -391,7 +391,7 @@
             setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
             setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
             autoTestMapping();
-            try{ await refreshServerKeyBadge(); }catch(_){ }
+            // refreshServerKeyBadge вызывается отдельно при загрузке страницы
           }catch(_){ /* ignore */ }
         }
 
@@ -423,7 +423,7 @@
             const headers = { 'Content-Type':'application/json' };
             if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
             await fetch('../api/config-store.php', { method:'POST', headers, body: JSON.stringify(payload) });
-            try{ await refreshServerKeyBadge(); }catch(_){ }
+            // refreshServerKeyBadge вызывается автоматически каждые 5 секунд
           }catch(_){ /* ignore */ }
         }
 
@@ -486,8 +486,8 @@
 
         loadRegistry();
         
-        // Автоматически проверяем статус при загрузке страницы
-        refreshServerKeyBadge();
+        // Автоматически проверяем статус при загрузке страницы (с задержкой)
+        setTimeout(refreshServerKeyBadge, 1000);
         
         // Принудительно обновляем статус каждые 5 секунд
         setInterval(refreshServerKeyBadge, 5000);
