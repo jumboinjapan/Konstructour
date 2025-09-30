@@ -211,7 +211,7 @@
     localStorage.setItem(baseKey, v);
     $('#baseUrl').value = v;
   }
-  function loadBase(){ const v = localStorage.getItem(baseKey) || ''; $('#baseUrl').value = v; }
+  function loadBase(){ const v = localStorage.getItem(baseKey) || 'https://www.konstructour.com'; $('#baseUrl').value = v; }
   function saveAuto(ms){ localStorage.setItem(autoKey, String(ms)); }
   function loadAuto(){ return parseInt(localStorage.getItem(autoKey)||'0',10); }
 
