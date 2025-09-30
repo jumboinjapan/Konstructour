@@ -377,6 +377,10 @@
       async function runHealth(){
         const dot = $('#hAirtDot'); 
         console.log('🔍 runHealth: Starting...', dot);
+        if (!dot) {
+          console.error('❌ runHealth: hAirtDot element not found!');
+          return;
+        }
         setDot(dot,'warn');
         const out = await fetchJson('../api/health-airtable.php');
         console.log('🔍 runHealth: API response:', out);
@@ -585,9 +589,11 @@
       function schedule(ms){ if (timer){ clearInterval(timer); timer=null; } if (ms>0){ timer = setInterval(runAll, ms); } }
 
       // init
+      console.log('🚀 Health Dashboard widget: Initializing...');
       const ms0 = loadAuto();
       if (ms0>0) $('#autoRefreshHealth').value = String(ms0);
       schedule(ms0);
+      console.log('🚀 Health Dashboard widget: Starting runAll()...');
       runAll();
     })();
     </script>
