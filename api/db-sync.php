@@ -1,7 +1,9 @@
 <?php
 // Minimal DB sync proxy (Airtable create/list placeholder)
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
+if (php_sapi_name() !== 'cli') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+}
 
 function respond($ok, $data=[], $code=200){ http_response_code($code); echo json_encode(['ok'=>$ok]+$data, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES); exit; }
 
@@ -53,7 +55,7 @@ function determineNameField($airReg, $scope, $baseUrl, $pat){
   return array_key_exists($label, $fields) ? $label : 'Name';
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(false, ['error'=>'Invalid method'], 405);
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') respond(false, ['error'=>'Invalid method'], 405);
 // Allow HTTP for local/admin pages; production usually fronted by TLS terminator
 $ref = $_SERVER['HTTP_REFERER'] ?? '';
 if ($ref && strpos($ref, (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on' ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].'/') !== 0) {
