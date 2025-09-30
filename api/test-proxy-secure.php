@@ -38,6 +38,64 @@ function respond($ok, $data = [], $code = 200) {
   exit;
 }
 
+function airtable_request_with_retry($url, $token, $maxRetries = 3) {
+  $retryDelays = [1, 2, 4]; // секунды
+  
+  for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+      CURLOPT_TIMEOUT => 30,
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    // Если успех - возвращаем результат
+    if ($httpCode >= 200 && $httpCode < 300) {
+      return [
+        'ok' => true,
+        'http_code' => $httpCode,
+        'response' => $response
+      ];
+    }
+    
+    // Если 429 (rate limit) - ждем и повторяем
+    if ($httpCode === 429) {
+      $delay = $retryDelays[$attempt] ?? 8;
+      error_log("[TEST-PROXY-AIRTABLE] Rate limited, retrying in {$delay}s (attempt " . ($attempt + 1) . ")");
+      sleep($delay);
+      continue;
+    }
+    
+    // Если 401/403 - не повторяем
+    if ($httpCode === 401 || $httpCode === 403) {
+      error_log("[TEST-PROXY-AIRTABLE] Auth failed: HTTP $httpCode");
+      return [
+        'ok' => false,
+        'http_code' => $httpCode,
+        'response' => $response
+      ];
+    }
+    
+    // Для других ошибок - повторяем
+    error_log("[TEST-PROXY-AIRTABLE] Request failed: HTTP $httpCode, retrying...");
+    if ($attempt < $maxRetries - 1) {
+      sleep($retryDelays[$attempt] ?? 1);
+    }
+  }
+  
+  // Все попытки исчерпаны
+  error_log("[TEST-PROXY-AIRTABLE] All retry attempts failed");
+  return [
+    'ok' => false,
+    'http_code' => $httpCode,
+    'response' => $response
+  ];
+}
+
 // Accept POST (JSON) and GET (query params) to bypass mod_security filters on some hosts
 $payload = $method === 'POST' ? body_json() : $_GET;
 
@@ -77,38 +135,24 @@ switch ($provider) {
         $url .= '?' . http_build_query($params);
       }
 
-      // Выполняем запрос к Airtable
-      $ch = curl_init($url);
-      curl_setopt_array($ch, [
-        CURLOPT_HTTPHEADER => ["Authorization: Bearer {$token}"],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 30,
-      ]);
+      // Выполняем запрос к Airtable с retry логикой
+      $result = airtable_request_with_retry($url, $token);
       
-      $response = curl_exec($ch);
-      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-      $error = curl_error($ch);
-      curl_close($ch);
-      
-      if ($error) {
-        respond(false, ['error'=>$error], 502);
-      }
-      
-      $data = json_decode($response, true);
-      
-      if ($httpCode >= 200 && $httpCode < 300) {
-        respond(true, [
-          'status' => $httpCode,
-          'body' => $data,
-          'token_slot' => $promote ? 'next_promoted' : 'current'
-        ]);
-      } else {
+      if (!$result['ok']) {
         respond(false, [
-          'status' => $httpCode,
-          'error' => $data['error']['message'] ?? 'Unknown error',
-          'body' => $data
-        ], $httpCode);
+          'status' => $result['http_code'],
+          'error' => 'Request failed after retries',
+          'response' => $result['response']
+        ], $result['http_code']);
       }
+      
+      $data = json_decode($result['response'], true);
+      
+      respond(true, [
+        'status' => $result['http_code'],
+        'body' => $data,
+        'token_slot' => $promote ? 'next_promoted' : 'current'
+      ]);
 
     } catch (Throwable $e) {
       error_log("[TEST-PROXY-AIRTABLE] Error: " . $e->getMessage());
