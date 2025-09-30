@@ -3,12 +3,23 @@
 function airtable_secret_path(): string {
   $env = getenv('KONSTRUCTOUR_SECRET_FILE');
   if ($env && is_string($env)) return $env;
+  
   // Фолбэк на домашнюю директорию хостинга:
   $home = getenv('HOME') ?: '';
   if ($home) {
     $candidate = rtrim($home, '/').'/konstructour/secrets/airtable.json';
     if (file_exists($candidate)) return $candidate;
   }
+  
+  // Попробуем определить пользователя из $_SERVER
+  $user = $_SERVER['USER'] ?? $_SERVER['USERNAME'] ?? 'revidovi';
+  $homePath = "/home/{$user}/konstructour/secrets/airtable.json";
+  if (file_exists($homePath)) return $homePath;
+  
+  // Попробуем /home/revidovi (известный пользователь)
+  $knownPath = "/home/revidovi/konstructour/secrets/airtable.json";
+  if (file_exists($knownPath)) return $knownPath;
+  
   // Старый системный путь как "последняя надежда"
   return '/var/konstructour/secrets/airtable.json';
 }
