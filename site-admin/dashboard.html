@@ -30,6 +30,12 @@
         .has-errors .text-2xl{ color:#ef4444; }
         /* Modal content fallback */
         .modal-content{ background:#fff; border:1px solid rgba(0,0,0,.1); }
+        /* Health Dashboard styles */
+        .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .dot{ width:10px; height:10px; border-radius:9999px; display:inline-block; background:#9ca3af;} 
+        .dot.ok{ background:#10b981;} .dot.err{ background:#ef4444;} .dot.warn{ background:#f59e0b;} 
+        .spin{ border:2px solid #a78bfa; border-top-color:transparent; border-radius:9999px; width:12px; height:12px; animation:spin .9s linear infinite; display:inline-block; }
+        @keyframes spin{ to{ transform:rotate(360deg);} }
     </style>
 </head>
 <body>
@@ -129,6 +135,108 @@
                 </div>
             </div>
 
+            <!-- Health Dashboard Section -->
+            <div class="glass-panel p-6 rounded-lg mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-light text-gray-800"><i class="fas fa-heartbeat mr-2 text-red-600"></i>Health Dashboard</h3>
+                    <div class="flex items-center gap-2 text-sm">
+                        <button id="btnRefreshHealth" class="px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-black text-xs"><i class="fa-solid fa-rotate"></i> Обновить</button>
+                        <label class="text-gray-600">Автообновление:
+                            <select id="autoRefreshHealth" class="ml-2 border rounded px-2 py-1 text-xs">
+                                <option value="0">Выкл</option>
+                                <option value="15000">15 сек</option>
+                                <option value="30000">30 сек</option>
+                                <option value="60000">1 мин</option>
+                                <option value="300000">5 мин</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Health Status Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                    <!-- Airtable Health -->
+                    <div class="bg-white rounded-lg p-4 border">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span id="hAirtDot" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <h4 class="text-sm font-medium">Airtable</h4>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600" id="btnShowHealth"><i class="fa-regular fa-eye text-xs"></i></button>
+                        </div>
+                        <div class="text-xs text-gray-600 space-y-1">
+                            <div class="flex justify-between"><span>Auth</span><span class="mono" id="hAirtAuth">—</span></div>
+                            <div class="flex justify-between"><span>Latency</span><span class="mono" id="hAirtLatency">—</span></div>
+                        </div>
+                        <pre id="hAirtRaw" class="mt-2 hidden bg-gray-50 p-2 rounded text-xs overflow-auto max-h-32 mono"></pre>
+                    </div>
+
+                    <!-- Data Parity -->
+                    <div class="bg-white rounded-lg p-4 border">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span id="parDot" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <h4 class="text-sm font-medium">Data Parity</h4>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600" id="btnParity"><i class="fa-solid fa-scale-balanced text-xs"></i></button>
+                        </div>
+                        <div class="text-xs text-gray-600 space-y-1">
+                            <div class="flex justify-between"><span>Records</span><span class="mono" id="parCounts">—</span></div>
+                            <div class="flex justify-between"><span>Orphans</span><span class="mono" id="parOrphans">—</span></div>
+                        </div>
+                        <pre id="parRaw" class="mt-2 hidden bg-gray-50 p-2 rounded text-xs overflow-auto max-h-32 mono"></pre>
+                    </div>
+
+                    <!-- Sync Status -->
+                    <div class="bg-white rounded-lg p-4 border">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span id="syncDot" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <h4 class="text-sm font-medium">Sync</h4>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600" id="btnSync"><i class="fa-solid fa-arrows-rotate text-xs"></i></button>
+                        </div>
+                        <div class="text-xs text-gray-600 space-y-1">
+                            <div class="flex justify-between"><span>Status</span><span class="mono" id="syncResult">—</span></div>
+                        </div>
+                        <pre id="syncRaw" class="mt-2 hidden bg-gray-50 p-2 rounded text-xs overflow-auto max-h-32 mono"></pre>
+                    </div>
+
+                    <!-- Performance -->
+                    <div class="bg-white rounded-lg p-4 border">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span id="perfDot" class="w-3 h-3 rounded-full bg-gray-300"></span>
+                                <h4 class="text-sm font-medium">Performance</h4>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600" id="btnPerf"><i class="fa-solid fa-chart-line text-xs"></i></button>
+                        </div>
+                        <div class="text-xs text-gray-600 space-y-1">
+                            <div class="flex justify-between"><span>Avg (ms)</span><span class="mono" id="perfAvg">—</span></div>
+                            <div class="flex justify-between"><span>Success</span><span class="mono" id="perfSuccess">—</span></div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="text-xs text-gray-500 mb-1">Recent:</div>
+                            <div id="perfChart" class="h-8 bg-gray-50 rounded border flex items-end gap-1 p-1">
+                                <!-- Mini chart bars will be inserted here -->
+                            </div>
+                        </div>
+                        <pre id="perfRaw" class="mt-2 hidden bg-gray-50 p-2 rounded text-xs overflow-auto max-h-32 mono"></pre>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="flex items-center justify-between text-sm text-gray-600">
+                    <div>
+                        <span>Последнее обновление: </span><span id="lastUpdate" class="mono">—</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="health-dashboard.html" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">Полный дашборд</a>
+                        <button id="btnTokenRotate" class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200">Rotate Token</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Таблица API и события -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div class="glass-panel p-6 rounded-lg">
@@ -155,6 +263,196 @@
     </div>
     <script src="../js/admin-auth.js?v=20250923-errlog1"></script>
     <script src="../js/admin-dashboard.js?v=20250923-errlog1"></script>
+    
+    <!-- Health Dashboard Script -->
+    <script>
+    (function(){
+      const $ = sel => document.querySelector(sel);
+      const autoKey = 'kt_health_auto_ms';
+      const perfKey = 'kt_health_perf_history';
+      const setDot = (el, cls) => { el.classList.remove('ok','err','warn'); el.classList.add(cls); };
+      const fmt = v => typeof v==='number' ? v.toString() : (v ?? '—');
+      const now = () => new Date().toLocaleString();
+      
+      // Performance tracking
+      let performanceHistory = JSON.parse(localStorage.getItem(perfKey) || '[]');
+      const maxHistoryLength = 20;
+
+      function saveAuto(ms){ localStorage.setItem(autoKey, String(ms)); }
+      function loadAuto(){ return parseInt(localStorage.getItem(autoKey)||'0',10); }
+
+      async function fetchJson(u, opts={}){
+        const r = await fetch(u, Object.assign({ cache:'no-store' }, opts));
+        const txt = await r.text();
+        try{ return { status:r.status, json: JSON.parse(txt), raw: txt }; }
+        catch{ return { status:r.status, json:null, raw: txt }; }
+      }
+
+      async function runHealth(){
+        const dot = $('#hAirtDot'); setDot(dot,'warn');
+        const out = await fetchJson('../api/health-airtable.php');
+        $('#hAirtRaw').textContent = out.raw || '';
+        const j = out.json || {};
+        const ok = !!j.ok;
+        setDot(dot, ok?'ok':'err');
+        const auth = j.auth ? `${j.auth.current? 'current✔' : 'current✖'} / ${j.auth.next? 'next✔':'next✖'}` : '—';
+        $('#hAirtAuth').textContent = auth;
+        const lat = j.latency_ms != null ? j.latency_ms : (j.metrics && j.metrics.latency_ms);
+        $('#hAirtLatency').textContent = fmt(lat);
+      }
+
+      async function runParity(){
+        const dot = $('#parDot'); setDot(dot,'warn');
+        const out = await fetchJson('../api/data-parity.php');
+        $('#parRaw').textContent = out.raw || '';
+        const j = out.json || {};
+        const ok = !!j.ok;
+        let warn = false;
+        if (j.orphans){
+          const sum = (j.orphans.city_orphans||0)+(j.orphans.poi_city_orphans||0)+(j.orphans.poi_region_orphans||0);
+          warn = sum>0;
+        }
+        setDot(dot, ok ? (warn?'warn':'ok') : 'err');
+        const counts = j.sqlite_counts ? `${j.sqlite_counts.regions ?? '—'}/${j.sqlite_counts.cities ?? '—'}/${j.sqlite_counts.pois ?? '—'}` : '—';
+        $('#parCounts').textContent = counts;
+        const orph = j.orphans ? `c:${j.orphans.city_orphans||0} • poi→city:${j.orphans.poi_city_orphans||0} • poi→region:${j.orphans.poi_region_orphans||0}` : '—';
+        $('#parOrphans').textContent = orph;
+      }
+
+      async function runSyncProbe(){
+        const dot = $('#syncDot'); setDot(dot,'warn');
+        const out = await fetchJson('../api/cron-sync.php');
+        $('#syncRaw').textContent = out.raw || '';
+        const j = out.json || {};
+        const ok = !!j.ok;
+        setDot(dot, ok?'ok':'err');
+        const s = ok ? `regions:${j.regions ?? '—'} cities:${j.cities ?? '—'} pois:${j.pois ?? '—'}` : (j.error || `HTTP ${out.status}`);
+        $('#syncResult').textContent = s;
+      }
+
+      async function runPerformance(){
+        const dot = $('#perfDot'); setDot(dot,'warn');
+        const startTime = performance.now();
+        
+        // Run a quick whoami test for performance measurement
+        const out = await fetchJson('../api/test-proxy-secure.php?provider=airtable',{
+          method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ whoami:true })
+        });
+        
+        const endTime = performance.now();
+        const responseTime = Math.round(endTime - startTime);
+        
+        // Add to performance history
+        performanceHistory.push({
+          timestamp: Date.now(),
+          responseTime: responseTime,
+          success: out.json?.ok || false,
+          status: out.status
+        });
+        
+        // Keep only last N entries
+        if (performanceHistory.length > maxHistoryLength) {
+          performanceHistory = performanceHistory.slice(-maxHistoryLength);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem(perfKey, JSON.stringify(performanceHistory));
+        
+        $('#perfRaw').textContent = JSON.stringify(performanceHistory.slice(-5), null, 2);
+        
+        // Calculate metrics
+        const recent = performanceHistory.slice(-10);
+        const avgResponse = recent.length > 0 ? Math.round(recent.reduce((sum, entry) => sum + entry.responseTime, 0) / recent.length) : 0;
+        const successRate = recent.length > 0 ? Math.round((recent.filter(entry => entry.success).length / recent.length) * 100) : 0;
+        
+        setDot(dot, successRate >= 90 ? 'ok' : (successRate >= 70 ? 'warn' : 'err'));
+        
+        $('#perfAvg').textContent = avgResponse;
+        $('#perfSuccess').textContent = `${successRate}%`;
+        
+        // Update mini chart
+        updatePerformanceChart();
+      }
+
+      function updatePerformanceChart(){
+        const chart = $('#perfChart');
+        chart.innerHTML = '';
+        
+        const recent = performanceHistory.slice(-10);
+        const maxTime = Math.max(...recent.map(entry => entry.responseTime), 100);
+        
+        recent.forEach(entry => {
+          const height = Math.round((entry.responseTime / maxTime) * 100);
+          const color = entry.success ? '#10b981' : '#ef4444';
+          const bar = document.createElement('div');
+          bar.style.height = `${height}%`;
+          bar.style.backgroundColor = color;
+          bar.style.flex = '1';
+          bar.style.borderRadius = '2px';
+          bar.style.minHeight = '4px';
+          bar.title = `${entry.responseTime}ms (${entry.success ? 'OK' : 'FAIL'})`;
+          chart.appendChild(bar);
+        });
+      }
+
+      async function runAll(){
+        await Promise.allSettled([runHealth(), runParity(), runSyncProbe(), runPerformance()]);
+        $('#lastUpdate').textContent = now();
+      }
+
+      async function rotateToken(){
+        const newToken = prompt('Enter new Airtable PAT token:');
+        if (!newToken) return;
+        
+        if (!newToken.match(/^pat\.[A-Za-z0-9_\-]{20,}$/)) {
+          alert('Invalid PAT format. Must start with "pat." and be at least 20 characters.');
+          return;
+        }
+        
+        try {
+          const adminToken = prompt('Enter admin token:');
+          if (!adminToken) return;
+          
+          const out = await fetchJson('../api/config-store-secure.php', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Admin-Token': adminToken
+            },
+            body: JSON.stringify({ airtable: { api_key: newToken } })
+          });
+          
+          if (out.json?.ok) {
+            alert('Token saved to next slot successfully!');
+            runAll();
+          } else {
+            alert('Failed to save token: ' + (out.json?.error || 'Unknown error'));
+          }
+        } catch (e) {
+          alert('Failed to rotate token: ' + e.message);
+        }
+      }
+
+      // UI bindings
+      $('#btnRefreshHealth').addEventListener('click', runAll);
+      $('#btnShowHealth').addEventListener('click', ()=> $('#hAirtRaw').classList.toggle('hidden'));
+      $('#btnParity').addEventListener('click', ()=> $('#parRaw').classList.toggle('hidden'));
+      $('#btnSync').addEventListener('click', ()=> $('#syncRaw').classList.toggle('hidden'));
+      $('#btnPerf').addEventListener('click', ()=> $('#perfRaw').classList.toggle('hidden'));
+      $('#btnTokenRotate').addEventListener('click', rotateToken);
+      $('#autoRefreshHealth').addEventListener('change', (e)=>{ const ms = parseInt(e.target.value,10)||0; saveAuto(ms); schedule(ms); });
+
+      // auto-refresh machinery
+      let timer = null;
+      function schedule(ms){ if (timer){ clearInterval(timer); timer=null; } if (ms>0){ timer = setInterval(runAll, ms); } }
+
+      // init
+      const ms0 = loadAuto();
+      if (ms0>0) $('#autoRefreshHealth').value = String(ms0);
+      schedule(ms0);
+      runAll();
+    })();
+    </script>
 </body>
 </html>
 
