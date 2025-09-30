@@ -94,25 +94,21 @@
                               <div class="map-entity"><span class="api-dot" id="am_dot_country"></span><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.5"/><path d="M3 12h18M12 3c-2.5 2.8-2.5 14.2 0 18" stroke-width="1.5" stroke-linecap="round"/></svg><span>Country</span></div>
                               <input id="am_country_table" class="input-japanese" placeholder="tbl...">
                               <input id="am_country_view" class="input-japanese" placeholder="viw...">
-                              <button data-entity="country" class="map-test btn-japanese">Test</button>
                             </div>
                             <div class="map-row">
                               <div class="map-entity"><span class="api-dot" id="am_dot_region"></span><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2v-13z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Region</span></div>
                               <input id="am_region_table" class="input-japanese" placeholder="tbl...">
                               <input id="am_region_view" class="input-japanese" placeholder="viw...">
-                              <button data-entity="region" class="map-test btn-japanese">Test</button>
                             </div>
                             <div class="map-row">
                               <div class="map-entity"><span class="api-dot" id="am_dot_city"></span><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><rect x="6" y="8" width="5" height="10" rx="1" stroke-width="1.5"/><rect x="13" y="5" width="5" height="13" rx="1" stroke-width="1.5"/><path d="M3 19h18" stroke-width="1.5" stroke-linecap="round"/></svg><span>City</span></div>
                               <input id="am_city_table" class="input-japanese" placeholder="tbl...">
                               <input id="am_city_view" class="input-japanese" placeholder="viw...">
-                              <button data-entity="city" class="map-test btn-japanese">Test</button>
                             </div>
                             <div class="map-row">
                               <div class="map-entity"><span class="api-dot" id="am_dot_poi"></span><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M12 20s5.5-4.6 5.5-9.5A5.5 5.5 0 1 0 6.5 10.5C6.5 15.4 12 20 12 20z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="10.5" r="1.8" stroke-width="1.5"/></svg><span>POI</span></div>
                               <input id="am_poi_table" class="input-japanese" placeholder="tbl...">
                               <input id="am_poi_view" class="input-japanese" placeholder="viw...">
-                              <button data-entity="poi" class="map-test btn-japanese">Test</button>
                             </div>
                           </div>
                         </div>
@@ -344,22 +340,9 @@
             if (msg){ msg.textContent = 'Ошибка подключения'; }
           }
         }
-        document.querySelectorAll('.map-test').forEach(btn=>{
-          btn.addEventListener('click', function(){ testTable(this.getAttribute('data-entity')); });
-        });
+        // map-test buttons removed - using auto-updating indicators instead
 
-        // Auto-test on load if Base + Table present, and re-test after edits
-        function autoTestMapping(){
-          const baseId = document.getElementById('airtable_base_id')?.value || '';
-          if (!baseId) return;
-          ['country','region','city','poi'].forEach(ent=>{
-            const tbl = document.getElementById('am_'+ent+'_table')?.value || '';
-            if (tbl) testTable(ent);
-          });
-        }
-        const debounce = (fn, ms)=>{ let t; return ()=>{ clearTimeout(t); t=setTimeout(fn, ms); }; };
-        ['airtable_base_id','am_country_table','am_country_view','am_region_table','am_region_view','am_city_table','am_city_view','am_poi_table','am_poi_view']
-          .forEach(id=>{ const el = document.getElementById(id); if (el){ el.addEventListener('input', debounce(autoTestMapping, 600)); el.addEventListener('change', autoTestMapping); } });
+        // autoTestMapping function removed - replaced with updateMappingIndicators
 
         // Load saved registry from server and populate fields
         async function loadRegistry(){
@@ -423,6 +406,51 @@
         });
 
         // Кнопка Token Locked убрана - не несет практической нагрузки
+
+        // Автообновление дочерних индикаторов
+        async function updateMappingIndicators() {
+          const entities = ['country', 'region', 'city', 'poi'];
+          
+          for (const entity of entities) {
+            const dot = document.getElementById(`am_dot_${entity}`);
+            const tableId = val(`am_${entity}_table`);
+            const viewId = val(`am_${entity}_view`);
+            
+            if (!dot) continue;
+            
+            // Если поля пустые - серый индикатор
+            if (!tableId || !viewId) {
+              dot.classList.remove('ok', 'err', 'warn');
+              dot.classList.add('none');
+              continue;
+            }
+            
+            // Проверяем доступность таблицы через Airtable API
+            try {
+              const response = await fetch('../api/test-proxy-secure.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  provider: 'airtable',
+                  baseId: val('airtable_base_id'),
+                  table: tableId,
+                  view: viewId,
+                  limit: 1
+                })
+              });
+              
+              const result = await response.json();
+              const isOk = !!(result && result.ok);
+              
+              dot.classList.remove('ok', 'err', 'warn', 'none');
+              dot.classList.add(isOk ? 'ok' : 'err');
+              
+            } catch (e) {
+              dot.classList.remove('ok', 'err', 'warn', 'none');
+              dot.classList.add('err');
+            }
+          }
+        }
 
         let isRefreshing = false; // Защита от множественных вызовов
         
@@ -493,6 +521,22 @@
         
         // Автоматически проверяем статус при загрузке страницы (без loading)
         setTimeout(() => refreshServerKeyBadge(false), 2000);
+        
+        // Автообновление дочерних индикаторов при изменении полей
+        const mappingInputs = ['am_country_table', 'am_country_view', 'am_region_table', 'am_region_view', 
+                              'am_city_table', 'am_city_view', 'am_poi_table', 'am_poi_view', 'airtable_base_id'];
+        
+        mappingInputs.forEach(inputId => {
+          const input = document.getElementById(inputId);
+          if (input) {
+            input.addEventListener('input', () => {
+              setTimeout(updateMappingIndicators, 500); // Задержка для дебаунса
+            });
+          }
+        });
+        
+        // Первоначальное обновление дочерних индикаторов
+        setTimeout(updateMappingIndicators, 3000);
         
         // Статус стабильный через GitHub Secrets - обновление не требуется
       })();
