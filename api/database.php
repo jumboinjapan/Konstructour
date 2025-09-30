@@ -127,6 +127,12 @@ class Database {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
+    public function getAllCities() {
+        $stmt = $this->db->prepare("SELECT * FROM cities ORDER BY name_ru");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
     public function getCity($id) {
         $stmt = $this->db->prepare("SELECT * FROM cities WHERE id = ?");
         $stmt->execute([$id]);
