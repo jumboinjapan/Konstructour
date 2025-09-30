@@ -409,6 +409,11 @@
 
         // Кнопка Token Locked убрана - не несет практической нагрузки
 
+        // Утилита для получения значений полей
+        function val(id) {
+          return document.getElementById(id)?.value || '';
+        }
+
         // Автообновление дочерних индикаторов с детальной диагностикой
         async function updateMappingIndicators() {
           console.log('🔍 updateMappingIndicators: Starting...');
