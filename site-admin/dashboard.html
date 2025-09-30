@@ -590,6 +590,14 @@
 
       // init
       console.log('🚀 Health Dashboard widget: Initializing...');
+      
+      // Проверяем доступность элементов
+      const elements = ['hAirtDot', 'parDot', 'syncDot', 'perfDot'];
+      elements.forEach(id => {
+        const el = $(`#${id}`);
+        console.log(`🔍 Element #${id}:`, el ? 'Found' : 'NOT FOUND', el);
+      });
+      
       const ms0 = loadAuto();
       if (ms0>0) $('#autoRefreshHealth').value = String(ms0);
       schedule(ms0);

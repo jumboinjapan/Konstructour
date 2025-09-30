@@ -411,8 +411,10 @@
 
         // Автообновление дочерних индикаторов с детальной диагностикой
         async function updateMappingIndicators() {
+          console.log('🔍 updateMappingIndicators: Starting...');
           const entities = ['country', 'region', 'city', 'poi'];
           const baseId = val('airtable_base_id');
+          console.log('🔍 Base ID:', baseId);
           
           // Сначала проверяем общий доступ к Airtable
           let generalAccess = false;
@@ -429,7 +431,12 @@
             const tableId = val(`am_${entity}_table`);
             const viewId = val(`am_${entity}_view`);
             
-            if (!dot) continue;
+            console.log(`🔍 ${entity}:`, { dot: !!dot, tableId, viewId });
+            
+            if (!dot) {
+              console.warn(`❌ ${entity}: Dot element not found!`);
+              continue;
+            }
             
             // Если поля пустые - серый индикатор
             if (!tableId || !viewId) {
@@ -575,10 +582,17 @@
         });
         
         // Первоначальное обновление дочерних индикаторов
-        setTimeout(updateMappingIndicators, 3000);
+        console.log('🚀 API Catalog: Starting mapping indicators...');
+        setTimeout(() => {
+          console.log('🔍 API Catalog: Running updateMappingIndicators...');
+          updateMappingIndicators();
+        }, 3000);
         
         // Периодическое обновление каждые 30 секунд (критично для сайта)
-        setInterval(updateMappingIndicators, 30000);
+        setInterval(() => {
+          console.log('🔄 API Catalog: Periodic updateMappingIndicators...');
+          updateMappingIndicators();
+        }, 30000);
         
         // Статус стабильный через GitHub Secrets - обновление не требуется
       })();
