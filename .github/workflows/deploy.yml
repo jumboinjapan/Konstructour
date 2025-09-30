@@ -70,8 +70,8 @@ jobs:
             sudo mkdir -p /var/konstructour/secrets
             sudo bash -c 'cat > /var/konstructour/secrets/airtable.json <<EOF
 {
-  "current": { "token": null, "since": null },
-  "next":    { "token": null, "since": null }
+  \"current\": { \"token\": null, \"since\": null },
+  \"next\":    { \"token\": null, \"since\": null }
 }
 EOF'
             sudo chown www-data:www-data /var/konstructour/secrets/airtable.json
