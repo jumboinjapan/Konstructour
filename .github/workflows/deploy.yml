@@ -59,44 +59,43 @@ jobs:
         "
         
         # Bootstrap Airtable secrets (FORCE CREATE)
-        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-          echo '🔧 FORCE creating Airtable secrets directory...'
-          
-          # FORCE create directory with sudo
-          sudo mkdir -p /var/konstructour/secrets
-          sudo chown www-data:www-data /var/konstructour/secrets
-          sudo chmod 700 /var/konstructour/secrets
-          echo '✅ Directory created with proper permissions'
-          
-          # Create secret file with REAL Airtable PAT
-          sudo tee /var/konstructour/secrets/airtable.json > /dev/null << 'EOF'
-{
-  "current": {
-    "token": "${{ secrets.AIRTABLE_PAT }}",
-    "since": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  },
-  "next": {
-    "token": null,
-    "since": null
-  }
-}
-EOF
-          sudo chown www-data:www-data /var/konstructour/secrets/airtable.json
-          sudo chmod 600 /var/konstructour/secrets/airtable.json
-          echo '✅ Secret file created with Airtable PAT'
-          
-          # Verify
-          if [ -f '/var/konstructour/secrets/airtable.json' ]; then
-            echo '✅ Verification: Secret file exists'
-            if sudo -u www-data test -r /var/konstructour/secrets/airtable.json; then
-              echo '✅ Verification: Secret file is readable by PHP'
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            echo '🔧 FORCE creating Airtable secrets directory...'
+            
+            # FORCE create directory with sudo
+            sudo mkdir -p /var/konstructour/secrets
+            sudo chown www-data:www-data /var/konstructour/secrets
+            sudo chmod 700 /var/konstructour/secrets
+            echo '✅ Directory created with proper permissions'
+            
+            # Create secret file with REAL Airtable PAT using printf
+            sudo bash -c \"printf '%s\n' '{
+              \"current\": {
+                \"token\": \"${{ secrets.AIRTABLE_PAT }}\",
+                \"since\": \"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'\"
+              },
+              \"next\": {
+                \"token\": null,
+                \"since\": null
+              }
+            }' > /var/konstructour/secrets/airtable.json\"
+            sudo chown www-data:www-data /var/konstructour/secrets/airtable.json
+            sudo chmod 600 /var/konstructour/secrets/airtable.json
+            echo '✅ Secret file created with Airtable PAT'
+            
+            # Verify
+            if [ -f '/var/konstructour/secrets/airtable.json' ]; then
+              echo '✅ Verification: Secret file exists'
+              if sudo -u www-data test -r /var/konstructour/secrets/airtable.json; then
+                echo '✅ Verification: Secret file is readable by PHP'
+              else
+                echo '❌ Verification: Secret file is NOT readable by PHP'
+              fi
             else
-              echo '❌ Verification: Secret file is NOT readable by PHP'
+              echo '❌ Verification: Secret file does NOT exist'
             fi
-          else
-            echo '❌ Verification: Secret file does NOT exist'
-          fi
-        "
+          "
         
         # Final verification
         ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
