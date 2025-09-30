@@ -454,11 +454,23 @@
     try{
       const adminToken = prompt('Введите ADMIN token (X-Admin-Token) для инициализации секрета:');
       if (!adminToken) return;
-      const out = await fetchJson(url('/api/init-secrets.php'), {
+      
+      // Сначала пробуем стандартный API
+      let out = await fetchJson(url('/api/init-secrets.php'), {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'X-Admin-Token': adminToken },
         body: JSON.stringify({})
       });
+      
+      // Если не получилось, пробуем force-create
+      if (!out.json?.ok) {
+        out = await fetchJson(url('/api/force-create-secrets.php'), {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'X-Admin-Token': adminToken },
+          body: JSON.stringify({})
+        });
+      }
+      
       alert('Init result: ' + (out.raw || JSON.stringify(out.json)));
       await runHealth();
       await runTokenManagement();
