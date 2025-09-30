@@ -375,6 +375,7 @@
       }
 
       async function runHealth(){
+        console.log('🔍 runHealth: Function called');
         const dot = $('#hAirtDot'); 
         console.log('🔍 runHealth: Starting...', dot);
         if (!dot) {
@@ -398,6 +399,7 @@
       }
 
       async function runParity(){
+        console.log('🔍 runParity: Function called');
         const dot = $('#parDot'); 
         console.log('🔍 runParity: Starting...', dot);
         setDot(dot,'warn');
@@ -419,6 +421,7 @@
       }
 
       async function runSyncProbe(){
+        console.log('🔍 runSyncProbe: Function called');
         const dot = $('#syncDot'); 
         console.log('🔍 runSyncProbe: Starting...', dot);
         setDot(dot,'warn');
@@ -433,6 +436,7 @@
       }
 
       async function runPerformance(){
+        console.log('🔍 runPerformance: Function called');
         const dot = $('#perfDot'); 
         console.log('🔍 runPerformance: Starting...', dot);
         setDot(dot,'warn');
@@ -505,14 +509,21 @@
 
       async function runAll(){
         console.log('🔄 Health Dashboard widget: Starting refresh...');
-        const results = await Promise.allSettled([runHealth(), runParity(), runSyncProbe(), runPerformance()]);
-        results.forEach((result, index) => {
-          if (result.status === 'rejected') {
-            console.error(`❌ Health widget error in function ${index}:`, result.reason);
-          }
-        });
-        $('#lastUpdate').textContent = now();
-        console.log('✅ Health Dashboard widget: Refresh completed');
+        try {
+          const results = await Promise.allSettled([runHealth(), runParity(), runSyncProbe(), runPerformance()]);
+          console.log('🔍 runAll: Promise.allSettled completed, results:', results);
+          results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+              console.error(`❌ Health widget error in function ${index}:`, result.reason);
+            } else {
+              console.log(`✅ Health widget function ${index} completed successfully`);
+            }
+          });
+          $('#lastUpdate').textContent = now();
+          console.log('✅ Health Dashboard widget: Refresh completed');
+        } catch (e) {
+          console.error('❌ runAll: Critical error:', e);
+        }
       }
 
       // rotateToken function removed - token rotation not needed
