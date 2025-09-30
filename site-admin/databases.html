@@ -2585,13 +2585,19 @@
             const currentRegion = selectedRegion;
             const currentCity = selectedCity;
             
-            // Запускаем синхронизацию с Airtable
-            const syncRes = await fetch('/api/sync-airtable.php', {
+            // Запускаем синхронизацию с Airtable (используем новую систему)
+            const syncRes = await fetch('/api/sync-airtable-new.php', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
             const syncData = await syncRes.json();
             console.log('Результат синхронизации:', syncData);
+            
+            // Очищаем кэш после успешной синхронизации
+            if (syncData.ok) {
+              clearAllCache();
+              console.log('Кэш очищен после синхронизации');
+            }
             
             if (currentLevel === 'cities' && currentRegion) {
               console.log(`📍 Обновляем города для региона: ${currentRegion.name}`);
