@@ -376,21 +376,26 @@
       }
 
       async function runHealth(){
-        const dot = $('#hAirtDot'); setDot(dot,'warn');
-        const out = await fetchJson('/api/health-airtable.php');
+        const dot = $('#hAirtDot'); 
+        console.log('🔍 runHealth: Starting...', dot);
+        setDot(dot,'warn');
+        const out = await fetchJson('../api/health-airtable.php');
+        console.log('🔍 runHealth: API response:', out);
         $('#hAirtRaw').textContent = out.raw || '';
         const j = out.json || {};
         const ok = !!j.ok;
+        console.log('🔍 runHealth: ok =', ok, 'j =', j);
         setDot(dot, ok?'ok':'err');
         const auth = j.auth ? `${j.auth.current? 'current✔' : 'current✖'} / ${j.auth.next? 'next✔':'next✖'}` : '—';
         $('#hAirtAuth').textContent = auth;
         const lat = j.latency_ms != null ? j.latency_ms : (j.metrics && j.metrics.latency_ms);
         $('#hAirtLatency').textContent = fmt(lat);
+        console.log('🔍 runHealth: Final dot classes:', dot.className);
       }
 
       async function runParity(){
         const dot = $('#parDot'); setDot(dot,'warn');
-        const out = await fetchJson('/api/data-parity.php');
+        const out = await fetchJson('../api/data-parity.php');
         $('#parRaw').textContent = out.raw || '';
         const j = out.json || {};
         const ok = !!j.ok;
@@ -408,7 +413,7 @@
 
       async function runSyncProbe(){
         const dot = $('#syncDot'); setDot(dot,'warn');
-        const out = await fetchJson('/api/cron-sync.php');
+        const out = await fetchJson('../api/cron-sync.php');
         $('#syncRaw').textContent = out.raw || '';
         const j = out.json || {};
         const ok = !!j.ok;
@@ -422,7 +427,7 @@
         const startTime = performance.now();
         
         // Run a quick whoami test for performance measurement
-        const out = await fetchJson('/api/test-proxy-secure.php?provider=airtable',{
+        const out = await fetchJson('../api/test-proxy-secure.php?provider=airtable',{
           method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ whoami:true })
         });
         
@@ -510,7 +515,7 @@
           const adminToken = prompt('Enter admin token:');
           if (!adminToken) return;
           
-          const out = await fetchJson('/api/config-store-secure.php', {
+          const out = await fetchJson('../api/config-store-secure.php', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -563,7 +568,7 @@
         $('#applyQuickFix').disabled = true;
         
         try {
-          const out = await fetchJson('/api/set-token-api.php', {
+          const out = await fetchJson('../api/set-token-api.php', {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
