@@ -68,6 +68,12 @@ function syncFromAirtable() {
             // Отладочная информация
             error_log("City: " . $data['name_ru'] . " | Region ID: " . ($regionId ?? 'NULL') . " | Fields: " . json_encode(array_keys($record['fields'])));
             
+            // Пропускаем города без региона
+            if (!$regionId) {
+                error_log("Skipping city " . $data['name_ru'] . " - no region ID");
+                continue;
+            }
+            
             try {
                 $db->saveCity($data);
                 $results['cities']++;
