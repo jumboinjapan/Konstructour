@@ -1,7 +1,9 @@
 <?php
 // Data API for admin panel
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
+if (php_sapi_name() !== 'cli') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+}
 
 require_once 'database.php';
 
@@ -12,7 +14,7 @@ function respond($ok, $data = [], $code = 200) {
 }
 
 $db = new Database();
-$method = $_SERVER['REQUEST_METHOD'];
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action = $_GET['action'] ?? '';
 
 try {
