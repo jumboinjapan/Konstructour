@@ -445,24 +445,24 @@
             
             // Если поля пустые - серый индикатор
             if (!tableId || !viewId) {
-              dot.classList.remove('ok', 'err', 'warn', 'none');
-              dot.classList.add('none');
+              dot.classList.remove('api-dot', 'ok', 'err', 'warn', 'none');
+              dot.classList.add('api-dot', 'none');
               dot.title = `${entity}: Не настроено (отсутствуют Table ID или View ID)`;
               continue;
             }
             
             // Если нет Base ID - предупреждение
             if (!baseId) {
-              dot.classList.remove('ok', 'err', 'warn', 'none');
-              dot.classList.add('warn');
+              dot.classList.remove('api-dot', 'ok', 'err', 'warn', 'none');
+              dot.classList.add('api-dot', 'warn');
               dot.title = `${entity}: Не настроен Base ID`;
               continue;
             }
             
             // Если общий доступ к Airtable недоступен - ошибка
             if (!generalAccess) {
-              dot.classList.remove('ok', 'err', 'warn', 'none');
-              dot.classList.add('err');
+              dot.classList.remove('api-dot', 'ok', 'err', 'warn', 'none');
+              dot.classList.add('api-dot', 'err');
               dot.title = `${entity}: Airtable недоступен (проблема с токеном)`;
               continue;
             }
@@ -484,8 +484,8 @@
               const result = await response.json();
               const isOk = !!(result && result.ok);
               
-              dot.classList.remove('ok', 'err', 'warn', 'none');
-              dot.classList.add(isOk ? 'ok' : 'err');
+              dot.classList.remove('api-dot', 'ok', 'err', 'warn', 'none');
+              dot.classList.add('api-dot', isOk ? 'ok' : 'err');
               
               // Детальная информация в tooltip
               if (isOk) {
@@ -496,8 +496,8 @@
               }
               
             } catch (e) {
-              dot.classList.remove('ok', 'err', 'warn', 'none');
-              dot.classList.add('err');
+              dot.classList.remove('api-dot', 'ok', 'err', 'warn', 'none');
+              dot.classList.add('api-dot', 'err');
               dot.title = `${entity}: ❌ Ошибка сети - ${e.message}`;
             }
           }
@@ -514,8 +514,8 @@
           const status = document.getElementById('statusAirtable');
           const dot = status ? status.querySelector('.api-dot') : null;
           if (dot && showLoading){ 
-            dot.classList.remove('ok','err'); 
-            dot.classList.add('loading'); 
+            dot.classList.remove('api-dot','ok','err'); 
+            dot.classList.add('api-dot','loading'); 
           }
           try{
             // Проверяем статус через health-airtable.php (GitHub Secrets)
@@ -528,14 +528,15 @@
             const statusText = status ? status.querySelector('span:last-child') : null;
             
             if (!hasToken){
-              if (dot){ dot.classList.remove('loading','ok'); dot.classList.add('err'); }
+              if (dot){ dot.classList.remove('api-dot','loading','ok'); dot.classList.add('api-dot','err'); }
               if (statusText) statusText.textContent = 'Нет токена';
               return;
             }
             
             // Обновляем статус на основе результата health check
             if (dot){ 
-              dot.classList.remove('loading'); 
+              dot.classList.remove('api-dot','loading'); 
+              dot.classList.add('api-dot');
               dot.classList.toggle('ok', isWorking); 
               dot.classList.toggle('err', !isWorking); 
             }
@@ -553,8 +554,8 @@
             }
           }catch(_){ 
             if (dot){ 
-              dot.classList.remove('loading'); 
-              dot.classList.add('err'); 
+              dot.classList.remove('api-dot','loading'); 
+              dot.classList.add('api-dot','err'); 
             }
             const statusText = status ? status.querySelector('span:last-child') : null;
             if (statusText) statusText.textContent = 'Ошибка проверки';
