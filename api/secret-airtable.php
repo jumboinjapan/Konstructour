@@ -1,7 +1,15 @@
 <?php
 // api/secret-airtable.php
 function airtable_secret_path(): string {
-  // Стандартный путь (приоритет)
+  $env = getenv('KONSTRUCTOUR_SECRET_FILE');
+  if ($env && is_string($env)) return $env;
+  // Фолбэк на домашнюю директорию хостинга:
+  $home = getenv('HOME') ?: '';
+  if ($home) {
+    $candidate = rtrim($home, '/').'/konstructour/secrets/airtable.json';
+    if (file_exists($candidate)) return $candidate;
+  }
+  // Старый системный путь как "последняя надежда"
   return '/var/konstructour/secrets/airtable.json';
 }
 
