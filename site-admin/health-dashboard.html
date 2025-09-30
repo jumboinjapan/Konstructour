@@ -80,7 +80,6 @@
         <div class="text-sm text-gray-600 space-y-2">
           <div class="flex justify-between"><span>Auth (current/next)</span><span class="mono" id="hAirtAuth">—</span></div>
           <div class="flex justify-between"><span>Latency (ms)</span><span class="mono" id="hAirtLatency">—</span></div>
-          <div class="flex justify-between"><span>Rate Limit</span><span class="mono" id="hAirtRate">—</span></div>
           <div class="flex justify-between"><span>Message</span><span class="mono truncate" style="max-width:60%;display:inline-block" id="hAirtMsg">—</span></div>
         </div>
         <pre id="hAirtRaw" class="mt-3 hidden bg-gray-50 p-3 rounded border mono text-xs overflow-auto max-h-48"></pre>
@@ -95,7 +94,6 @@
         <div class="text-sm text-gray-600 space-y-2">
           <div class="flex justify-between"><span>Auth</span><span class="mono" id="whoAuth">—</span></div>
           <div class="flex justify-between"><span>Status</span><span class="mono" id="whoStatus">—</span></div>
-          <div class="flex justify-between"><span>Message</span><span class="mono truncate" style="max-width:60%;display:inline-block" id="whoMsg">—</span></div>
         </div>
         <pre id="whoRaw" class="mt-3 hidden bg-gray-50 p-3 rounded border mono text-xs overflow-auto max-h-48"></pre>
       </div>
@@ -150,7 +148,6 @@
         <div class="text-sm text-gray-600 space-y-2">
           <div class="flex justify-between"><span>Current Status</span><span class="mono" id="tokenCurrent">—</span></div>
           <div class="flex justify-between"><span>Next Available</span><span class="mono" id="tokenNext">—</span></div>
-          <div class="flex justify-between"><span>Last Promotion</span><span class="mono" id="tokenPromotion">—</span></div>
         </div>
         <div class="mt-3 flex gap-2">
           <button id="btnInitSecrets" class="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200">
@@ -215,7 +212,15 @@
   const url = path => (getBase() ? getBase()+path : path);
   const setDot = (el, cls) => { el.classList.remove('ok','err','warn'); el.classList.add(cls); };
   const fmt = v => typeof v==='number' ? v.toString() : (v ?? '—');
-  const now = () => new Date().toLocaleString();
+  const now = () => new Date().toLocaleString('ru-RU', {
+    year: 'numeric',
+    month: '2-digit', 
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'Europe/Moscow'
+  });
   
   // Performance tracking
   let performanceHistory = JSON.parse(localStorage.getItem(perfKey) || '[]');
@@ -272,8 +277,7 @@
     const latencyText = serverLatency ? `${realLatency}ms (server: ${serverLatency}ms)` : `${realLatency}ms`;
     $('#hAirtLatency').textContent = latencyText;
     
-    const rate = j.rate ? `${j.rate.remaining ?? '—'} left` + (j.rate.reset_at? `, reset ${j.rate.reset_at}`:'' ) : '—';
-    $('#hAirtRate').textContent = rate;
+    // Rate limit removed - not useful for this dashboard
     
     // Enhanced message with specific error handling
     let msg = j.message || j.error || j.reason || '';
@@ -300,10 +304,7 @@
     setDot(dot, ok?'ok':'err');
     $('#whoAuth').textContent = ok ? 'OK' : 'FAIL';
     $('#whoStatus').textContent = out.status;
-    // Set message
-    const wmsg = (out.json && (out.json.message || out.json.error || out.json.reason)) || '';
-    const wmsgEl = $('#whoMsg');
-    if (wmsgEl) wmsgEl.textContent = wmsg ? String(wmsg) : '—';
+    // Message field removed - not useful for this dashboard
   }
 
   async function runParity(){
@@ -357,11 +358,9 @@
     
     const current = j.auth?.current ? 'Active' : 'Inactive';
     const next = j.auth?.next ? 'Available' : 'None';
-    const promotion = j.reason === 'next_promoted' ? 'Just promoted' : '—';
     
     $('#tokenCurrent').textContent = current;
     $('#tokenNext').textContent = next;
-    $('#tokenPromotion').textContent = promotion;
     
     // Show promote button if next is available
     const promoteBtn = $('#btnPromote');

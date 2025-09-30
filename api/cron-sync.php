@@ -95,8 +95,26 @@ try {
     $cities = $syncResult['cities'] ?? 0;
     $pois = $syncResult['pois'] ?? 0;
     log_message("Sync completed successfully: $regions regions, $cities cities, $pois pois");
+    
+    // Возвращаем JSON для дашборда
+    header('Content-Type: application/json');
+    echo json_encode([
+      'ok' => true,
+      'regions' => $regions,
+      'cities' => $cities,
+      'pois' => $pois,
+      'message' => 'Sync completed successfully'
+    ]);
   } else {
     log_message("Sync failed: " . ($syncResult['error'] ?? 'unknown error'));
+    
+    // Возвращаем JSON ошибки для дашборда
+    header('Content-Type: application/json');
+    echo json_encode([
+      'ok' => false,
+      'error' => $syncResult['error'] ?? 'Sync failed',
+      'message' => 'Sync failed'
+    ]);
     exit(1);
   }
   
