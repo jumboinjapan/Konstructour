@@ -9,11 +9,21 @@ function syncFromAirtable() {
     
     // Airtable settings
     $baseId = 'apppwhjFN82N9zNqm';
-    $pat = getenv('AIRTABLE_PAT') ?: 'PLACEHOLDER_FOR_REAL_API_KEY';
     
-    if (!$pat) {
+    // Получаем токен тем же способом, что и test-proxy.php
+    $pat = ($config['airtable']['api_key'] ?? '')
+        ?: (($config['airtable']['token'] ?? '')
+        ?: (($config['airtable_pat'] ?? '')
+        ?: (($config['airtable_registry']['api_key'] ?? '')
+        ?: (($config['airtable_registry']['token'] ?? '')
+        ?: (getenv('AIRTABLE_PAT') ?: (getenv('AIRTABLE_API_KEY') ?: ''))))));
+    
+    if (!$pat || $pat === 'PLACEHOLDER_FOR_REAL_API_KEY') {
         throw new Exception('Airtable token not configured');
     }
+    
+    // Отладочная информация (удалить в продакшене)
+    error_log("Airtable PAT: " . substr($pat, 0, 10) . "...");
     
     $results = [
         'regions' => 0,

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Простой тест Airtable</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Простой тест Airtable</h1>
+    <button onclick="runTest()">Запустить тест</button>
+    <div id="output"></div>
+
+    <script src="test-api-debug.js"></script>
+    <script>
+        function addOutput(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('output').appendChild(div);
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        async function runTest() {
+            clearOutput();
+            addOutput('🚀 Запускаем тест Airtable...', 'info');
+            
+            try {
+                // Перехватываем console.log для отображения в UI
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    originalLog.apply(console, args);
+                    addOutput(args.join(' '), 'info');
+                };
+                
+                // Запускаем тесты
+                await testAirtable.runAllTests();
+                
+                // Восстанавливаем console.log
+                console.log = originalLog;
+                
+            } catch (error) {
+                addOutput(`❌ Ошибка: ${error.message}`, 'error');
+            }
+        }
+
+        // Автоматический тест при загрузке
+        window.onload = function() {
+            addOutput('📋 Страница загружена. Нажмите "Запустить тест" для проверки Airtable.', 'info');
+        };
+    </script>
+</body>
+</html>

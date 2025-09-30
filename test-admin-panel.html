@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест админ панели Airtable</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .api-status { display: inline-flex; align-items: center; gap: 5px; }
+        .api-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .api-dot.loading { background: #ffc107; }
+        .api-dot.ok { background: #28a745; }
+        .api-dot.err { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Тест админ панели Airtable</h1>
+    
+    <div class="api-status">
+        <span class="api-dot" id="statusDot"></span>
+        <span id="statusText">Проверка...</span>
+    </div>
+    
+    <button onclick="testAdminPanel()">Тест админ панели</button>
+    <button onclick="clearCaches()">Очистить кэши</button>
+    <button onclick="testRefreshBadge()">Тест refreshServerKeyBadge</button>
+    
+    <div id="output"></div>
+
+    <script>
+        function addOutput(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('output').appendChild(div);
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        function clearCaches() {
+            try{
+                [
+                    'konstructour_regions_cache_v1',
+                    'konstructour_cities_cache_v2',
+                    'konstructour_pois_cache_v2',
+                    'konstructour_last_refresh',
+                    'konstructour_last_sync'
+                ].forEach(k=> localStorage.removeItem(k));
+                addOutput('✅ Локальные кэши очищены', 'success');
+            }catch(_){
+                addOutput('⚠️ Ошибка очистки кэшей', 'error');
+            }
+        }
+
+        async function testRefreshBadge() {
+            addOutput('🔍 Тестируем refreshServerKeyBadge...', 'info');
+            
+            const dot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            if (dot) { 
+                dot.classList.remove('ok','err'); 
+                dot.classList.add('loading'); 
+            }
+            
+            try {
+                // 1) Узнаём, есть ли серверный ключ
+                const r1 = await fetch(`https://www.konstructour.com/api/test-proxy.php?provider=server_keys&_=${Date.now()}`, { cache:'no-store' });
+                const j1 = await r1.json();
+                const hasKey = !!(j1 && j1.keys && j1.keys.airtable);
+                
+                addOutput(`Server key: ${hasKey ? '✅ Есть' : '❌ Нет'}`, hasKey ? 'success' : 'error');
+                
+                if (!hasKey){
+                    if (dot){ dot.classList.remove('loading','ok'); dot.classList.add('err'); }
+                    if (statusText) statusText.textContent = 'Нет ключа';
+                    return;
+                }
+                
+                // 2) Тестируем реальное подключение
+                const body = { whoami: true };
+                const r2 = await fetch(`https://www.konstructour.com/api/test-proxy.php?provider=airtable&_=${Date.now()}`, {
+                    method:'POST',
+                    cache:'no-store',
+                    headers:{ 'Content-Type':'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const j2 = await r2.json();
+                const ok = !!(j2 && j2.ok);
+                
+                addOutput(`Airtable whoami: ${ok ? '✅ OK' : '❌ Ошибка'}`, ok ? 'success' : 'error');
+                addOutput(`Response: ${JSON.stringify(j2, null, 2)}`, 'info');
+                
+                if (dot){ 
+                    dot.classList.remove('loading'); 
+                    dot.classList.toggle('ok', ok); 
+                    dot.classList.toggle('err', !ok); 
+                }
+                
+                if (statusText) {
+                    statusText.textContent = ok ? 'Подключено' : 'Ошибка';
+                }
+                
+            } catch (error) {
+                addOutput(`❌ Ошибка: ${error.message}`, 'error');
+                if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); }
+            }
+        }
+
+        async function testAdminPanel() {
+            clearOutput();
+            addOutput('🚀 Тестируем админ панель...', 'info');
+            
+            // Очищаем кэши
+            clearCaches();
+            
+            // Тестируем refreshServerKeyBadge
+            await testRefreshBadge();
+            
+            // Тестируем health endpoint
+            try {
+                const healthResponse = await fetch('https://www.konstructour.com/api/health.php');
+                const healthData = await healthResponse.json();
+                addOutput(`Health endpoint: ${JSON.stringify(healthData, null, 2)}`, 'info');
+            } catch (error) {
+                addOutput(`❌ Ошибка health: ${error.message}`, 'error');
+            }
+        }
+
+        // Автоматический тест при загрузке
+        window.onload = function() {
+            addOutput('📋 Страница загружена. Нажмите кнопки для тестирования.', 'info');
+        };
+    </script>
+</body>
+</html>
