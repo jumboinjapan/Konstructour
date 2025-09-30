@@ -20,6 +20,8 @@
       .api-dot.loading{ border:2px solid #a78bfa; border-top-color:transparent; width:12px; height:12px; border-radius:50%; animation: spin .9s linear infinite; background:transparent; }
       .api-dot.ok{ background:#10b981; }
       .api-dot.err{ background:#ef4444; }
+      .api-dot.warn{ background:#f59e0b; }
+      .api-dot.none{ background:#9ca3af; }
       .stable-status { color: #059669 !important; font-weight: 500; }
       @keyframes spin{ 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
       .map-row{ display:grid; grid-template-columns: 1fr 1fr auto auto; align-items:center; gap:10px; }
@@ -407,9 +409,20 @@
 
         // Кнопка Token Locked убрана - не несет практической нагрузки
 
-        // Автообновление дочерних индикаторов
+        // Автообновление дочерних индикаторов с детальной диагностикой
         async function updateMappingIndicators() {
           const entities = ['country', 'region', 'city', 'poi'];
+          const baseId = val('airtable_base_id');
+          
+          // Сначала проверяем общий доступ к Airtable
+          let generalAccess = false;
+          try {
+            const healthResponse = await fetch('../api/health-airtable.php', { cache: 'no-store' });
+            const healthData = await healthResponse.json();
+            generalAccess = !!(healthData && healthData.ok);
+          } catch (e) {
+            console.warn('Health check failed:', e);
+          }
           
           for (const entity of entities) {
             const dot = document.getElementById(`am_dot_${entity}`);
@@ -420,19 +433,36 @@
             
             // Если поля пустые - серый индикатор
             if (!tableId || !viewId) {
-              dot.classList.remove('ok', 'err', 'warn');
+              dot.classList.remove('ok', 'err', 'warn', 'none');
               dot.classList.add('none');
+              dot.title = `${entity}: Не настроено (отсутствуют Table ID или View ID)`;
               continue;
             }
             
-            // Проверяем доступность таблицы через Airtable API
+            // Если нет Base ID - предупреждение
+            if (!baseId) {
+              dot.classList.remove('ok', 'err', 'warn', 'none');
+              dot.classList.add('warn');
+              dot.title = `${entity}: Не настроен Base ID`;
+              continue;
+            }
+            
+            // Если общий доступ к Airtable недоступен - ошибка
+            if (!generalAccess) {
+              dot.classList.remove('ok', 'err', 'warn', 'none');
+              dot.classList.add('err');
+              dot.title = `${entity}: Airtable недоступен (проблема с токеном)`;
+              continue;
+            }
+            
+            // Проверяем доступность конкретной таблицы
             try {
               const response = await fetch('../api/test-proxy-secure.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   provider: 'airtable',
-                  baseId: val('airtable_base_id'),
+                  baseId: baseId,
                   table: tableId,
                   view: viewId,
                   limit: 1
@@ -445,9 +475,18 @@
               dot.classList.remove('ok', 'err', 'warn', 'none');
               dot.classList.add(isOk ? 'ok' : 'err');
               
+              // Детальная информация в tooltip
+              if (isOk) {
+                dot.title = `${entity}: ✅ Работает (Table: ${tableId}, View: ${viewId})`;
+              } else {
+                const error = result.error || result.message || 'Неизвестная ошибка';
+                dot.title = `${entity}: ❌ Ошибка - ${error}`;
+              }
+              
             } catch (e) {
               dot.classList.remove('ok', 'err', 'warn', 'none');
               dot.classList.add('err');
+              dot.title = `${entity}: ❌ Ошибка сети - ${e.message}`;
             }
           }
         }
@@ -537,6 +576,9 @@
         
         // Первоначальное обновление дочерних индикаторов
         setTimeout(updateMappingIndicators, 3000);
+        
+        // Периодическое обновление каждые 30 секунд (критично для сайта)
+        setInterval(updateMappingIndicators, 30000);
         
         // Статус стабильный через GitHub Secrets - обновление не требуется
       })();
