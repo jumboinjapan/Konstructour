@@ -72,8 +72,8 @@
                             <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span>Проверка...</span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
-                            <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
-                            <button id="btnEraseAirtable" type="button" class="btn-japanese"><i class="fas fa-trash mr-2"></i>Erase</button>
+                            <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save Mapping</button>
+                            <button id="btnEraseAirtable" type="button" class="btn-japanese" disabled style="opacity: 0.5;"><i class="fas fa-lock mr-2"></i>Token Locked</button>
                             <button id="btnTestAirtable" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
                             <button id="am_toggle" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
@@ -81,7 +81,8 @@
                     <div class="form-grid" id="sectionAirtable">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
-                            <input id="airtable_api_key" type="password" class="input-japanese" placeholder="pat...">
+                            <input id="airtable_api_key" type="text" class="input-japanese" placeholder="Настроено через GitHub Secrets" readonly style="background-color: #f0f9ff; color: #0369a1;">
+                            <div class="text-xs text-blue-600 mt-1">🔐 Токен автоматически настроен при деплое</div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Base ID</label>
@@ -328,15 +329,13 @@
           const baseId = document.getElementById('airtable_base_id')?.value || '';
           const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
           const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
-          const apiKey = document.getElementById('airtable_api_key')?.value || '';
           const dot = document.getElementById('am_dot_'+entity);
           const msg = document.getElementById('am_msg_'+entity);
           if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
           try{
-            const isPlaceholder = !apiKey || apiKey === 'pat...' || apiKey.toUpperCase().includes('PLACEHOLDER');
+            // Используем токен из GitHub Secrets (через test-proxy-secure.php)
             const body = { base_id: baseId, table: tableId, view: viewId, whoami: true };
-            if (!isPlaceholder && apiKey) body.api_key = apiKey; // только реальный PAT, введённый вручную
-            const r = await fetch(`../api/test-proxy.php?provider=airtable&_=${Date.now()}`,{
+            const r = await fetch(`../api/test-proxy-secure.php?provider=airtable&_=${Date.now()}`,{
               method:'POST',
               cache:'no-store',
               headers:{ 'Content-Type':'application/json' },
@@ -428,31 +427,13 @@
         }
 
         document.getElementById('btnSaveAirtable')?.addEventListener('click', function(){
-          const v = (document.getElementById('airtable_api_key')?.value||'').trim();
-          const isRealPat = /^pat\.[A-Za-z0-9_\-]{20,}$/.test(v);
-          if (!isRealPat){
-            alert('Введите реальный Airtable PAT (начинается с "pat."), плейсхолдеры не принимаются.');
-            // Сохраняем только маппинг без ключа
-            return saveRegistry(false);
-          }
-          return saveRegistry(true);
+          // Токен настроен через GitHub Secrets, сохраняем только маппинг
+          alert('Airtable токен настроен через GitHub Secrets. Сохраняем только маппинг таблиц.');
+          return saveRegistry(false);
         });
 
         document.getElementById('btnEraseAirtable')?.addEventListener('click', async function(){
-          try{
-            const headers = { 'Content-Type':'application/json' };
-            if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
-            await fetch('../api/config-store.php', {
-              method:'POST',
-              headers,
-              body: JSON.stringify({ airtable: { api_key: null } })
-            });
-            const inp = document.getElementById('airtable_api_key'); if (inp) inp.value='';
-            await refreshServerKeyBadge();
-            alert('Airtable ключ удалён на сервере.');
-          }catch(_){
-            alert('Не удалось удалить ключ. Проверьте доступ.');
-          }
+          alert('Airtable токен настроен через GitHub Secrets и не может быть удален через интерфейс. Для удаления токена обновите GitHub Secret AIRTABLE_PAT.');
         });
 
         async function refreshServerKeyBadge(){
@@ -462,43 +443,44 @@
           const dot = status ? status.querySelector('.api-dot') : null;
           if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
           try{
-            // 1) Узнаём, есть ли серверный ключ
-            const r1 = await fetch(`../api/test-proxy.php?provider=server_keys&_=${Date.now()}`, { cache:'no-store' });
+            // Проверяем статус через health-airtable.php (GitHub Secrets)
+            const r1 = await fetch(`../api/health-airtable.php?_=${Date.now()}`, { cache:'no-store' });
             const j1 = await r1.json();
-            const hasKey = !!(j1 && j1.keys && j1.keys.airtable);
-            if (badge){ badge.classList.toggle('hidden', !hasKey); }
+            const hasToken = !!(j1 && j1.state && j1.state.token_current_present);
+            const isWorking = !!(j1 && j1.ok);
+            
+            if (badge){ badge.classList.toggle('hidden', !hasToken); }
             const statusText = status ? status.querySelector('span:last-child') : null;
-            if (!hasKey){
+            
+            if (!hasToken){
               if (dot){ dot.classList.remove('loading','ok'); dot.classList.add('err'); }
-              if (statusText) statusText.textContent = 'Нет ключа';
+              if (statusText) statusText.textContent = 'Нет токена';
               return;
             }
-            // 2) Тестируем реальное подключение (whoami или таблицу, если задана)
-            const val = id=> (document.getElementById(id)?.value||'').trim();
-            const baseId = val('airtable_base_id');
-            const tableId = val('am_region_table') || val('am_city_table') || val('am_country_table') || val('am_poi_table');
-            let url = '../api/test-proxy.php?provider=airtable';
-            const body = { whoami: true }; // строгое подтверждение валидного токена
-            if (baseId) body.base_id = baseId;
-            if (tableId) body.table = tableId;
-            const r2 = await fetch(`${url}&_=${Date.now()}`, {
-              method:'POST',
-              cache:'no-store',
-              headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify(body)
-            });
-            const j2 = await r2.json();
-            const ok = !!(j2 && j2.ok);
+            
+            // Обновляем статус на основе результата health check
             if (dot){ 
               dot.classList.remove('loading'); 
-              dot.classList.toggle('ok', ok); 
-              dot.classList.toggle('err', !ok); 
+              dot.classList.toggle('ok', isWorking); 
+              dot.classList.toggle('err', !isWorking); 
             }
+            
             // Обновляем текст статуса
             if (statusText) {
-              statusText.textContent = ok ? 'Подключено' : 'Ошибка';
+              if (isWorking) {
+                statusText.textContent = 'Подключено (GitHub Secrets)';
+              } else {
+                statusText.textContent = 'Ошибка подключения';
+              }
             }
-          }catch(_){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
+          }catch(_){ 
+            if (dot){ 
+              dot.classList.remove('loading'); 
+              dot.classList.add('err'); 
+            }
+            const statusText = status ? status.querySelector('span:last-child') : null;
+            if (statusText) statusText.textContent = 'Ошибка проверки';
+          }
         }
 
         loadRegistry();
