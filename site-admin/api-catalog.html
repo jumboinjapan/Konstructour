@@ -20,6 +20,7 @@
       .api-dot.loading{ border:2px solid #a78bfa; border-top-color:transparent; width:12px; height:12px; border-radius:50%; animation: spin .9s linear infinite; background:transparent; }
       .api-dot.ok{ background:#10b981; }
       .api-dot.err{ background:#ef4444; }
+      .stable-status { color: #059669 !important; font-weight: 500; }
       @keyframes spin{ 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
       .map-row{ display:grid; grid-template-columns: 1fr 1fr auto auto; align-items:center; gap:10px; }
       .map-entity{ display:flex; align-items:center; gap:8px; font-weight:500; }
@@ -478,8 +479,11 @@
             if (statusText) {
               if (isWorking) {
                 statusText.textContent = 'Подключено (GitHub Secrets)';
+                // Добавляем класс для стабильного статуса
+                statusText.classList.add('stable-status');
               } else {
                 statusText.textContent = 'Ошибка подключения';
+                statusText.classList.remove('stable-status');
               }
             }
           }catch(_){ 
@@ -504,8 +508,7 @@
         // Автоматически проверяем статус при загрузке страницы (без loading)
         setTimeout(() => refreshServerKeyBadge(false), 2000);
         
-        // Принудительно обновляем статус каждые 10 секунд
-        setInterval(refreshServerKeyBadge, 10000);
+        // Убрано автоматическое обновление - только ручное через кнопку Refresh
         
         // Кнопка принудительного обновления
         document.getElementById('btnRefreshStatus')?.addEventListener('click', function(){
