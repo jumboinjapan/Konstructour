@@ -68,12 +68,7 @@ jobs:
           else
             echo '⚠️  Bootstrap script not found, creating secrets manually...'
             sudo mkdir -p /var/konstructour/secrets
-            sudo bash -c 'cat > /var/konstructour/secrets/airtable.json <<EOF
-{
-  \"current\": { \"token\": null, \"since\": null },
-  \"next\":    { \"token\": null, \"since\": null }
-}
-EOF'
+            sudo bash -c 'echo "{\"current\":{\"token\":null,\"since\":null},\"next\":{\"token\":null,\"since\":null}}" > /var/konstructour/secrets/airtable.json'
             sudo chown www-data:www-data /var/konstructour/secrets/airtable.json
             sudo chmod 600 /var/konstructour/secrets/airtable.json
             sudo chown www-data:www-data /var/konstructour/secrets
