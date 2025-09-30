@@ -8,7 +8,7 @@ if (file_exists($tokenFile)) {
     $lines = file($tokenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strpos($line, 'AIRTABLE_PAT=') === 0) {
-            $token = substr($line, 12);
+            $token = trim(substr($line, 13)); // 13 символов для 'AIRTABLE_PAT='
             putenv("AIRTABLE_API_KEY=$token");
             $_ENV['AIRTABLE_API_KEY'] = $token;
             $_SERVER['AIRTABLE_API_KEY'] = $token;
@@ -26,7 +26,7 @@ if (empty($debugToken)) {
         $lines = file($tokenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
             if (strpos($line, 'AIRTABLE_PAT=') === 0) {
-                $token = trim(substr($line, 13));
+                $token = trim(substr($line, 13)); // 13 символов для 'AIRTABLE_PAT='
                 putenv("AIRTABLE_API_KEY=$token");
                 $_ENV['AIRTABLE_API_KEY'] = $token;
                 $_SERVER['AIRTABLE_API_KEY'] = $token;
@@ -36,21 +36,21 @@ if (empty($debugToken)) {
     }
 }
 
-// Отладка для веб-интерфейса
+// Альтернативный способ загрузки токена для веб-интерфейса
 if (isset($_SERVER['HTTP_HOST'])) {
     $finalToken = getenv('AIRTABLE_API_KEY');
     if (empty($finalToken)) {
-        echo json_encode([
-            'ok' => false, 
-            'error' => 'Token still not loaded after fallback',
-            'debug' => [
-                'file_exists' => file_exists($tokenFile),
-                'file_content' => file_exists($tokenFile) ? file_get_contents($tokenFile) : 'File not found',
-                'env_var' => getenv('AIRTABLE_API_KEY'),
-                'server_var' => $_SERVER['AIRTABLE_API_KEY'] ?? 'Not set'
-            ]
-        ]);
-        exit;
+        // Прямая загрузка токена из файла
+        $tokenFile = __DIR__ . '/airtable.env.local';
+        if (file_exists($tokenFile)) {
+            $content = file_get_contents($tokenFile);
+            if (preg_match('/AIRTABLE_PAT=([^\r\n]+)/', $content, $matches)) {
+                $token = trim($matches[1]);
+                putenv("AIRTABLE_API_KEY=$token");
+                $_ENV['AIRTABLE_API_KEY'] = $token;
+                $_SERVER['AIRTABLE_API_KEY'] = $token;
+            }
+        }
     }
 }
 
