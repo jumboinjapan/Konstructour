@@ -188,14 +188,15 @@ class Database {
     }
     
     public function savePoi($data) {
+        // Сначала пытаемся обновить существующую запись
         $stmt = $this->db->prepare("
-            INSERT OR REPLACE INTO pois (
-                id, name_ru, name_en, category, place_id, published, business_id, 
-                city_id, region_id, description, latitude, longitude, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            UPDATE pois 
+            SET name_ru = ?, name_en = ?, category = ?, place_id = ?, published = ?, 
+                business_id = ?, city_id = ?, region_id = ?, description = ?, 
+                latitude = ?, longitude = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
         ");
-        return $stmt->execute([
-            $data['id'],
+        $stmt->execute([
             $data['name_ru'],
             $data['name_en'] ?? null,
             $data['category'] ?? null,
@@ -206,8 +207,35 @@ class Database {
             is_array($data['region_id']) ? $data['region_id'][0] ?? null : $data['region_id'],
             $data['description'] ?? null,
             $data['latitude'] ?? null,
-            $data['longitude'] ?? null
+            $data['longitude'] ?? null,
+            $data['id']
         ]);
+        
+        // Если запись не была обновлена, вставляем новую
+        if ($stmt->rowCount() === 0) {
+            $stmt = $this->db->prepare("
+                INSERT INTO pois (
+                    id, name_ru, name_en, category, place_id, published, business_id, 
+                    city_id, region_id, description, latitude, longitude, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ");
+            return $stmt->execute([
+                $data['id'],
+                $data['name_ru'],
+                $data['name_en'] ?? null,
+                $data['category'] ?? null,
+                $data['place_id'] ?? null,
+                $data['published'] ? 1 : 0,
+                $data['business_id'] ?? null,
+                $data['city_id'],
+                is_array($data['region_id']) ? $data['region_id'][0] ?? null : $data['region_id'],
+                $data['description'] ?? null,
+                $data['latitude'] ?? null,
+                $data['longitude'] ?? null
+            ]);
+        }
+        
+        return true;
     }
     
     // Statistics
