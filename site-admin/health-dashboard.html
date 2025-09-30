@@ -125,6 +125,22 @@
         <pre id="syncRaw" class="mt-3 hidden bg-gray-50 p-3 rounded border mono text-xs overflow-auto max-h-48"></pre>
       </div>
 
+      <!-- Airtable Token Status -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><span id="airtableTokenDot" class="dot"></span><h2 class="text-lg font-medium">Airtable Token Status</h2></div>
+          <button class="text-gray-500 hover:text-gray-700" id="btnAirtableTokenInfo"><i class="fa-solid fa-shield-alt"></i></button>
+        </div>
+        <div class="text-sm text-gray-600 space-y-2">
+          <div class="flex justify-between"><span>Token Source</span><span class="mono" id="airtableTokenSource">—</span></div>
+          <div class="flex justify-between"><span>Token Status</span><span class="mono" id="airtableTokenStatus">—</span></div>
+          <div class="flex justify-between"><span>Last Check</span><span class="mono" id="airtableTokenLastCheck">—</span></div>
+          <div class="flex justify-between"><span>Response Time</span><span class="mono" id="airtableTokenResponseTime">—</span></div>
+        </div>
+        <div class="text-xs text-gray-500 mt-2"><span class="mono" id="airtableTokenMsg">—</span></div>
+        <pre id="airtableTokenRaw" class="mt-3 hidden bg-gray-50 p-3 rounded border mono text-xs overflow-auto max-h-48"></pre>
+      </div>
+
       <!-- Token Management -->
       <div class="card">
         <div class="flex items-center justify-between mb-3">
@@ -444,8 +460,98 @@
     });
   }
 
+  // Airtable Token Status check
+  async function runAirtableToken(){
+    const dot = $('#airtableTokenDot');
+    const source = $('#airtableTokenSource');
+    const status = $('#airtableTokenStatus');
+    const lastCheck = $('#airtableTokenLastCheck');
+    const responseTime = $('#airtableTokenResponseTime');
+    const msg = $('#airtableTokenMsg');
+    const raw = $('#airtableTokenRaw');
+    
+    if (dot) dot.classList.remove('ok', 'err', 'warn');
+    if (dot) dot.classList.add('loading');
+    
+    try {
+      const startTime = Date.now();
+      const out = await fetchJson(url('/api/health-airtable.php'));
+      const elapsed = Date.now() - startTime;
+      
+      if (out.json) {
+        const j = out.json;
+        const hasToken = !!(j.state && j.state.token_current_present);
+        const isWorking = !!(j.ok);
+        
+        // Update dot
+        if (dot) {
+          dot.classList.remove('loading');
+          if (isWorking) {
+            dot.classList.add('ok');
+          } else if (hasToken) {
+            dot.classList.add('warn');
+          } else {
+            dot.classList.add('err');
+          }
+        }
+        
+        // Update fields
+        if (source) source.textContent = hasToken ? 'GitHub Secrets' : 'Not Found';
+        if (status) status.textContent = isWorking ? 'Active' : (hasToken ? 'Invalid' : 'Missing');
+        if (lastCheck) lastCheck.textContent = now();
+        if (responseTime) responseTime.textContent = `${elapsed}ms`;
+        
+        // Update message
+        if (msg) {
+          if (isWorking) {
+            msg.textContent = 'Token is working correctly';
+          } else if (hasToken) {
+            msg.textContent = j.message || 'Token exists but authentication failed';
+          } else {
+            msg.textContent = j.message || 'No token configured';
+          }
+        }
+        
+        // Show raw data
+        if (raw) {
+          raw.textContent = JSON.stringify(j, null, 2);
+          raw.classList.toggle('hidden', false);
+        }
+      } else {
+        // Error case
+        if (dot) {
+          dot.classList.remove('loading');
+          dot.classList.add('err');
+        }
+        if (source) source.textContent = 'Error';
+        if (status) status.textContent = 'Failed';
+        if (lastCheck) lastCheck.textContent = now();
+        if (responseTime) responseTime.textContent = `${elapsed}ms`;
+        if (msg) msg.textContent = out.raw || 'Network error';
+        if (raw) {
+          raw.textContent = out.raw || 'No response';
+          raw.classList.toggle('hidden', false);
+        }
+      }
+    } catch (e) {
+      if (dot) {
+        dot.classList.remove('loading');
+        dot.classList.add('err');
+      }
+      if (source) source.textContent = 'Error';
+      if (status) status.textContent = 'Failed';
+      if (lastCheck) lastCheck.textContent = now();
+      if (responseTime) responseTime.textContent = '—';
+      if (msg) msg.textContent = e.message || 'Unknown error';
+      if (raw) {
+        raw.textContent = e.message || 'Unknown error';
+        raw.classList.toggle('hidden', false);
+      }
+    }
+  }
+
   async function runAll(){
-    await Promise.allSettled([runHealth(), runWho(), runParity(), runSyncProbe(), runTokenManagement(), runPerformance()]);
+    await Promise.allSettled([runHealth(), runWho(), runParity(), runSyncProbe(), runAirtableToken(), runTokenManagement(), runPerformance()]);
     $('#lastUpdate').textContent = now();
   }
 
@@ -536,6 +642,7 @@
   $('#btnParity').addEventListener('click', ()=> $('#parRaw').classList.toggle('hidden'));
   $('#btnInitSecrets').addEventListener('click', initSecrets);
   $('#btnSync').addEventListener('click', ()=> $('#syncRaw').classList.toggle('hidden'));
+  $('#btnAirtableTokenInfo').addEventListener('click', ()=> $('#airtableTokenRaw').classList.toggle('hidden'));
   $('#btnTokenInfo').addEventListener('click', ()=> $('#tokenRaw').classList.toggle('hidden'));
   $('#btnPerf').addEventListener('click', ()=> $('#perfRaw').classList.toggle('hidden'));
   $('#btnPromote').addEventListener('click', promoteToken);
