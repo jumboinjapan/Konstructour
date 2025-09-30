@@ -46,6 +46,34 @@
                 </div>`;
             }
             
+            // Test Airtable
+            try {
+                const res = await fetch('/api/airtable-ping.php');
+                const data = await res.json();
+                
+                if (data.ok) {
+                    html += `<div class="test success">
+                        <h3>✅ Airtable подключение работает</h3>
+                        <p>Base ID: ${data.base_id}</p>
+                        <p>Table ID: ${data.table_id}</p>
+                        <p>Token: ${data.token_preview}</p>
+                        <p>Записей в выборке: ${data.sample.length}</p>
+                    </div>`;
+                } else {
+                    html += `<div class="test error">
+                        <h3>❌ Ошибка Airtable</h3>
+                        <p>Код: ${data.code || 'N/A'}</p>
+                        <p>Ошибка: ${data.details || data.error || 'Неизвестная ошибка'}</p>
+                        <p>Подсказка: ${data.hint || ''}</p>
+                    </div>`;
+                }
+            } catch (e) {
+                html += `<div class="test error">
+                    <h3>❌ Ошибка подключения к Airtable</h3>
+                    <p>${e.message}</p>
+                </div>`;
+            }
+            
             // Test regions
             try {
                 const res = await fetch('/api/data-api.php?action=regions');
