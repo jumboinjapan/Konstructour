@@ -69,7 +69,6 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
-                            <span id="badgeAirtable" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
                             <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span>Проверка...</span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
@@ -130,7 +129,6 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-robot mr-2 text-indigo-600"></i>OpenAI</h3>
-                            <span id="badgeOpenAI" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
                             <span id="statusOpenAI" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
@@ -157,7 +155,6 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-file-excel mr-2 text-green-600"></i>Google Sheets</h3>
-                            <span id="badgeGSheets" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
                             <span id="statusGSheets" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
@@ -184,7 +181,6 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-map-marked-alt mr-2 text-red-600"></i>Google Maps</h3>
-                            <span id="badgeGMaps" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
                             <span id="statusGMaps" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
@@ -212,7 +208,6 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-shield-alt mr-2 text-gray-600"></i>Google reCAPTCHA</h3>
-                            <span id="badgeRecaptcha" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
                             <span id="statusRecaptcha" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
@@ -239,7 +234,6 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-database mr-2 text-purple-600"></i>BD</h3>
-                            <span id="badgeBrilliant" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
                             <span id="statusBrilliant" class="api-status"><span class="api-dot"></span><span></span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
@@ -458,7 +452,7 @@
             const hasToken = !!(j1 && j1.state && j1.state.token_current_present);
             const isWorking = !!(j1 && j1.ok);
             
-            if (badge){ badge.classList.toggle('hidden', !hasToken); }
+            // Бейдж убран - статус показывает всю информацию
             const statusText = status ? status.querySelector('span:last-child') : null;
             
             if (!hasToken){
