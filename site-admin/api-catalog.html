@@ -390,7 +390,7 @@
             setv('am_region_id_field', t.region?.idField||'');
             setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
             setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
-            autoTestMapping();
+            // autoTestMapping(); // Отключено при загрузке чтобы избежать конфликтов со статусом
             // refreshServerKeyBadge вызывается отдельно при загрузке страницы
           }catch(_){ /* ignore */ }
         }
@@ -437,7 +437,12 @@
           alert('Airtable токен настроен через GitHub Secrets и не может быть удален через интерфейс. Для удаления токена обновите GitHub Secret AIRTABLE_PAT.');
         });
 
+        let isRefreshing = false; // Защита от множественных вызовов
+        
         async function refreshServerKeyBadge(){
+          if (isRefreshing) return; // Предотвращаем множественные вызовы
+          isRefreshing = true;
+          
           clearLocalCaches();
           const badge = document.getElementById('badgeAirtable');
           const status = document.getElementById('statusAirtable');
@@ -481,6 +486,8 @@
             }
             const statusText = status ? status.querySelector('span:last-child') : null;
             if (statusText) statusText.textContent = 'Ошибка проверки';
+          } finally {
+            isRefreshing = false; // Сбрасываем флаг в любом случае
           }
         }
 
@@ -489,8 +496,8 @@
         // Автоматически проверяем статус при загрузке страницы (с задержкой)
         setTimeout(refreshServerKeyBadge, 1000);
         
-        // Принудительно обновляем статус каждые 5 секунд
-        setInterval(refreshServerKeyBadge, 5000);
+        // Принудительно обновляем статус каждые 10 секунд
+        setInterval(refreshServerKeyBadge, 10000);
         
         // Кнопка принудительного обновления
         document.getElementById('btnRefreshStatus')?.addEventListener('click', function(){
