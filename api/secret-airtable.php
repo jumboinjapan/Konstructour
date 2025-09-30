@@ -1,8 +1,20 @@
 <?php
 // api/secret-airtable.php
 function airtable_secret_path(): string {
-  // Вынесите в конфиг, если нужно
-  return '/var/konstructour/secrets/airtable.json';
+  // Сначала пробуем стандартный путь
+  $standard_path = '/var/konstructour/secrets/airtable.json';
+  if (file_exists($standard_path)) {
+    return $standard_path;
+  }
+  
+  // Fallback на /tmp если стандартный путь недоступен
+  $fallback_path = '/tmp/konstructour_secrets/airtable.json';
+  if (file_exists($fallback_path)) {
+    return $fallback_path;
+  }
+  
+  // По умолчанию возвращаем стандартный путь
+  return $standard_path;
 }
 
 function load_airtable_tokens(): array {
