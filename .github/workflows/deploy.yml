@@ -55,5 +55,45 @@ jobs:
         ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           find '${{ secrets.SERVER_PATH }}' -type f -exec chmod 644 {} \;
           find '${{ secrets.SERVER_PATH }}' -type d -exec chmod 755 {} \;
+          echo '✅ File permissions set'
+        "
+        
+        # Bootstrap Airtable secrets
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          echo '🔧 Bootstrapping Airtable secrets...'
+          if [ -f '${{ secrets.SERVER_PATH }}/scripts/bootstrap_airtable_secret.sh' ]; then
+            chmod +x '${{ secrets.SERVER_PATH }}/scripts/bootstrap_airtable_secret.sh'
+            sudo '${{ secrets.SERVER_PATH }}/scripts/bootstrap_airtable_secret.sh'
+            echo '✅ Airtable secrets bootstrapped'
+          else
+            echo '⚠️  Bootstrap script not found, creating secrets manually...'
+            sudo mkdir -p /var/konstructour/secrets
+            sudo bash -c 'cat > /var/konstructour/secrets/airtable.json <<EOF
+{
+  \"current\": { \"token\": null, \"since\": null },
+  \"next\":    { \"token\": null, \"since\": null }
+}
+EOF'
+            sudo chown www-data:www-data /var/konstructour/secrets/airtable.json
+            sudo chmod 600 /var/konstructour/secrets/airtable.json
+            sudo chown www-data:www-data /var/konstructour/secrets
+            sudo chmod 700 /var/konstructour/secrets
+            echo '✅ Airtable secrets created manually'
+          fi
+        "
+        
+        # Final verification
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          echo '🔍 Verifying deployment...'
+          if [ -f '/var/konstructour/secrets/airtable.json' ]; then
+            echo '✅ Secret file exists'
+            if sudo -u www-data test -r /var/konstructour/secrets/airtable.json; then
+              echo '✅ Secret file is readable by PHP'
+            else
+              echo '❌ Secret file is not readable by PHP'
+            fi
+          else
+            echo '❌ Secret file does not exist'
+          fi
           echo '✅ Deployment completed!'
         "

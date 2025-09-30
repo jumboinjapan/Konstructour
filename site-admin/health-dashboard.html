@@ -230,7 +230,18 @@
     const j = out.json || {};
     const ok = !!j.ok;
     setDot(dot, ok?'ok':'err');
-    const auth = j.auth ? `${j.auth.current? 'current✔' : 'current✖'} / ${j.auth.next? 'next✔':'next✖'}` : '—';
+    
+    // Enhanced auth display with state info
+    let auth = '—';
+    if (j.auth) {
+      auth = `${j.auth.current? 'current✔' : 'current✖'} / ${j.auth.next? 'next✔':'next✖'}`;
+    }
+    if (j.state) {
+      const state = j.state;
+      if (state.php_user) auth += ` (${state.php_user})`;
+      if (!state.file_exists) auth += ' [FILE MISSING]';
+      else if (!state.file_readable) auth += ' [PERMISSION DENIED]';
+    }
     $('#hAirtAuth').textContent = auth;
     
     // Show real latency, with server RTT as secondary info
@@ -240,8 +251,17 @@
     
     const rate = j.rate ? `${j.rate.remaining ?? '—'} left` + (j.rate.reset_at? `, reset ${j.rate.reset_at}`:'' ) : '—';
     $('#hAirtRate').textContent = rate;
-    // Set message
-    const msg = j.message || j.error || j.reason || '';
+    
+    // Enhanced message with specific error handling
+    let msg = j.message || j.error || j.reason || '';
+    if (j.reason === 'file_missing') {
+      msg = '🔴 Секрет не создан на сервере. Запустите bootstrap_airtable_secret.sh';
+    } else if (j.reason === 'permission_denied') {
+      msg = '🔴 Нет прав доступа к файлу секрета. Проверьте chown/chmod';
+    } else if (j.reason === 'token_missing') {
+      msg = '🔴 Нет токенов в файле секрета. Загрузите PAT через API';
+    }
+    
     const msgEl = $('#hAirtMsg');
     if (msgEl) msgEl.textContent = msg ? String(msg) : '—';
   }
@@ -334,16 +354,17 @@
       await runHealth();
     }
     
-    // Update rotate button state (traffic light)
+    // Update rotate button state (traffic light) - hide if no next token
     const rotateBtn = $('#btnRotate');
     if (j.auth?.next) {
       rotateBtn.className = 'px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200';
       rotateBtn.textContent = 'Rotate Token (Next Available)';
+      rotateBtn.style.display = 'inline-block';
+      rotateBtn.disabled = false;
     } else {
-      rotateBtn.className = 'px-3 py-1 text-xs bg-gray-100 text-gray-500 rounded cursor-not-allowed';
-      rotateBtn.textContent = 'Rotate Token (No Next)';
+      // Hide button completely when no next token
+      rotateBtn.style.display = 'none';
     }
-    rotateBtn.disabled = !j.auth?.next;
     const tmsg = j.message || j.error || j.reason || '';
     const tmsgEl = $('#tokenMsg');
     if (tmsgEl) tmsgEl.textContent = tmsg ? String(tmsg) : '—';

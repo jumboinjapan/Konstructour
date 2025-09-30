@@ -32,16 +32,56 @@ function airtable_whoami_with_metrics($token) {
 try {
   $startTime = microtime(true);
   
-  // Проверяем наличие токенов
-  $tokens = load_airtable_tokens();
-  $hasCurrent = !empty($tokens['current']);
-  $hasNext = !empty($tokens['next']);
+  // Детальная диагностика состояния
+  $secretPath = airtable_secret_path();
+  $fileExists = file_exists($secretPath);
+  $fileReadable = $fileExists && is_readable($secretPath);
+  $phpUser = get_current_user();
   
-  if (!$hasCurrent && !$hasNext) {
+  // Проверяем наличие токенов
+  $tokens = null;
+  $hasCurrent = false;
+  $hasNext = false;
+  
+  if ($fileReadable) {
+    try {
+      $tokens = load_airtable_tokens();
+      $hasCurrent = !empty($tokens['current']);
+      $hasNext = !empty($tokens['next']);
+    } catch (Exception $e) {
+      // Файл есть, но не читается или содержит невалидный JSON
+    }
+  }
+  
+  // Определяем причину проблемы
+  $reason = 'unknown';
+  $message = 'Unknown error';
+  
+  if (!$fileExists) {
+    $reason = 'file_missing';
+    $message = 'Airtable secret file not found on server';
+  } elseif (!$fileReadable) {
+    $reason = 'permission_denied';
+    $message = 'Airtable secret file not readable by PHP';
+  } elseif (!$hasCurrent && !$hasNext) {
+    $reason = 'token_missing';
+    $message = 'No Airtable tokens configured in secret file';
+  }
+  
+  // Если есть критические проблемы, возвращаем детальный статус
+  if ($reason !== 'unknown') {
     echo json_encode([
       'ok' => false,
-      'reason' => 'no_tokens',
-      'message' => 'No Airtable tokens configured',
+      'reason' => $reason,
+      'message' => $message,
+      'state' => [
+        'file_exists' => $fileExists,
+        'file_readable' => $fileReadable,
+        'token_current_present' => $hasCurrent,
+        'token_next_present' => $hasNext,
+        'php_user' => $phpUser,
+        'secret_path' => $secretPath
+      ],
       'timestamp' => date('c'),
       'latency_ms' => round((microtime(true) - $startTime) * 1000, 2)
     ]);
@@ -68,6 +108,14 @@ try {
         'auth' => $auth,
         'metrics' => $metrics,
         'token_slot' => 'current',
+        'state' => [
+          'file_exists' => $fileExists,
+          'file_readable' => $fileReadable,
+          'token_current_present' => $hasCurrent,
+          'token_next_present' => $hasNext,
+          'php_user' => $phpUser,
+          'secret_path' => $secretPath
+        ],
         'timestamp' => date('c'),
         'latency_ms' => round((microtime(true) - $startTime) * 1000, 2)
       ]);
@@ -98,6 +146,14 @@ try {
         'auth' => $auth,
         'metrics' => $metrics,
         'token_slot' => 'current',
+        'state' => [
+          'file_exists' => $fileExists,
+          'file_readable' => $fileReadable,
+          'token_current_present' => true, // теперь current есть
+          'token_next_present' => false,   // next очищен
+          'php_user' => $phpUser,
+          'secret_path' => $secretPath
+        ],
         'timestamp' => date('c'),
         'latency_ms' => round((microtime(true) - $startTime) * 1000, 2)
       ]);
@@ -114,8 +170,14 @@ try {
     'message' => 'All Airtable tokens are invalid',
     'auth' => $auth,
     'metrics' => $metrics,
-    'has_current' => $hasCurrent,
-    'has_next' => $hasNext,
+    'state' => [
+      'file_exists' => $fileExists,
+      'file_readable' => $fileReadable,
+      'token_current_present' => $hasCurrent,
+      'token_next_present' => $hasNext,
+      'php_user' => $phpUser,
+      'secret_path' => $secretPath
+    ],
     'timestamp' => date('c'),
     'latency_ms' => round((microtime(true) - $startTime) * 1000, 2)
   ]);

@@ -56,16 +56,28 @@ function run_sync() {
 try {
   log_message("Starting cron sync check");
   
+  // Проверяем наличие секретного файла
+  $secretPath = airtable_secret_path();
+  if (!file_exists($secretPath)) {
+    log_message("CRITICAL: Secret file missing: $secretPath");
+    exit(2); // Код 2 для file_missing
+  }
+  
+  if (!is_readable($secretPath)) {
+    log_message("CRITICAL: Secret file not readable: $secretPath");
+    exit(3); // Код 3 для permission_denied
+  }
+  
   // Проверяем health
   $health = check_airtable_health();
   
   if (!$health['ok']) {
     log_message("Health check failed: " . ($health['reason'] ?? 'unknown'));
     
-    // Если проблема с токенами - не запускаем синхронизацию
-    if (in_array($health['reason'], ['no_tokens', 'all_tokens_invalid'])) {
-      log_message("Skipping sync due to token issues");
-      exit(1);
+    // Критические ошибки - не запускаем синхронизацию
+    if (in_array($health['reason'], ['file_missing', 'permission_denied', 'token_missing', 'all_tokens_invalid'])) {
+      log_message("Skipping sync due to critical issues: " . $health['reason']);
+      exit(4); // Код 4 для critical issues
     }
     
     // Для других ошибок - пробуем синхронизацию
