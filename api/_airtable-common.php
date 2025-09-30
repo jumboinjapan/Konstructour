@@ -76,6 +76,9 @@ function air_call($method, $path = '', $payload = null, $query = []) {
     CURLOPT_HTTPHEADER    => $headers,
     CURLOPT_RETURNTRANSFER=> true,
     CURLOPT_TIMEOUT       => 30,
+    CURLOPT_SSL_VERIFYPEER => true, // Включить проверку SSL
+    CURLOPT_FOLLOWLOCATION => true, // Следовать редиректам
+    CURLOPT_USERAGENT     => 'Konstructour/1.0', // Добавить User-Agent
   ]);
   if (!is_null($payload)) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
@@ -84,7 +87,13 @@ function air_call($method, $path = '', $payload = null, $query = []) {
   $out  = curl_exec($ch);
   $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
   $err  = curl_error($ch);
+  $info = curl_getinfo($ch);
   curl_close($ch);
+
+  // Логирование для отладки (только в случае ошибки)
+  if ($out === false || $err || $code >= 400) {
+    error_log("Airtable API Error - URL: $url, Code: $code, Error: $err, Output: " . substr($out, 0, 500));
+  }
 
   return [$code, $out, $err, $url, substr($cfg['api_key'],0,3), substr($cfg['api_key'],-6)];
 }

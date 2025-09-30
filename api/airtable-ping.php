@@ -11,7 +11,35 @@ try {
   
   // пробуем прочитать 1 запись (или схему таблицы через list)
   [$code,$out,$err,$url] = air_call('GET','', null, ['pageSize'=>1]);
+  
+  // Отладка ответа
+  if ($out === false || $err) {
+    http_response_code(500);
+    echo json_encode([
+      'ok'=>false,
+      'where'=>'air_call',
+      'code'=>$code,
+      'url'=>$url,
+      'curl_error'=>$err,
+      'raw_output'=>$out,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+  }
+
+  // Проверка JSON
   $json = json_decode($out, true);
+  if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(500);
+    echo json_encode([
+      'ok'=>false,
+      'where'=>'json_decode',
+      'code'=>$code,
+      'url'=>$url,
+      'json_error'=>json_last_error_msg(),
+      'raw_output'=>$out,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+  }
 
   if ($code>=400) {
     http_response_code(500);
