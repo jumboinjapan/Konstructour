@@ -76,7 +76,6 @@
                             <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-save mr-2"></i>Save Mapping</button>
                             <button id="btnEraseAirtable" type="button" class="btn-japanese" disabled style="opacity: 0.5;"><i class="fas fa-lock mr-2"></i>Token Locked</button>
                             <button id="btnTestAirtable" type="button" class="btn-japanese"><i class="fas fa-vial mr-2"></i>Test</button>
-                            <button id="btnRefreshStatus" type="button" class="btn-japanese"><i class="fas fa-sync-alt mr-2"></i>Refresh</button>
                             <button id="am_toggle" type="button" class="btn-icon" title="Toggle"><i class="fas fa-chevron-up"></i></button>
                         </div>
                     </div>
@@ -508,12 +507,7 @@
         // Автоматически проверяем статус при загрузке страницы (без loading)
         setTimeout(() => refreshServerKeyBadge(false), 2000);
         
-        // Убрано автоматическое обновление - только ручное через кнопку Refresh
-        
-        // Кнопка принудительного обновления
-        document.getElementById('btnRefreshStatus')?.addEventListener('click', function(){
-          refreshServerKeyBadge();
-        });
+        // Статус стабильный через GitHub Secrets - обновление не требуется
       })();
     </script>
 </body>
