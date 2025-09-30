@@ -40,6 +40,17 @@ function air_cfg() {
   if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
     $apiKey = _read_pat_from_file();
   }
+  
+  // Если все еще нет токена, пробуем загрузить из config.php
+  if ($apiKey === '' || !preg_match('/^pat[^\s]{20,}$/', $apiKey)) {
+    $configFile = __DIR__ . '/config.php';
+    if (file_exists($configFile)) {
+      $config = require $configFile;
+      if (is_array($config) && isset($config['airtable_registry']['api_key'])) {
+        $apiKey = $config['airtable_registry']['api_key'];
+      }
+    }
+  }
 
 
   // строгая валидация: начинаем с pat и минимум 20 непробельных символов далее
