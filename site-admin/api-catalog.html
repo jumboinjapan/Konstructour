@@ -349,14 +349,20 @@
         // Load saved registry from server and populate fields
         async function loadRegistry(){
           try{
+            console.log('🔍 loadRegistry: Starting...');
             const headers = {};
             if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
             const r = await fetch('../api/config-read.php', { headers });
             const j = await r.json();
+            console.log('🔍 loadRegistry: API response:', j);
             const reg = j && j.airtable_registry;
-            if (!reg) { autoTestMapping(); return; }
+            if (!reg) { 
+              console.log('🔍 loadRegistry: No registry found');
+              return; 
+            }
             const baseId = reg.baseId || reg.base_id || '';
             const t = reg.tables || {};
+            console.log('🔍 loadRegistry: Base ID:', baseId, 'Tables:', t);
             const setv = (id,val)=>{ const el=document.getElementById(id); if (el && val!==undefined) el.value=val; };
             setv('airtable_base_id', baseId);
             setv('am_country_table', t.country?.tableId||''); setv('am_country_view', t.country?.viewId||'');
@@ -364,9 +370,12 @@
             // Region ID Field убран - не нужен
             setv('am_city_table',    t.city?.tableId||'');    setv('am_city_view',    t.city?.viewId||'');
             setv('am_poi_table',     t.poi?.tableId||'');     setv('am_poi_view',     t.poi?.viewId||'');
+            console.log('🔍 loadRegistry: Fields populated');
             // autoTestMapping(); // Отключено при загрузке чтобы избежать конфликтов со статусом
             // refreshServerKeyBadge вызывается отдельно при загрузке страницы
-          }catch(_){ /* ignore */ }
+          }catch(e){ 
+            console.error('🔍 loadRegistry: Error:', e);
+          }
         }
 
         // Save registry (и опц. PAT) на сервер; не отправляем пустые значения, чтобы не затирать
