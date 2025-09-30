@@ -140,18 +140,38 @@ class Database {
     }
     
     public function saveCity($data) {
+        // Сначала пытаемся обновить существующую запись
         $stmt = $this->db->prepare("
-            INSERT OR REPLACE INTO cities (id, name_ru, name_en, business_id, type, region_id, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            UPDATE cities 
+            SET name_ru = ?, name_en = ?, business_id = ?, type = ?, region_id = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
         ");
-        return $stmt->execute([
-            $data['id'],
+        $stmt->execute([
             $data['name_ru'],
             $data['name_en'] ?? null,
             $data['business_id'] ?? null,
             $data['type'] ?? 'city',
-            $data['region_id']
+            $data['region_id'],
+            $data['id']
         ]);
+        
+        // Если запись не была обновлена, вставляем новую
+        if ($stmt->rowCount() === 0) {
+            $stmt = $this->db->prepare("
+                INSERT INTO cities (id, name_ru, name_en, business_id, type, region_id, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ");
+            return $stmt->execute([
+                $data['id'],
+                $data['name_ru'],
+                $data['name_en'] ?? null,
+                $data['business_id'] ?? null,
+                $data['type'] ?? 'city',
+                $data['region_id']
+            ]);
+        }
+        
+        return true;
     }
     
     // POI methods
