@@ -1451,19 +1451,16 @@
           });
           const j = await res.json();
           if (j.ok && j.stats) {
-            // Обновляем счетчики городов для каждого региона
-            Object.keys(citiesByRegion).forEach(regionId => {
-              const region = regions.find(r => r.id === regionId);
-              if (region) {
-                const cityCount = j.stats.cities_by_region[regionId] || 0;
-                // Обновляем счетчик в UI если мы на уровне регионов
-                if (level === 'regions') {
-                  const regionElement = document.querySelector(`[data-go="cities"][data-id="${regionId}"]`);
-                  if (regionElement) {
-                    const countElement = regionElement.querySelector('.text-xs.font-medium');
-                    if (countElement) {
-                      countElement.textContent = cityCount;
-                    }
+            // Обновляем счетчики городов для всех регионов
+            regions.forEach(region => {
+              const cityCount = j.stats.cities_by_region[region.id] || 0;
+              // Обновляем счетчик в UI если мы на уровне регионов
+              if (level === 'regions') {
+                const regionElement = document.querySelector(`[data-go="cities"][data-id="${region.id}"]`);
+                if (regionElement) {
+                  const countElement = regionElement.querySelector('.text-xs.font-medium');
+                  if (countElement) {
+                    countElement.textContent = cityCount;
                   }
                 }
               }

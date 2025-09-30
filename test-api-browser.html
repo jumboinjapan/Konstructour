@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Konstructour</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Konstructour API Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Regions API</h3>
+        <button onclick="testRegions()">Test Regions</button>
+        <div id="regions-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Cities API</h3>
+        <button onclick="testCities()">Test Cities (First Region)</button>
+        <div id="cities-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Stats API</h3>
+        <button onclick="testStats()">Test Stats</button>
+        <div id="stats-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test City Counts API</h3>
+        <button onclick="testCityCounts()">Test City Counts</button>
+        <div id="city-counts-result"></div>
+    </div>
+
+    <script>
+        async function testAPI(endpoint, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            resultElement.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`/api/data-api.php?action=${endpoint}`);
+                const data = await response.json();
+                
+                resultElement.className = 'test-section success';
+                resultElement.innerHTML = `
+                    <h4>Success!</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultElement.className = 'test-section error';
+                resultElement.innerHTML = `
+                    <h4>Error!</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testRegions() {
+            await testAPI('regions', 'regions-result');
+        }
+        
+        async function testCities() {
+            // First get regions to get a region ID
+            try {
+                const regionsResponse = await fetch('/api/data-api.php?action=regions');
+                const regionsData = await regionsResponse.json();
+                
+                if (regionsData.ok && regionsData.items.length > 0) {
+                    const firstRegionId = regionsData.items[0].id;
+                    const response = await fetch(`/api/data-api.php?action=cities&region_id=${firstRegionId}`);
+                    const data = await response.json();
+                    
+                    const resultElement = document.getElementById('cities-result');
+                    resultElement.className = 'test-section success';
+                    resultElement.innerHTML = `
+                        <h4>Success!</h4>
+                        <p>Testing cities for region: ${regionsData.items[0].name_ru}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error('No regions found');
+                }
+            } catch (error) {
+                const resultElement = document.getElementById('cities-result');
+                resultElement.className = 'test-section error';
+                resultElement.innerHTML = `
+                    <h4>Error!</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testStats() {
+            await testAPI('stats', 'stats-result');
+        }
+        
+        async function testCityCounts() {
+            await testAPI('stats', 'city-counts-result');
+        }
+    </script>
+</body>
+</html>
