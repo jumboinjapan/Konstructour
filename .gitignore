@@ -30,3 +30,6 @@ api/.env.local
 api/*.key
 api/*.token
 api/*.pat
+
+# Secrets directory
+/var/konstructour/secrets/*
