@@ -68,7 +68,7 @@
                         <div class="flex items-center gap-2">
                             <h3 class="text-lg font-light text-gray-800"><i class="fas fa-table mr-2 text-blue-600"></i>Airtable</h3>
                             <span id="badgeAirtable" class="text-xs text-gray-500 hidden"><i class="fas fa-shield-alt mr-1"></i>Server key</span>
-                            <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span>Ожидание</span></span>
+                            <span id="statusAirtable" class="api-status"><span class="api-dot"></span><span>Проверка...</span></span>
                         </div>
                         <div class="api-actions flex items-center gap-2 flex-wrap">
                             <button id="btnSaveAirtable" type="button" class="btn-japanese"><i class="fas fa-plus mr-2"></i>Add</button>
@@ -304,7 +304,26 @@
         bindToggle('toggleGMaps','sectionGMaps');
         bindToggle('toggleRecaptcha','sectionRecaptcha');
         bindToggle('toggleBrilliant','sectionBrilliant');
+        // Утилита очистки локальных кэшей
+        function clearLocalCaches(){
+          try{
+            [
+              'konstructour_regions_cache_v1',
+              'konstructour_cities_cache_v2',
+              'konstructour_pois_cache_v2',
+              'konstructour_last_refresh',
+              'konstructour_last_sync'
+            ].forEach(k=> localStorage.removeItem(k));
+          }catch(_){ /* ignore */ }
+        }
+
+        // Проверка на реальный PAT токен
+        function isValidPatToken(token) {
+          return token && /^pat[A-Za-z0-9]{14}\.[A-Za-z0-9]{22}$/.test(token);
+        }
+
         async function testTable(entity){
+          clearLocalCaches();
           const baseId = document.getElementById('airtable_base_id')?.value || '';
           const tableId = document.getElementById('am_'+entity+'_table')?.value || '';
           const viewId = document.getElementById('am_'+entity+'_view')?.value || '';
@@ -313,19 +332,27 @@
           const msg = document.getElementById('am_msg_'+entity);
           if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
           try{
-            const r = await fetch('../api/test-proxy.php?provider=airtable',{
+            const isPlaceholder = !apiKey || apiKey === 'pat...' || apiKey.toUpperCase().includes('PLACEHOLDER');
+            const body = { base_id: baseId, table: tableId, view: viewId, whoami: true };
+            if (!isPlaceholder && apiKey) body.api_key = apiKey; // только реальный PAT, введённый вручную
+            const r = await fetch(`../api/test-proxy.php?provider=airtable&_=${Date.now()}`,{
               method:'POST',
+              cache:'no-store',
               headers:{ 'Content-Type':'application/json' },
-              body: JSON.stringify({ base_id: baseId, table: tableId, view: viewId, api_key: apiKey || undefined })
+              body: JSON.stringify(body)
             });
             const t = await r.json();
-            if (dot){ dot.classList.remove('loading'); dot.classList.add(t.ok?'ok':'err'); }
-            if (msg){ msg.textContent = t.ok ? 'OK' : (t.error || ('HTTP '+(t.status||''))); }
-            if (t.ok){
-              // успешный тест = сохранить текущий mapping и PAT (если введён) на сервере
-              try{ await saveRegistry(true); }catch(_){ /* ignore */ }
+            const authOk = !!(t && t.ok && t.auth !== false && t.status !== 401);
+            if (dot){ dot.classList.remove('loading'); dot.classList.add(authOk?'ok':'err'); }
+            if (msg){ msg.textContent = authOk ? 'OK' : (t && (t.error || t.message) ? (t.error || t.message) : ('HTTP '+(t && t.status || ''))); }
+            // На Test сохраняем только МАППИНГ, НИКОГДА не ключ
+            if (authOk){
+              try{ await saveRegistry(false); }catch(_){ /* ignore */ }
             }
-          }catch(e){ if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); } }
+          }catch(e){
+            if (dot){ dot.classList.remove('loading'); dot.classList.add('err'); }
+            if (msg){ msg.textContent = 'Ошибка подключения'; }
+          }
         }
         document.querySelectorAll('.map-test').forEach(btn=>{
           btn.addEventListener('click', function(){ testTable(this.getAttribute('data-entity')); });
@@ -389,7 +416,8 @@
             payload.airtable_registry = reg;
             if (saveKeyAlso){
               const apiKey = val('airtable_api_key');
-              if (apiKey){ payload.airtable = { api_key: apiKey }; }
+              const isRealPat = /^pat\.[A-Za-z0-9_\-]{20,}$/.test(apiKey);
+              if (isRealPat){ payload.airtable = { api_key: apiKey }; }
             }
             const headers = { 'Content-Type':'application/json' };
             if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
@@ -398,28 +426,66 @@
           }catch(_){ /* ignore */ }
         }
 
-        document.getElementById('btnSaveAirtable')?.addEventListener('click', function(){ saveRegistry(true); });
+        document.getElementById('btnSaveAirtable')?.addEventListener('click', function(){
+          const v = (document.getElementById('airtable_api_key')?.value||'').trim();
+          const isRealPat = /^pat\.[A-Za-z0-9_\-]{20,}$/.test(v);
+          if (!isRealPat){
+            alert('Введите реальный Airtable PAT (начинается с "pat."), плейсхолдеры не принимаются.');
+            // Сохраняем только маппинг без ключа
+            return saveRegistry(false);
+          }
+          return saveRegistry(true);
+        });
+
+        document.getElementById('btnEraseAirtable')?.addEventListener('click', async function(){
+          try{
+            const headers = { 'Content-Type':'application/json' };
+            if (window.ADMIN_TOKEN) headers['X-Admin-Token'] = window.ADMIN_TOKEN;
+            await fetch('../api/config-store.php', {
+              method:'POST',
+              headers,
+              body: JSON.stringify({ airtable: { api_key: null } })
+            });
+            const inp = document.getElementById('airtable_api_key'); if (inp) inp.value='';
+            await refreshServerKeyBadge();
+            alert('Airtable ключ удалён на сервере.');
+          }catch(_){
+            alert('Не удалось удалить ключ. Проверьте доступ.');
+          }
+        });
 
         async function refreshServerKeyBadge(){
+          clearLocalCaches();
           const badge = document.getElementById('badgeAirtable');
           const status = document.getElementById('statusAirtable');
           const dot = status ? status.querySelector('.api-dot') : null;
           if (dot){ dot.classList.remove('ok','err'); dot.classList.add('loading'); }
           try{
             // 1) Узнаём, есть ли серверный ключ
-            const r1 = await fetch('../api/test-proxy.php?provider=server_keys');
+            const r1 = await fetch(`../api/test-proxy.php?provider=server_keys&_=${Date.now()}`, { cache:'no-store' });
             const j1 = await r1.json();
             const hasKey = !!(j1 && j1.keys && j1.keys.airtable);
             if (badge){ badge.classList.toggle('hidden', !hasKey); }
+            const statusText = status ? status.querySelector('span:last-child') : null;
+            if (!hasKey){
+              if (dot){ dot.classList.remove('loading','ok'); dot.classList.add('err'); }
+              if (statusText) statusText.textContent = 'Нет ключа';
+              return;
+            }
             // 2) Тестируем реальное подключение (whoami или таблицу, если задана)
             const val = id=> (document.getElementById(id)?.value||'').trim();
             const baseId = val('airtable_base_id');
             const tableId = val('am_region_table') || val('am_city_table') || val('am_country_table') || val('am_poi_table');
             let url = '../api/test-proxy.php?provider=airtable';
-            const body = {};
+            const body = { whoami: true }; // строгое подтверждение валидного токена
             if (baseId) body.base_id = baseId;
             if (tableId) body.table = tableId;
-            const r2 = await fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+            const r2 = await fetch(`${url}&_=${Date.now()}`, {
+              method:'POST',
+              cache:'no-store',
+              headers:{ 'Content-Type':'application/json' },
+              body: JSON.stringify(body)
+            });
             const j2 = await r2.json();
             const ok = !!(j2 && j2.ok);
             if (dot){ 
@@ -428,7 +494,6 @@
               dot.classList.toggle('err', !ok); 
             }
             // Обновляем текст статуса
-            const statusText = status ? status.querySelector('span:last-child') : null;
             if (statusText) {
               statusText.textContent = ok ? 'Подключено' : 'Ошибка';
             }
