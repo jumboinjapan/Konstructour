@@ -18,8 +18,8 @@ try {
       COUNT(DISTINCT c.id) as cities_count,
       COUNT(DISTINCT p.id) as pois_count
     FROM regions r
-    LEFT JOIN cities c ON c.regionId = r.id
-    LEFT JOIN pois p ON p.cityId = c.id OR p.regionId = r.id
+    LEFT JOIN cities c ON c.region_id = r.id
+    LEFT JOIN pois p ON p.city_id = c.id OR p.region_id = r.id
     GROUP BY r.id, r.business_id, r.name_ru
     ORDER BY r.id
   ");
