@@ -1276,7 +1276,9 @@
           regions = items.map((it, idx) => ({
             id: it.id,
             name: it.name_ru || ('Регион ' + (idx + 1)),
-            rid: it.business_id || ('REG-' + String(idx + 1).padStart(3, '0'))
+            rid: it.business_id || ('REG-' + String(idx + 1).padStart(3, '0')),
+            business_id: it.business_id || ('REG-' + String(idx + 1).padStart(3, '0')),
+            code: it.business_id || ('REG-' + String(idx + 1).padStart(3, '0'))
           }));
           
           // Сохраняем в кэш сразу после загрузки
@@ -1843,7 +1845,10 @@
       async function loadCitiesForRegion(region, forceRefresh = false){
         try{
           console.log(`Загружаем города для ${region.name} из серверной БД`);
-          const res = await fetch(`/api/data-api.php?action=cities&region_id=${region.id}`, {
+          // Используем business_id вместо Airtable ID согласно Filtering.md
+          const regionBusinessId = region.business_id || region.code;
+          console.log('Using region business_id:', regionBusinessId);
+          const res = await fetch(`/api/data-api.php?action=cities&region_id=${regionBusinessId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
@@ -1853,6 +1858,7 @@
             id: it.id, 
             name: it.name_ru || '—', 
             code: it.business_id || '', 
+            business_id: it.business_id || '',
             type: it.type === 'location' ? 'location' : 'city' 
           }));
           
@@ -1887,7 +1893,10 @@
         
         try{
           console.log(`Загружаем POI для ${city.name} из серверной БД`);
-          const res = await fetch(`/api/data-api.php?action=pois&city_id=${city.id}`, {
+          // Используем business_id вместо Airtable ID согласно Filtering.md
+          const cityBusinessId = city.business_id || city.code;
+          console.log('Using city business_id:', cityBusinessId);
+          const res = await fetch(`/api/data-api.php?action=pois&city_id=${cityBusinessId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
