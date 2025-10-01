@@ -2483,7 +2483,7 @@
             
             wrap.innerHTML = `
               <div class="absolute inset-0" onclick="this.parentElement.querySelector('#poi_cancel').click()"></div>
-              <div class="relative bg-white rounded-lg shadow-xl p-4 w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+              <div class="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
                 <div class="flex items-center justify-between mb-3">
                   <h3 class="text-lg font-medium text-gray-800">${isEdit ? 'Редактировать POI' : 'Новый POI'}</h3>
                   <button id="poi_close" class="text-gray-400 hover:text-gray-600">
@@ -2575,13 +2575,13 @@
                           <i class="fas fa-tags mr-1 text-purple-600 text-xs"></i>
                           Категории <span class="text-red-500">*</span>
                         </h4>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-2 gap-3">
                           <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">RU</label>
-                            <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
+                            <div class="space-y-1 max-h-80 overflow-y-auto border border-gray-200 rounded p-2 bg-white">
                               ${categories_ru.map((cat) => `
-                                <label class="flex items-center text-xs">
-                                  <input type="checkbox" name="cats_ru" value="${cat}" class="mr-1">
+                                <label class="flex items-center text-xs hover:bg-gray-50 px-1 py-0.5 rounded cursor-pointer">
+                                  <input type="checkbox" name="cats_ru" value="${cat}" class="mr-2">
                                   <span>${cat}</span>
                                 </label>
                               `).join('')}
@@ -2589,10 +2589,10 @@
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">EN</label>
-                            <div class="space-y-1 max-h-28 overflow-y-auto border border-gray-200 rounded p-1">
+                            <div class="space-y-1 max-h-80 overflow-y-auto border border-gray-200 rounded p-2 bg-white">
                               ${categories_en.map((cat) => `
-                                <label class="flex items-center text-xs">
-                                  <input type="checkbox" name="cats_en" value="${cat}" class="mr-1">
+                                <label class="flex items-center text-xs hover:bg-gray-50 px-1 py-0.5 rounded cursor-pointer">
+                                  <input type="checkbox" name="cats_en" value="${cat}" class="mr-2">
                                   <span>${cat}</span>
                                 </label>
                               `).join('')}
@@ -2610,12 +2610,12 @@
                         <div class="space-y-2">
                           <div>
                             <label class="block text-xs font-medium text-gray-700">Описание (RU)</label>
-                            <textarea id="poi_desc_ru" class="input-japanese w-full text-sm py-1" rows="2"
+                            <textarea id="poi_desc_ru" class="input-japanese w-full text-sm py-1" rows="3"
                                       placeholder="Краткое описание"></textarea>
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-700">Description (EN)</label>
-                            <textarea id="poi_desc_en" class="input-japanese w-full text-sm py-1" rows="2"
+                            <textarea id="poi_desc_en" class="input-japanese w-full text-sm py-1" rows="3"
                                       placeholder="Brief description"></textarea>
                           </div>
                         </div>
