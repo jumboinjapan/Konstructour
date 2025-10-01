@@ -2418,17 +2418,63 @@
             wrap.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto';
             wrap.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
             
-            // Префектуры для селектов
+            // Все 47 префектур Японии
             const prefectures = [
+              // Хоккайдо
+              {value: 'hokkaido', ru: 'Хоккайдо', en: 'Hokkaido'},
+              // Тохоку
+              {value: 'aomori', ru: 'Аомори', en: 'Aomori'},
+              {value: 'iwate', ru: 'Иватэ', en: 'Iwate'},
+              {value: 'miyagi', ru: 'Мияги', en: 'Miyagi'},
+              {value: 'akita', ru: 'Акита', en: 'Akita'},
+              {value: 'yamagata', ru: 'Ямагата', en: 'Yamagata'},
+              {value: 'fukushima', ru: 'Фукусима', en: 'Fukushima'},
+              // Канто
+              {value: 'ibaraki', ru: 'Ибараки', en: 'Ibaraki'},
+              {value: 'tochigi', ru: 'Тотиги', en: 'Tochigi'},
+              {value: 'gunma', ru: 'Гумма', en: 'Gunma'},
+              {value: 'saitama', ru: 'Сайтама', en: 'Saitama'},
+              {value: 'chiba', ru: 'Тиба', en: 'Chiba'},
               {value: 'tokyo', ru: 'Токио', en: 'Tokyo'},
+              {value: 'kanagawa', ru: 'Канагава', en: 'Kanagawa'},
+              // Тюбу
+              {value: 'niigata', ru: 'Ниигата', en: 'Niigata'},
+              {value: 'toyama', ru: 'Тояма', en: 'Toyama'},
+              {value: 'ishikawa', ru: 'Исикава', en: 'Ishikawa'},
+              {value: 'fukui', ru: 'Фукуи', en: 'Fukui'},
+              {value: 'yamanashi', ru: 'Яманаси', en: 'Yamanashi'},
+              {value: 'nagano', ru: 'Нагано', en: 'Nagano'},
+              {value: 'gifu', ru: 'Гифу', en: 'Gifu'},
+              {value: 'shizuoka', ru: 'Сидзуока', en: 'Shizuoka'},
+              {value: 'aichi', ru: 'Айти', en: 'Aichi'},
+              // Кансай
+              {value: 'mie', ru: 'Миэ', en: 'Mie'},
+              {value: 'shiga', ru: 'Сига', en: 'Shiga'},
               {value: 'kyoto', ru: 'Киото', en: 'Kyoto'},
               {value: 'osaka', ru: 'Осака', en: 'Osaka'},
-              {value: 'kanagawa', ru: 'Канагава', en: 'Kanagawa'},
-              {value: 'aichi', ru: 'Айти', en: 'Aichi'},
-              {value: 'fukuoka', ru: 'Фукуока', en: 'Fukuoka'},
-              {value: 'hokkaido', ru: 'Хоккайдо', en: 'Hokkaido'},
-              {value: 'hiroshima', ru: 'Хиросима', en: 'Hiroshima'},
+              {value: 'hyogo', ru: 'Хёго', en: 'Hyogo'},
               {value: 'nara', ru: 'Нара', en: 'Nara'},
+              {value: 'wakayama', ru: 'Вакаяма', en: 'Wakayama'},
+              // Тюгоку
+              {value: 'tottori', ru: 'Тоттори', en: 'Tottori'},
+              {value: 'shimane', ru: 'Симанэ', en: 'Shimane'},
+              {value: 'okayama', ru: 'Окаяма', en: 'Okayama'},
+              {value: 'hiroshima', ru: 'Хиросима', en: 'Hiroshima'},
+              {value: 'yamaguchi', ru: 'Ямагути', en: 'Yamaguchi'},
+              // Сикоку
+              {value: 'tokushima', ru: 'Токусима', en: 'Tokushima'},
+              {value: 'kagawa', ru: 'Кагава', en: 'Kagawa'},
+              {value: 'ehime', ru: 'Эхимэ', en: 'Ehime'},
+              {value: 'kochi', ru: 'Коти', en: 'Kochi'},
+              // Кюсю
+              {value: 'fukuoka', ru: 'Фукуока', en: 'Fukuoka'},
+              {value: 'saga', ru: 'Сага', en: 'Saga'},
+              {value: 'nagasaki', ru: 'Нагасаки', en: 'Nagasaki'},
+              {value: 'kumamoto', ru: 'Кумамото', en: 'Kumamoto'},
+              {value: 'oita', ru: 'Оита', en: 'Oita'},
+              {value: 'miyazaki', ru: 'Миядзаки', en: 'Miyazaki'},
+              {value: 'kagoshima', ru: 'Кагосима', en: 'Kagoshima'},
+              // Окинава
               {value: 'okinawa', ru: 'Окинава', en: 'Okinawa'}
             ];
             
@@ -2604,11 +2650,31 @@
             
             document.body.appendChild(wrap);
             
-            // Синхронизация префектур
+            // Синхронизация префектур RU ↔ EN
             const prefRu = wrap.querySelector('#poi_pref_ru');
             const prefEn = wrap.querySelector('#poi_pref_en');
             prefRu.addEventListener('change', () => { prefEn.value = prefRu.value; });
             prefEn.addEventListener('change', () => { prefRu.value = prefEn.value; });
+            
+            // Синхронизация категорий RU ↔ EN (парная логика)
+            const catsRu = wrap.querySelectorAll('input[name="cats_ru"]');
+            const catsEn = wrap.querySelectorAll('input[name="cats_en"]');
+            
+            catsRu.forEach((cbRu, index) => {
+              cbRu.addEventListener('change', () => {
+                if (catsEn[index]) {
+                  catsEn[index].checked = cbRu.checked;
+                }
+              });
+            });
+            
+            catsEn.forEach((cbEn, index) => {
+              cbEn.addEventListener('change', () => {
+                if (catsRu[index]) {
+                  catsRu[index].checked = cbEn.checked;
+                }
+              });
+            });
             
             // Обработчики кнопок
             function done(val){ 
