@@ -2,19 +2,25 @@
 return array (
   'airtable_registry' => 
   array (
-    'baseId' => 'PLACEHOLDER_BASE_ID',
+    'baseId' => 'apppwhjFN82N9zNqm',
     'api_key' => 'PLACEHOLDER_FOR_REAL_API_KEY',
     'tables' => 
     array (
       'region' => 
       array (
-        'tableId' => 'PLACEHOLDER_REGION_TABLE_ID',
+        'tableId' => 'tblbSajWkzI8X7M4U',
       ),
       'city' => 
       array (
-        'tableId' => 'PLACEHOLDER_CITY_TABLE_ID',
+        'tableId' => 'tblHaHc9NV0mA8bSa',
         'linkField' => 'Regions',
         'regionCodeField' => 'Region',
+      ),
+      'poi' => 
+      array (
+        'tableId' => 'tblVCmFcHRpXUT24y',
+        'linkField' => 'Cities',
+        'cityCodeField' => 'City',
       ),
     ),
   ),
