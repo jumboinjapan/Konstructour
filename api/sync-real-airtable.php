@@ -70,8 +70,8 @@ try {
             $regionData = [
                 'id' => $record['id'],
                 'business_id' => $fields['POI ID'] ?? 'REG-' . str_pad(rand(1, 9), 4, '0', STR_PAD_LEFT),
-                'name_ru' => $fields['Название (RU)'] ?? 'Неизвестно',
-                'name_en' => $fields['Название (EN)'] ?? 'Unknown'
+                'name_ru' => $fields['POI Name (RU)'] ?? 'Неизвестно',
+                'name_en' => $fields['POI Name (EN)'] ?? 'Unknown'
             ];
             
             $db->saveRegion($regionData);
@@ -90,8 +90,8 @@ try {
                 $cityData = [
                     'id' => $record['id'],
                     'business_id' => $fields['POI ID'] ?? 'CTY-' . str_pad(rand(1, 32), 4, '0', STR_PAD_LEFT),
-                    'name_ru' => $fields['Название (RU)'] ?? 'Неизвестно',
-                    'name_en' => $fields['Название (EN)'] ?? 'Unknown',
+                    'name_ru' => $fields['POI Name (RU)'] ?? 'Неизвестно',
+                    'name_en' => $fields['POI Name (EN)'] ?? 'Unknown',
                     'region_id' => $fields['Regions'][0] ?? null
                 ];
                 
@@ -112,14 +112,14 @@ try {
                 $poiData = [
                     'id' => $record['id'],
                     'business_id' => $fields['POI ID'] ?? 'POI-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT),
-                    'name_ru' => $fields['Название (RU)'] ?? 'Неизвестно',
-                    'name_en' => $fields['Название (EN)'] ?? 'Unknown',
+                    'name_ru' => $fields['POI Name (RU)'] ?? 'Неизвестно',
+                    'name_en' => $fields['POI Name (EN)'] ?? 'Unknown',
                     'category' => $fields['POI Category (RU)'][0] ?? 'Unknown',
                     'city_id' => $fields['City Location'][0] ?? null,
                     'region_id' => $fields['Regions'][0] ?? null,
-                    'description_ru' => $fields['Описание (RU)'] ?? null,
+                    'description_ru' => $fields['Description (RU)'] ?? null,
                     'description_en' => $fields['Description (EN)'] ?? null,
-                    'prefecture_ru' => $fields['Префектура (RU)'] ?? null,
+                    'prefecture_ru' => $fields['Prefecture (RU)'] ?? null,
                     'prefecture_en' => $fields['Prefecture (EN)'] ?? null,
                     'website' => $fields['Website / Сайт'] ?? null,
                     'working_hours' => $fields['Hours / Часы работы'] ?? null,
