@@ -1069,7 +1069,7 @@
             }
             
             const list = citiesByRegion[selectedRegion.id] || [];
-            selectedCity = list.find(c=>c.id===state.cityId) || null;
+          selectedCity = list.find(c=>c.id===state.cityId) || null;
             selectedPoi = null;
             renderCrumbs();
             setMappingHeader('poi');
@@ -1104,9 +1104,9 @@
             if (selectedCity) {
               if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
                 await loadPoisForCity(selectedCity);
-              }
-              renderPois();
             }
+              renderPois();
+          }
           }
           return;
         }
@@ -1120,14 +1120,14 @@
             }
             
             const listC = citiesByRegion[selectedRegion.id] || [];
-            selectedCity = listC.find(c=>c.id===state.cityId) || null;
+          selectedCity = listC.find(c=>c.id===state.cityId) || null;
             if (selectedCity) {
               // Загружаем POI если еще не загружены
               if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
                 await loadPoisForCity(selectedCity);
               }
               const listP = poisByCity[selectedCity.id] || [];
-              selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+          selectedPoi = listP.find(p=>p.id===state.poiId) || null;
             }
           }
           renderCrumbs();
@@ -1479,7 +1479,7 @@
           };
           return getNumericId(a.poi_id) - getNumericId(b.poi_id);
         });
-        
+          
         // Получаем уникальные категории для фильтра
         const uniqueCategories = [...new Set(sortedPois.map(p => p.type).filter(Boolean))].sort();
         
@@ -1624,8 +1624,8 @@
           '<div id="poi-cards-container" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">' + 
           (poiCardsHTML || '<div class="col-span-full text-center text-gray-500 py-12">Нет POI. Нажмите + чтобы добавить.</div>') +
           '</div>' +
-          '</div>';
-        
+            '</div>';
+          
         // Добавляем обработчики для фильтров
         const searchInput = document.getElementById('poi-search-input');
         const categoryFilter = document.getElementById('poi-category-filter');
@@ -2084,7 +2084,7 @@
             e.preventDefault();
             e.stopPropagation();
             await handleActionButton(actionBtn);
-            return;
+            return; 
           }
           
           // 2. Затем проверяем навигацию
@@ -2158,9 +2158,9 @@
         if (!region) {
           console.error('Region not found:', regionId);
           showErrorState('Регион не найден');
-          return;
-        }
-        
+            return;
+          }
+          
         // Обновляем состояние
         selectedRegion = region;
         selectedCity = null;
@@ -2458,7 +2458,7 @@
               console.log('✅ Локальные данные обновлены');
               
               // Перерисовываем карточки
-              await renderPois();
+                await renderPois();
               
               // Уведомление об успешном сохранении
               if (window.osNotify) {
@@ -3270,9 +3270,9 @@
             const currentRegion = selectedRegion;
             const currentCity = selectedCity;
             
-            // Запускаем синхронизацию с Airtable (используем новую систему)
-            const syncRes = await fetch('/api/sync-airtable-new.php', {
-              method: 'POST',
+            // Запускаем синхронизацию с Airtable (используем JSON версию)
+            const syncRes = await fetch('/api/sync-airtable-json.php', {
+              method: 'GET',
               headers: { 'Content-Type': 'application/json' }
             });
             const syncData = await syncRes.json();
@@ -3511,7 +3511,7 @@
           console.error('❌ Error stack:', error.stack);
           // Если есть кэш - оставляем его, иначе рендерим пустое состояние
           if (!cachedRegions || cachedRegions.length === 0) {
-            renderRegions();
+          renderRegions();
           }
         }
         
