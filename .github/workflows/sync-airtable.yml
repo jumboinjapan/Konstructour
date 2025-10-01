@@ -1,0 +1,41 @@
+name: Sync Airtable Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # Каждый день в 2:00 UTC
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      API_BASE: ${{ secrets.API_BASE }}
+      SECRET_DIR: ${{ secrets.SECRET_DIR }}
+      SECRET_FILE: ${{ secrets.SECRET_DIR }}/airtable.json
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup SSH key
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        echo "SSH key ready"
+        
+    - name: Sync Airtable data
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "🔄 Starting Airtable sync..."
+        
+        # Запускаем синхронизацию на сервере
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          cd ${{ secrets.SERVER_PATH }} &&
+          php api/sync-real-airtable.php
+        "
+        
+        echo "✅ Airtable sync completed!"
