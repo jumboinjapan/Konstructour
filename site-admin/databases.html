@@ -1180,6 +1180,9 @@
         
         level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs(); setMappingHeader('region');
         
+        // Восстанавливаем grid классы для регионов
+        cards.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+        
         if (!regions.length){
           console.log('⚠️ Регионы пусты, рендерим пустое состояние');
           cards.innerHTML = '<div class="text-gray-500">Нет регионов. Нажмите + чтобы добавить.</div>';
@@ -1342,6 +1345,9 @@
       async function renderCities(){
         level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
         
+        // Восстанавливаем grid классы для городов
+        cards.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+        
         if (!selectedRegion || !selectedRegion.id) {
           console.error('renderCities: No selected region');
           cards.innerHTML = '<div class="text-center text-red-500 py-12">Регион не выбран</div>';
@@ -1418,6 +1424,9 @@
           cards.innerHTML = '<div class="text-center text-red-500 py-12">Город не выбран</div>';
           return;
         }
+        
+        // ВАЖНО: Убираем grid классы с родительского контейнера для POI
+        cards.className = 'w-full';
         
         console.log('renderPois called for city:', selectedCity);
         console.log('poisByCity keys:', Object.keys(poisByCity));
@@ -1586,8 +1595,12 @@
           `;
         }).join('');
           
-        cards.innerHTML = filterBlock + '<div id="poi-cards-container" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">' + 
+        // Обёртываем в flex-col контейнер для вертикального расположения
+        cards.innerHTML = '<div class="flex flex-col w-full">' + 
+          filterBlock + 
+          '<div id="poi-cards-container" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">' + 
           (poiCardsHTML || '<div class="col-span-full text-center text-gray-500 py-12">Нет POI. Нажмите + чтобы добавить.</div>') +
+          '</div>' +
           '</div>';
         
         // Добавляем обработчики для фильтров
@@ -1649,6 +1662,10 @@
       // Функция для отображения деталей POI
       function renderPOIDetails(){
         level='poi-details'; renderCrumbs(); setMappingHeader('poi-details');
+        
+        // Убираем grid для детального просмотра
+        cards.className = 'w-full';
+        
         if (!selectedPoi) {
           cards.innerHTML = '<div class="text-gray-500">POI не найден</div>';
           return;
@@ -1961,6 +1978,10 @@
 
       function renderTickets(){
         level='tickets'; renderCrumbs();
+        
+        // Восстанавливаем grid для билетов
+        cards.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+        
         const list = ticketsByPoi[selectedPoi.id] || [];
         
         // Сортируем билеты по ID в порядке возрастания (создаем новый массив)
