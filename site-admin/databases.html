@@ -2802,37 +2802,27 @@
       // ОПТИМИЗИРОВАННАЯ загрузка - только счетчики при старте
       (async function(){
         console.log('⚡ Быстрая инициализация системы...');
+        console.log('⚡ Текущее состояние: regions.length =', regions.length);
         
         try {
-          // Проверяем кэш счетчиков
-          const cache = localStorage.getItem('region_counts_cache');
-          if (cache) {
-            try {
-              const cached = JSON.parse(cache);
-              const age = Date.now() - cached.timestamp;
-              if (age < 5 * 60 * 1000) { // Кэш на 5 минут
-                console.log('✅ Используем кэшированные счетчики');
-              }
-            } catch (_e) {}
-          }
+          // Всегда загружаем регионы при первом открытии страницы
+          console.log('⚡ Загрузка регионов из БД...');
+          await syncRegionsFromAirtable(); // Загружает регионы + счетчики
           
-          // Загружаем только регионы (быстро)
           if (!regions.length) {
-            console.log('⚡ Загрузка регионов...');
-            await syncRegionsFromAirtable(); // Загружает регионы + счетчики
-            if (!regions.length){ await loadRegionsViaProxy(); }
-            if (!regions.length) {
-              renderRegions();
-              return;
-            }
+            console.log('⚠️ Регионы не загружены из БД, пробуем через proxy...');
+            await loadRegionsViaProxy();
           }
           
-          // НЕ загружаем города и POI при старте!
-          // Они загрузятся по требованию при клике на регион
+          if (!regions.length) {
+            console.log('⚠️ Регионы все еще пусты, рендерим пустое состояние');
+            renderRegions();
+            return;
+          }
           
           console.log('✅ Система готова (регионы:', regions.length, ')');
         } catch (error) {
-          console.error('Ошибка инициализации:', error);
+          console.error('❌ Ошибка инициализации:', error);
           renderRegions();
         }
         
