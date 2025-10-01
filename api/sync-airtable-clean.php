@@ -108,37 +108,43 @@ try {
     echo "  📊 Получено записей городов: " . (isset($citiesData['records']) ? count($citiesData['records']) : 0) . "\n";
     
     if (isset($citiesData['records'])) {
-        // Получаем регионы для сопоставления (по Airtable ID)
+        // Получаем регионы для сопоставления (Airtable ID -> business_id)
         $regions = [];
         $stmt = $pdo->query("SELECT id, business_id FROM regions");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $regions[$row['id']] = $row['id']; // Используем Airtable ID как ключ
+            $regions[$row['id']] = $row['business_id']; // Airtable ID -> business_id
         }
         echo "  📊 Загружено регионов для сопоставления: " . count($regions) . "\n";
         
         foreach ($citiesData['records'] as $record) {
             $fields = $record['fields'];
             
-            // Получаем business_id региона из поля Region ID
-            $regionBusinessId = null;
+            // Получаем Airtable ID региона из поля Region ID
+            $regionAirtableId = null;
             if (isset($fields['Region ID'])) {
                 $regionId = $fields['Region ID'];
                 if (is_array($regionId) && !empty($regionId)) {
-                    $regionBusinessId = $regionId[0];
+                    $regionAirtableId = $regionId[0];
                 } elseif (is_string($regionId)) {
-                    $regionBusinessId = $regionId;
+                    $regionAirtableId = $regionId;
                 }
             }
             
-            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Region ID: " . json_encode($fields['Region ID'] ?? 'НЕТ') . " | Business ID: " . ($regionBusinessId ?? 'НЕТ') . "\n";
+            // Получаем business_id региона по Airtable ID
+            $regionBusinessId = null;
+            if ($regionAirtableId && isset($regions[$regionAirtableId])) {
+                $regionBusinessId = $regions[$regionAirtableId];
+            }
             
-            if ($regionBusinessId && isset($regions[$regionBusinessId])) {
+            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Region ID: " . json_encode($fields['Region ID'] ?? 'НЕТ') . " | Airtable ID: " . ($regionAirtableId ?? 'НЕТ') . " | Business ID: " . ($regionBusinessId ?? 'НЕТ') . "\n";
+            
+            if ($regionAirtableId && isset($regions[$regionAirtableId])) {
                 $cityData = [
                     'id' => $record['id'],
                     'business_id' => $fields['CITY ID'] ?? 'CTY-' . str_pad(rand(1, 32), 4, '0', STR_PAD_LEFT),
                     'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
                     'name_en' => $fields['Name (EN)'] ?? 'Unknown',
-                    'region_id' => $regions[$regionBusinessId]
+                    'region_id' => $regionAirtableId // Используем Airtable ID для связи
                 ];
                 saveCity($pdo, $cityData);
                 echo "  ✅ {$cityData['business_id']}\n";
@@ -211,4 +217,5 @@ try {
     echo "❌ Ошибка: " . $e->getMessage() . "\n";
     exit(1);
 }
+?>
 ?>
