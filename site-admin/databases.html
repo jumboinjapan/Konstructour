@@ -1066,28 +1066,23 @@
           return;
         }
         
+        // poi-details level удалён - перенаправляем на список POI
         if (level === 'poi-details') {
+          level = 'pois';
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
           if (selectedRegion) {
-            // Загружаем города если еще не загружены
             if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
               await loadCitiesForRegion(selectedRegion);
             }
-            
             const listC = citiesByRegion[selectedRegion.id] || [];
             selectedCity = listC.find(c=>c.id===state.cityId) || null;
             if (selectedCity) {
-              // Загружаем POI если еще не загружены
               if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
                 await loadPoisForCity(selectedCity);
               }
-              const listP = poisByCity[selectedCity.id] || [];
-              selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+              renderPois();
             }
           }
-          renderCrumbs();
-          setMappingHeader('poi');
-          renderPOIDetails(); 
           return;
         }
         
@@ -1524,8 +1519,7 @@
           
           return `
             <div 
-              class="poi-card bg-white rounded-lg shadow-sm border-2 ${borderColor} hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
-              data-go="poi-details" 
+              class="poi-card bg-white rounded-lg shadow-sm border-2 ${borderColor} hover:shadow-lg transition-all duration-300 overflow-hidden"
               data-id="${p.id}"
               data-name-ru="${(p.name || '').toLowerCase()}"
               data-name-en="${(p.name_en || '').toLowerCase()}"
@@ -1659,7 +1653,10 @@
         setupNavigationHandler();
       }
 
-      // Функция для отображения деталей POI
+      // УДАЛЕНО: Детальный просмотр POI больше не используется
+      // Используйте кнопку "Редактировать" на карточке POI для просмотра деталей
+      
+      /*
       function renderPOIDetails(){
         level='poi-details'; renderCrumbs(); setMappingHeader('poi-details');
         
@@ -1750,6 +1747,7 @@
         
         cards.innerHTML = details;
       }
+      */
 
       // Ленивая загрузка - загружаем только счетчики для текущего уровня
       async function loadRegionCounts(){
@@ -2127,25 +2125,7 @@
           });
           return;
         }
-        if (to==='poi-details'){
-          if (!selectedCity || !selectedCity.id) {
-            console.error('No city selected when trying to view POI details');
-            return;
-          }
-          
-          const list = poisByCity[selectedCity.id] || [];
-          selectedPoi = list.find(p=>p.id===id) || null;
-          
-          if (!selectedPoi) {
-            console.error('POI not found for id:', id);
-            return;
-          }
-          
-          console.log('Navigating to POI details:', selectedPoi);
-          push('poi-details', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
-          renderPOIDetails();
-          return;
-        }
+        // poi-details навигация удалена - используйте кнопку "Редактировать" на карточке
           if (to==='poi-edit'){
             const list = poisByCity[selectedCity.id] || [];
             const poi = list.find(p=>p.id===id) || null;
