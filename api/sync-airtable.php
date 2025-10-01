@@ -132,17 +132,31 @@ function syncFromAirtable() {
                      " | City Airtable ID: " . ($record['fields']['City Location'][0] ?? 'NULL') . 
                      " | City ID: " . ($cityId ?? 'NULL'));
             
+            // Обрабатываем категории правильно
+            $categoriesRu = $record['fields']['POI Category (RU)'] ?? [];
+            $categoriesEn = $record['fields']['POI Category (EN)'] ?? [];
+            $category = is_array($categoriesRu) && count($categoriesRu) > 0 ? $categoriesRu[0] : null;
+            
             $data = [
                 'id' => $record['id'],
                 'name_ru' => $record['fields']['POI Name (RU)'] ?? 'Unknown',
                 'name_en' => $record['fields']['POI Name (EN)'] ?? null,
-                'category' => $record['fields']['POI Category (RU)'] ?? $record['fields']['Category'] ?? null,
+                'category' => $category,
+                'categories_ru' => is_array($categoriesRu) ? $categoriesRu : [],
+                'categories_en' => is_array($categoriesEn) ? $categoriesEn : [],
                 'place_id' => $record['fields']['Place ID'] ?? null,
                 'published' => $record['fields']['Published'] ?? false,
                 'business_id' => $record['fields']['POI ID'] ?? null,
                 'city_id' => $cityId,
                 'region_id' => $regionId,
                 'description' => $record['fields']['Description (RU)'] ?? $record['fields']['Description'] ?? null,
+                'description_ru' => $record['fields']['Description (RU)'] ?? null,
+                'description_en' => $record['fields']['Description (EN)'] ?? null,
+                'prefecture_ru' => $record['fields']['Prefecture (RU)'] ?? null,
+                'prefecture_en' => $record['fields']['Prefecture (EN)'] ?? null,
+                'website' => $record['fields']['Website'] ?? null,
+                'working_hours' => $record['fields']['Working Hours'] ?? null,
+                'notes' => $record['fields']['Notes'] ?? null,
                 'latitude' => $record['fields']['Latitude'] ?? null,
                 'longitude' => $record['fields']['Longitude'] ?? null
             ];
