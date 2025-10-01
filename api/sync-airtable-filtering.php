@@ -101,7 +101,7 @@ try {
     foreach ($citiesData['records'] as $record) {
         $fields = $record['fields'];
         $businessId = $fields['CITY ID'] ?? null;
-        $regionBusinessId = $fields['Region ID'][0] ?? null; // Это business_id региона!
+        $regionAirtableId = $fields['Region ID'][0] ?? null; // Это Airtable ID региона!
         
         // Валидируем business_id города
         if (!$businessId || !validateBusinessId($businessId, 'city')) {
@@ -109,16 +109,9 @@ try {
             continue;
         }
         
-        // Валидируем business_id региона
-        if (!$regionBusinessId || !validateBusinessId($regionBusinessId, 'region')) {
-            $log[] = "  ⚠️ Пропущен город {$businessId} - невалидный region business_id: " . ($regionBusinessId ?? 'null');
-            continue;
-        }
-        
-        // Находим Airtable ID региона по business_id
-        $regionAirtableId = $db->getRegionAirtableIdByBusinessId($regionBusinessId);
+        // Проверяем, что регион существует
         if (!$regionAirtableId) {
-            $log[] = "  ⚠️ Пропущен город {$businessId} - регион {$regionBusinessId} не найден";
+            $log[] = "  ⚠️ Пропущен город {$businessId} - нет связанного региона";
             continue;
         }
         
@@ -142,7 +135,7 @@ try {
     foreach ($poisData['records'] as $record) {
         $fields = $record['fields'];
         $businessId = $fields['POI ID'] ?? null;
-        $cityBusinessId = $fields['City Location'][0] ?? null; // Это business_id города!
+        $cityAirtableId = $fields['City Location'][0] ?? null; // Это Airtable ID города!
         
         // Валидируем business_id POI
         if (!$businessId || !validateBusinessId($businessId, 'poi')) {
@@ -150,16 +143,9 @@ try {
             continue;
         }
         
-        // Валидируем business_id города
-        if (!$cityBusinessId || !validateBusinessId($cityBusinessId, 'city')) {
-            $log[] = "  ⚠️ Пропущен POI {$businessId} - невалидный city business_id: " . ($cityBusinessId ?? 'null');
-            continue;
-        }
-        
-        // Находим Airtable ID города по business_id
-        $cityAirtableId = $db->getCityAirtableIdByBusinessId($cityBusinessId);
+        // Проверяем, что город существует
         if (!$cityAirtableId) {
-            $log[] = "  ⚠️ Пропущен POI {$businessId} - город {$cityBusinessId} не найден";
+            $log[] = "  ⚠️ Пропущен POI {$businessId} - нет связанного города";
             continue;
         }
         
