@@ -68,11 +68,11 @@ try {
                     respond(false, ['error' => 'Invalid city ID format. Expected: CTY-XXXX or LOC-XXXX'], 400);
                 }
                 
-                // Найдем Airtable ID города по business_id
+                // Найдем Airtable ID города по business_id или по Airtable ID
                 $cities = $db->getAllCities();
                 $cityAirtableId = null;
                 foreach ($cities as $city) {
-                    if ($city['business_id'] === $cityId) {
+                    if ($city['business_id'] === $cityId || $city['id'] === $cityId) {
                         $cityAirtableId = $city['id'];
                         break;
                     }
