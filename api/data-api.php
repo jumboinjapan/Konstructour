@@ -4,6 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 require_once 'database.php';
+require_once 'filter-constants.php';
 
 function respond($ok, $data = [], $code = 200) {
     http_response_code($code);
@@ -30,6 +31,12 @@ try {
                 if (!$regionId) {
                     respond(false, ['error' => 'Region ID required'], 400);
                 }
+                
+                // ЖЕСТКАЯ ВАЛИДАЦИЯ: проверяем формат region_id
+                if (!validateBusinessId($regionId, 'region')) {
+                    respond(false, ['error' => 'Invalid region ID format. Expected: REG-XXXX'], 400);
+                }
+                
                 $cities = $db->getCitiesByRegion($regionId);
                 respond(true, ['items' => $cities]);
             }
@@ -41,6 +48,12 @@ try {
                 if (!$cityId) {
                     respond(false, ['error' => 'City ID required'], 400);
                 }
+                
+                // ЖЕСТКАЯ ВАЛИДАЦИЯ: проверяем формат city_id
+                if (!validateBusinessId($cityId, 'city')) {
+                    respond(false, ['error' => 'Invalid city ID format. Expected: CTY-XXXX or LOC-XXXX'], 400);
+                }
+                
                 $pois = $db->getPoisByCity($cityId);
                 respond(true, ['items' => $pois]);
             }
