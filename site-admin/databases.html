@@ -2707,8 +2707,8 @@
                     <div class="flex items-center justify-between mb-2">
                       <h4 class="text-xs font-medium text-gray-700 flex items-center">
                         <i class="fas fa-ticket-alt mr-1 text-indigo-600 text-xs"></i>
-                        Билеты <span class="text-red-500 ml-1">*</span>
-                        <span class="ml-2 text-xs text-gray-500 font-normal">(минимум 1 тип)</span>
+                        Билеты
+                        <span class="ml-2 text-xs text-gray-500 font-normal">(необязательно - для бесплатных локаций оставьте пустым)</span>
                       </h4>
                       <button type="button" id="add-ticket-btn" class="btn-japanese text-xs py-1 px-2">
                         <i class="fas fa-plus mr-1"></i>Добавить билет
@@ -2855,34 +2855,38 @@
                 return;
               }
               
-              // Валидация билетов
+              // Валидация билетов (необязательно, но если есть - то корректно)
               const ticketRows = wrap.querySelectorAll('.ticket-row');
-              if (ticketRows.length === 0) {
-                alert('Добавьте хотя бы один тип билета');
-                return;
-              }
-              
               const tickets = [];
               let ticketsValid = true;
+              let hasTicketData = false;
+              
               ticketRows.forEach(row => {
                 const type = row.querySelector('.ticket-type').value;
                 const price = row.querySelector('.ticket-price').value;
                 const currency = row.querySelector('.ticket-currency').value;
                 
-                if (!type || !price) {
-                  ticketsValid = false;
-                  return;
+                // Если хотя бы одно поле заполнено - считаем что есть данные
+                if (type || price || currency) {
+                  hasTicketData = true;
+                  
+                  // Если есть данные, то тип и цена обязательны
+                  if (!type || !price) {
+                    ticketsValid = false;
+                    return;
+                  }
+                  
+                  tickets.push({
+                    category: type,
+                    price: parseInt(price),
+                    currency: currency
+                  });
                 }
-                
-                tickets.push({
-                  category: type,
-                  price: parseInt(price),
-                  currency: currency
-                });
               });
               
-              if (!ticketsValid) {
-                alert('Заполните все поля билетов (тип и цена обязательны)');
+              // Если есть данные о билетах, но они неполные
+              if (hasTicketData && !ticketsValid) {
+                alert('Если указаны билеты, заполните все поля (тип и цена обязательны)');
                 return;
               }
               
