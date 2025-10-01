@@ -5,16 +5,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once 'database.php';
-// require_once 'filter-constants.php'; // Временно отключено для отладки
-
-// Функция для получения токена Airtable
+// Простая функция для получения токена Airtable
 function getAirtableToken() {
-    $token = getenv('AIRTABLE_PAT') ?: getenv('AIRTABLE_API_KEY');
-    if ($token) {
-        return $token;
-    }
-    
     try {
         require_once 'secret-airtable.php';
         $tokens = load_airtable_tokens();
@@ -31,15 +23,12 @@ function getAirtableToken() {
 // Функция для запроса к Airtable API
 function airtableRequest($endpoint, $token) {
     $url = "https://api.airtable.com/v0/apppwhjFN82N9zNqm/$endpoint";
-    $ch = curl_init();
+    
+    $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => [
-            'Authorization: Bearer ' . $token,
-            'Content-Type: application/json'
-        ],
-        CURLOPT_TIMEOUT => 30
+        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+        CURLOPT_TIMEOUT => 30,
     ]);
     
     $response = curl_exec($ch);
@@ -53,17 +42,48 @@ function airtableRequest($endpoint, $token) {
     return json_decode($response, true);
 }
 
+// Простая функция для работы с базой данных
+function getDatabase() {
+    $pdo = new PDO('sqlite:konstructour.db');
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    return $pdo;
+}
+
+function saveRegion($pdo, $data) {
+    $stmt = $pdo->prepare("
+        INSERT OR REPLACE INTO regions (id, name_ru, name_en, business_id, created_at, updated_at)
+        VALUES (:id, :name_ru, :name_en, :business_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ");
+    $stmt->execute($data);
+}
+
+function saveCity($pdo, $data) {
+    $stmt = $pdo->prepare("
+        INSERT OR REPLACE INTO cities (id, name_ru, name_en, business_id, region_id, created_at, updated_at)
+        VALUES (:id, :name_ru, :name_en, :business_id, :region_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ");
+    $stmt->execute($data);
+}
+
+function savePOI($pdo, $data) {
+    $stmt = $pdo->prepare("
+        INSERT OR REPLACE INTO pois (id, name_ru, name_en, business_id, city_id, region_id, created_at, updated_at)
+        VALUES (:id, :name_ru, :name_en, :business_id, :city_id, :region_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ");
+    $stmt->execute($data);
+}
+
 try {
     echo "🔄 Синхронизация данных из Airtable...\n";
     
     $token = getAirtableToken();
     echo "✅ Токен Airtable получен\n";
     
-    $db = new Database();
+    $pdo = getDatabase();
     
     // 1. Синхронизируем регионы
     echo "📊 Синхронизируем регионы...\n";
-    $db->getConnection()->exec("DELETE FROM regions");
+    $pdo->exec("DELETE FROM regions");
     
     $regionsData = airtableRequest('tblbSajWkzI8X7M4U', $token);
     if (isset($regionsData['records'])) {
@@ -75,77 +95,75 @@ try {
                 'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
                 'name_en' => $fields['Name (EN)'] ?? 'Unknown'
             ];
-            $db->saveRegion($regionData);
+            saveRegion($pdo, $regionData);
             echo "  ✅ {$regionData['business_id']}\n";
         }
     }
     
     // 2. Синхронизируем города
     echo "🏙️ Синхронизируем города...\n";
-    $db->getConnection()->exec("DELETE FROM cities");
+    $pdo->exec("DELETE FROM cities");
     
     $citiesData = airtableRequest('tblHaHc9NV0mA8bSa', $token);
-    echo "  📊 Получено записей городов: " . (isset($citiesData['records']) ? count($citiesData['records']) : 0) . "\n";
-    
     if (isset($citiesData['records'])) {
+        // Получаем регионы для сопоставления
+        $regions = [];
+        $stmt = $pdo->query("SELECT id, business_id FROM regions");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $regions[$row['business_id']] = $row['id'];
+        }
+        
         foreach ($citiesData['records'] as $record) {
             $fields = $record['fields'];
-            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Region ID: " . json_encode($fields['Region ID'] ?? 'НЕТ') . "\n";
             
-            // СТРОГО: Получаем business_id региона из поля Region ID (связанные записи)
+            // Получаем business_id региона из поля Region ID
             $regionBusinessId = null;
             if (isset($fields['Region ID'])) {
-                $regions = $fields['Region ID'];
-                if (is_array($regions) && !empty($regions)) {
-                    $regionBusinessId = $regions[0];
-                } elseif (is_string($regions)) {
-                    $regionBusinessId = $regions;
+                $regionId = $fields['Region ID'];
+                if (is_array($regionId) && !empty($regionId)) {
+                    $regionBusinessId = $regionId[0];
+                } elseif (is_string($regionId)) {
+                    $regionBusinessId = $regionId;
                 }
             }
             
-            // СТРОГО: Найдем регион по business_id (REG-XXXX)
-            $regionAirtableId = null;
-            if ($regionBusinessId && preg_match('/^REG-\d+$/', $regionBusinessId)) {
-                $regions = $db->getRegions();
-                foreach ($regions as $region) {
-                    if ($region['business_id'] === $regionBusinessId) {
-                        $regionAirtableId = $region['id'];
-                        break;
-                    }
-                }
-                echo "    ✅ Найден регион: $regionBusinessId -> $regionAirtableId\n";
-            } else {
-                echo "    ❌ Неверный business_id региона: $regionBusinessId\n";
-            }
-                
-                if ($regionAirtableId) {
-                    $cityData = [
-                        'id' => $record['id'],
-                        'business_id' => $fields['CITY ID'] ?? 'CTY-' . str_pad(rand(1, 32), 4, '0', STR_PAD_LEFT),
-                        'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
-                        'name_en' => $fields['Name (EN)'] ?? 'Unknown',
-                        'region_id' => $regionAirtableId
-                    ];
-                    $db->saveCity($cityData);
-                    echo "  ✅ {$cityData['business_id']}\n";
-                }
+            if ($regionBusinessId && isset($regions[$regionBusinessId])) {
+                $cityData = [
+                    'id' => $record['id'],
+                    'business_id' => $fields['CITY ID'] ?? 'CTY-' . str_pad(rand(1, 32), 4, '0', STR_PAD_LEFT),
+                    'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
+                    'name_en' => $fields['Name (EN)'] ?? 'Unknown',
+                    'region_id' => $regions[$regionBusinessId]
+                ];
+                saveCity($pdo, $cityData);
+                echo "  ✅ {$cityData['business_id']}\n";
             }
         }
     }
     
     // 3. Синхронизируем POI
     echo "📍 Синхронизируем POI...\n";
-    $db->getConnection()->exec("DELETE FROM pois");
+    $pdo->exec("DELETE FROM pois");
     
     $poisData = airtableRequest('tblVCmFcHRpXUT24y', $token);
-    echo "  📊 Получено записей POI: " . (isset($poisData['records']) ? count($poisData['records']) : 0) . "\n";
-    
     if (isset($poisData['records'])) {
+        // Получаем города и регионы для сопоставления
+        $cities = [];
+        $stmt = $pdo->query("SELECT id, business_id FROM cities");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $cities[$row['business_id']] = $row['id'];
+        }
+        
+        $regions = [];
+        $stmt = $pdo->query("SELECT id, business_id FROM regions");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $regions[$row['business_id']] = $row['id'];
+        }
+        
         foreach ($poisData['records'] as $record) {
             $fields = $record['fields'];
-            echo "  🔍 POI: " . ($fields['POI Name (RU)'] ?? 'Без названия') . " | City: " . json_encode($fields['City Location'] ?? 'НЕТ') . " | Regions: " . json_encode($fields['Regions'] ?? 'НЕТ') . "\n";
             
-            // СТРОГО: Получаем business_id города из поля City Location
+            // Получаем business_id города из поля City Location
             $cityBusinessId = null;
             if (isset($fields['City Location'])) {
                 $cityLocation = $fields['City Location'];
@@ -156,76 +174,33 @@ try {
                 }
             }
             
-            if ($cityBusinessId && preg_match('/^(CTY|LOC)-\d+$/', $cityBusinessId)) {
-                // Найдем Airtable ID города по business_id
-                $cities = $db->getAllCities();
-                $cityAirtableId = null;
-                foreach ($cities as $city) {
-                    if ($city['business_id'] === $cityBusinessId) {
-                        $cityAirtableId = $city['id'];
-                        break;
-                    }
+            // Получаем business_id региона из поля Regions
+            $regionBusinessId = null;
+            if (isset($fields['Regions'])) {
+                $regionsField = $fields['Regions'];
+                if (is_array($regionsField) && !empty($regionsField)) {
+                    $regionBusinessId = $regionsField[0];
+                } elseif (is_string($regionsField)) {
+                    $regionBusinessId = $regionsField;
                 }
-                
-                if ($cityAirtableId) {
-                    // СТРОГО: Получаем business_id региона из поля Regions
-                    $regionBusinessId = null;
-                    if (isset($fields['Regions'])) {
-                        $regions = $fields['Regions'];
-                        if (is_array($regions) && !empty($regions)) {
-                            $regionBusinessId = $regions[0];
-                        } elseif (is_string($regions)) {
-                            $regionBusinessId = $regions;
-                        }
-                    }
-                    
-                    // СТРОГО: Найдем регион по business_id (REG-XXXX)
-                    $regionAirtableId = null;
-                    if ($regionBusinessId && preg_match('/^REG-\d+$/', $regionBusinessId)) {
-                        $regions = $db->getRegions();
-                        foreach ($regions as $region) {
-                            if ($region['business_id'] === $regionBusinessId) {
-                                $regionAirtableId = $region['id'];
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if ($regionAirtableId) {
-                        $poiData = [
-                            'id' => $record['id'],
-                            'business_id' => $fields['POI ID'] ?? 'POI-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT),
-                            'name_ru' => $fields['POI Name (RU)'] ?? 'Неизвестно',
-                            'name_en' => $fields['POI Name (EN)'] ?? 'Unknown',
-                            'category' => $fields['POI Category (RU)'][0] ?? 'Unknown',
-                            'city_id' => $cityAirtableId,
-                            'region_id' => $regionAirtableId,
-                            'description_ru' => $fields['Description (RU)'] ?? null,
-                            'description_en' => $fields['Description (EN)'] ?? null,
-                            'prefecture_ru' => $fields['Prefecture (RU)'] ?? null,
-                            'prefecture_en' => $fields['Prefecture (EN)'] ?? null,
-                            'website' => $fields['Website / Сайт'] ?? null,
-                            'working_hours' => $fields['Hours / Часы работы'] ?? null,
-                            'notes' => $fields['Notes / Заметки'] ?? null
-                        ];
-                        $db->savePoi($poiData);
-                        echo "  ✅ {$poiData['business_id']}\n";
-                    }
-                }
+            }
+            
+            if ($cityBusinessId && isset($cities[$cityBusinessId])) {
+                $poiData = [
+                    'id' => $record['id'],
+                    'business_id' => $fields['POI ID'] ?? 'POI-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT),
+                    'name_ru' => $fields['POI Name (RU)'] ?? 'Неизвестно',
+                    'name_en' => $fields['POI Name (EN)'] ?? 'Unknown',
+                    'city_id' => $cities[$cityBusinessId],
+                    'region_id' => ($regionBusinessId && isset($regions[$regionBusinessId])) ? $regions[$regionBusinessId] : null
+                ];
+                savePOI($pdo, $poiData);
+                echo "  ✅ {$poiData['business_id']}\n";
             }
         }
     }
     
-    echo "\n✅ Синхронизация завершена!\n";
-    
-    // Статистика
-    $regions = $db->getRegions();
-    $cities = $db->getAllCities();
-    $pois = $db->getAllPois();
-    
-    echo "📊 Регионов: " . count($regions) . "\n";
-    echo "📊 Городов: " . count($cities) . "\n";
-    echo "📊 POI: " . count($pois) . "\n";
+    echo "✅ Синхронизация завершена!\n";
     
 } catch (Exception $e) {
     echo "❌ Ошибка: " . $e->getMessage() . "\n";

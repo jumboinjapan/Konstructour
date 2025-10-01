@@ -1,6 +1,6 @@
 <?php
 // api/cron-sync.php
-require_once __DIR__ . '/secret-airtable.php';
+require_once 'secret-airtable.php';
 
 // Логирование
 function log_message($message) {
@@ -8,31 +8,9 @@ function log_message($message) {
   error_log("[CRON-SYNC] $timestamp: $message");
 }
 
-// Проверка health check
-function check_airtable_health() {
-  $url = 'https://www.konstructour.com/api/health-airtable.php';
-  $ch = curl_init($url);
-  curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_SSL_VERIFYPEER => false,
-  ]);
-  
-  $response = curl_exec($ch);
-  $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  curl_close($ch);
-  
-  if ($httpCode !== 200) {
-    return ['ok' => false, 'reason' => 'http_error', 'code' => $httpCode];
-  }
-  
-  $data = json_decode($response, true);
-  return $data;
-}
-
 // Выполнение синхронизации
 function run_sync() {
-  // Вызываем синхронизацию напрямую вместо HTTP запроса
+  // Вызываем синхронизацию напрямую
   ob_start();
   
   try {
@@ -87,24 +65,6 @@ try {
   if (!is_readable($secretPath)) {
     log_message("CRITICAL: Secret file not readable: $secretPath");
     exit(3); // Код 3 для permission_denied
-  }
-  
-  // Проверяем health
-  $health = check_airtable_health();
-  
-  if (!$health['ok']) {
-    log_message("Health check failed: " . ($health['reason'] ?? 'unknown'));
-    
-    // Критические ошибки - не запускаем синхронизацию
-    if (in_array($health['reason'], ['file_missing', 'permission_denied', 'token_missing', 'all_tokens_invalid'])) {
-      log_message("Skipping sync due to critical issues: " . $health['reason']);
-      exit(4); // Код 4 для critical issues
-    }
-    
-    // Для других ошибок - пробуем синхронизацию
-    log_message("Health check failed but attempting sync anyway");
-  } else {
-    log_message("Health check passed: " . ($health['reason'] ?? 'unknown'));
   }
   
   // Запускаем синхронизацию

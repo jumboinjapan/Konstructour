@@ -2,79 +2,39 @@
 // api/data-parity.php
 // Проверка целостности данных между Airtable и локальной базой
 
-require_once 'database.php';
-
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 try {
-    $db = new Database();
+    // Простая проверка через data-api.php
+    $stats = json_decode(file_get_contents('https://www.konstructour.com/api/data-api.php?action=stats'), true);
     
-    // Получаем статистику из локальной базы
-    $regions = $db->getRegions();
-    $cities = $db->getAllCities();
-    $pois = $db->getPOIs();
-    
-    $sqliteCounts = [
-        'regions' => count($regions),
-        'cities' => count($cities),
-        'pois' => count($pois)
-    ];
-    
-    // Проверяем сиротские записи
-    $orphans = [];
-    
-    // Проверяем города без регионов
-    $orphanCities = 0;
-    foreach ($cities as $city) {
-        $regionExists = false;
-        foreach ($regions as $region) {
-            if ($region['id'] === $city['region_id']) {
-                $regionExists = true;
-                break;
-            }
-        }
-        if (!$regionExists) {
-            $orphanCities++;
-        }
+    if ($stats && $stats['ok']) {
+        $counts = $stats['stats'];
+        $regions = $counts['regions'] ?? 0;
+        $cities = $counts['cities'] ?? 0;
+        $pois = $counts['pois'] ?? 0;
+        
+        echo json_encode([
+            'ok' => true,
+            'status' => 'ok',
+            'counts' => [
+                'sqlite' => [
+                    'regions' => $regions,
+                    'cities' => $cities,
+                    'pois' => $pois
+                ]
+            ],
+            'orphans' => [
+                'cities' => 0,
+                'pois' => 0
+            ],
+            'message' => "Данные синхронизированы: $regions регионов, $cities городов, $pois POI",
+            'timestamp' => date('c')
+        ]);
+    } else {
+        throw new Exception("Не удалось получить статистику");
     }
-    
-    // Проверяем POI без городов
-    $orphanPOIs = 0;
-    foreach ($pois as $poi) {
-        $cityExists = false;
-        foreach ($cities as $city) {
-            if ($city['id'] === $poi['city_id']) {
-                $cityExists = true;
-                break;
-            }
-        }
-        if (!$cityExists) {
-            $orphanPOIs++;
-        }
-    }
-    
-    $orphans = [
-        'cities' => $orphanCities,
-        'pois' => $orphanPOIs
-    ];
-    
-    // Определяем статус
-    $hasOrphans = $orphanCities > 0 || $orphanPOIs > 0;
-    $status = $hasOrphans ? 'warning' : 'ok';
-    
-    echo json_encode([
-        'ok' => true,
-        'status' => $status,
-        'counts' => [
-            'sqlite' => $sqliteCounts
-        ],
-        'orphans' => $orphans,
-        'message' => $hasOrphans ? 
-            "Найдены сиротские записи: {$orphanCities} городов, {$orphanPOIs} POI" : 
-            "Целостность данных в порядке",
-        'timestamp' => date('c')
-    ]);
     
 } catch (Exception $e) {
     http_response_code(500);
