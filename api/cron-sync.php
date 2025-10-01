@@ -32,24 +32,45 @@ function check_airtable_health() {
 
 // Выполнение синхронизации
 function run_sync() {
-  $url = 'https://www.konstructour.com/api/sync-airtable-clean.php';
-  $ch = curl_init($url);
-  curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 300, // 5 минут
-    CURLOPT_SSL_VERIFYPEER => false,
-  ]);
+  // Вызываем синхронизацию напрямую вместо HTTP запроса
+  ob_start();
   
-  $response = curl_exec($ch);
-  $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  curl_close($ch);
-  
-  if ($httpCode !== 200) {
-    return ['ok' => false, 'reason' => 'http_error', 'code' => $httpCode];
+  try {
+    // Подключаем и запускаем синхронизацию
+    require_once __DIR__ . '/sync-airtable-clean.php';
+    $output = ob_get_clean();
+    
+    // Парсим вывод для получения статистики
+    $regions = 0;
+    $cities = 0;
+    $pois = 0;
+    
+    if (preg_match_all('/✅ (REG-\d+)/', $output, $matches)) {
+      $regions = count($matches[1]);
+    }
+    if (preg_match_all('/✅ (CTY-\d+|LOC-\d+)/', $output, $matches)) {
+      $cities = count($matches[1]);
+    }
+    if (preg_match_all('/✅ (POI-\d+)/', $output, $matches)) {
+      $pois = count($matches[1]);
+    }
+    
+    return [
+      'ok' => true,
+      'regions' => $regions,
+      'cities' => $cities,
+      'pois' => $pois,
+      'output' => $output
+    ];
+    
+  } catch (Exception $e) {
+    ob_end_clean();
+    return [
+      'ok' => false,
+      'error' => $e->getMessage(),
+      'reason' => 'sync_error'
+    ];
   }
-  
-  $data = json_decode($response, true);
-  return $data;
 }
 
 // Основная логика
