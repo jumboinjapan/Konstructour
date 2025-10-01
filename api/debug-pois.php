@@ -10,11 +10,17 @@ $stmt = $db->getConnection()->query("
     SELECT 
         p.id as poi_id,
         p.name_ru as poi_name,
+        p.business_id as poi_business_id,
+        p.category,
         p.city_id,
+        p.region_id,
         c.id as city_record_id,
-        c.name_ru as city_name
+        c.name_ru as city_name,
+        r.id as region_record_id,
+        r.name_ru as region_name
     FROM pois p
     LEFT JOIN cities c ON p.city_id = c.id
+    LEFT JOIN regions r ON p.region_id = r.id
     LIMIT 10
 ");
 
