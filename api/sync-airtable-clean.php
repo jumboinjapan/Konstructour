@@ -110,6 +110,9 @@ try {
                         break;
                     }
                 }
+                echo "    ✅ Найден регион: $regionBusinessId -> $regionAirtableId\n";
+            } else {
+                echo "    ❌ Неверный business_id региона: $regionBusinessId\n";
             }
                 
                 if ($regionAirtableId) {
