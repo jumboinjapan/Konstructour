@@ -5,6 +5,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Устанавливаем JSON заголовок
+header('Content-Type: application/json; charset=utf-8');
+
 // Простая функция для получения токена Airtable
 function getAirtableToken() {
     try {
@@ -74,7 +77,7 @@ function savePOI($pdo, $data) {
 }
 
 try {
-    echo "🔄 Синхронизация данных из Airtable...\n";
+    $log = ["🔄 Синхронизация данных из Airtable..."];
     
     $token = getAirtableToken();
     echo "✅ Токен Airtable получен\n";
