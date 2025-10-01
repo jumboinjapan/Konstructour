@@ -108,20 +108,38 @@ try {
         $pat = $airReg['api_key'] ?? ($cfg['airtable']['api_key'] ?? '');
         
         if ($baseId && $tableId && $pat) {
-            // Подготовка данных для Airtable
+            // Подготовка данных для Airtable (только непустые поля)
             $airtableFields = [
                 'POI ID' => $data['business_id'] ?? $data['id'],
                 'POI Name (RU)' => $data['name_ru'],
-                'POI Name (EN)' => $data['name_en'] ?? '',
-                'Prefecture (RU)' => $data['prefecture_ru'] ?? '',
-                'Prefecture (EN)' => $data['prefecture_en'] ?? '',
-                'Place ID' => $data['place_id'] ?? '',
-                'Description (RU)' => $data['description_ru'] ?? '',
-                'Description (EN)' => $data['description_en'] ?? '',
-                'Website' => $data['website'] ?? '',
-                'Working Hours' => $data['working_hours'] ?? '',
-                'Notes' => $data['notes'] ?? ''
+                'POI Name (EN)' => $data['name_en'] ?? ''
             ];
+            
+            // Добавляем только непустые поля
+            if (!empty($data['prefecture_ru'])) {
+                $airtableFields['Prefecture (RU)'] = $data['prefecture_ru'];
+            }
+            if (!empty($data['prefecture_en'])) {
+                $airtableFields['Prefecture (EN)'] = $data['prefecture_en'];
+            }
+            if (!empty($data['place_id'])) {
+                $airtableFields['Place ID'] = $data['place_id'];
+            }
+            if (!empty($data['description_ru'])) {
+                $airtableFields['Description (RU)'] = $data['description_ru'];
+            }
+            if (!empty($data['description_en'])) {
+                $airtableFields['Description (EN)'] = $data['description_en'];
+            }
+            if (!empty($data['website'])) {
+                $airtableFields['Website'] = $data['website'];
+            }
+            if (!empty($data['working_hours'])) {
+                $airtableFields['Working Hours'] = $data['working_hours'];
+            }
+            if (!empty($data['notes'])) {
+                $airtableFields['Notes'] = $data['notes'];
+            }
             
             // Категории (multi-select)
             if (!empty($data['categories_ru']) && is_array($data['categories_ru'])) {
@@ -154,6 +172,10 @@ try {
                 $payload = ['fields' => $airtableFields];
             }
             
+            // Логирование для отладки
+            error_log("Airtable request: $method $url");
+            error_log("Airtable payload: " . json_encode($payload, JSON_UNESCAPED_UNICODE));
+            
             $ch = curl_init($url);
             curl_setopt_array($ch, [
                 CURLOPT_CUSTOMREQUEST => $method,
@@ -174,7 +196,16 @@ try {
             if ($code >= 200 && $code < 300) {
                 $airtableResult = json_decode($resp, true);
             } else {
+                $errorDetails = json_decode($resp, true);
                 error_log("Airtable sync failed: $code - $resp");
+                
+                // Возвращаем подробную ошибку для отладки
+                respond(false, [
+                    'error' => "Airtable sync failed: $code",
+                    'airtable_error' => $errorDetails,
+                    'payload' => $payload,
+                    'url' => $url
+                ], 500);
             }
         }
     }

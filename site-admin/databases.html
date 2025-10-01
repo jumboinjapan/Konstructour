@@ -2962,27 +2962,17 @@
                 return;
               }
               
-              // Валидация билетов (необязательно, но если есть - то корректно)
+              // Сбор данных о билетах (полностью необязательно)
               const ticketRows = wrap.querySelectorAll('.ticket-row');
               const tickets = [];
-              let ticketsValid = true;
-              let hasTicketData = false;
               
               ticketRows.forEach(row => {
                 const type = row.querySelector('.ticket-type').value;
                 const price = row.querySelector('.ticket-price').value;
                 const currency = row.querySelector('.ticket-currency').value;
                 
-                // Если хотя бы одно поле заполнено - считаем что есть данные
-                if (type || price || currency) {
-                  hasTicketData = true;
-                  
-                  // Если есть данные, то тип и цена обязательны
-                  if (!type || !price) {
-                    ticketsValid = false;
-                    return;
-                  }
-                  
+                // Добавляем билет только если заполнены тип и цена
+                if (type && price) {
                   tickets.push({
                     category: type,
                     price: parseInt(price),
@@ -2991,11 +2981,7 @@
                 }
               });
               
-              // Если есть данные о билетах, но они неполные
-              if (hasTicketData && !ticketsValid) {
-                alert('Если указаны билеты, заполните все поля (тип и цена обязательны)');
-                return;
-              }
+              // Билеты полностью необязательны - никакой валидации
               
               const data = {
                 name_ru: wrap.querySelector('#poi_name_ru').value.trim(),
