@@ -152,7 +152,17 @@ try {
             
             if (!$cityAirtableId) {
                 echo "  ⚠️ Не найден город для POI {$nameRu}: {$cityId}\n";
-                continue;
+                // Попробуем найти город по business_id
+                foreach ($cities as $city) {
+                    if ($city['business_id'] === $cityId) {
+                        $cityAirtableId = $city['id'];
+                        echo "  ✅ Найден город по business_id: {$city['name_ru']}\n";
+                        break;
+                    }
+                }
+                if (!$cityAirtableId) {
+                    continue;
+                }
             }
             
             // Найдем Airtable ID региона
