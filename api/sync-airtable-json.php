@@ -72,6 +72,7 @@ try {
     $log[] = "📊 Синхронизируем регионы...";
     $regionsData = airtableRequest('tblbSajWkzI8X7M4U', $token);
     $regions = [];
+    $regionsByAirtableId = []; // Маппинг Airtable ID -> business_id
     
     foreach ($regionsData['records'] as $record) {
         $fields = $record['fields'];
@@ -83,6 +84,7 @@ try {
         ];
         $db->saveRegion($regionData);
         $regions[$regionData['business_id']] = $regionData['id'];
+        $regionsByAirtableId[$record['id']] = $regionData['business_id']; // Добавляем маппинг
         $stats['regions']++;
         $log[] = "  ✅ {$regionData['business_id']}";
     }
@@ -95,7 +97,10 @@ try {
     
     foreach ($citiesData['records'] as $record) {
         $fields = $record['fields'];
-        $regionBusinessId = $fields['Region ID'][0] ?? null;
+        $regionAirtableId = $fields['Region ID'][0] ?? null;
+        
+        // Находим business_id региона по Airtable ID
+        $regionBusinessId = $regionsByAirtableId[$regionAirtableId] ?? null;
         
         if ($regionBusinessId && isset($regions[$regionBusinessId])) {
             $cityData = [
