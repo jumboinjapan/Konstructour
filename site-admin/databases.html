@@ -2288,40 +2288,90 @@
             const poi = list.find(x=>x.id===id);
             if (!poi) return;
             
-            const data = await openCreatePOIModal(poi);
-            if (!data) return;
+            const formData = await openCreatePOIModal(poi);
+            if (!formData) return;
             
             try {
-              // Обновляем локальные данные
-              Object.assign(poi, {
-                name: data.name_ru,
-                name_en: data.name_en,
-                type: data.cats_ru[0] || poi.type,
-                categories_ru: data.cats_ru,
-                categories_en: data.cats_en,
-                prefecture_ru: data.pref_ru,
-                prefecture_en: data.pref_en,
-                place_id: data.place_id,
-                website: data.website,
-                hours: data.hours,
-                description_ru: data.desc_ru,
-                description_en: data.desc_en,
-                published: data.published,
-                notes: data.notes
+              // Показываем индикатор сохранения
+              cards.innerHTML = '<div class="flex items-center justify-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><span class="ml-3 text-gray-600">Сохранение POI...</span></div>';
+              
+              // СОХРАНЕНИЕ В БД И AIRTABLE через API
+              console.log('💾 Сохранение POI через API...', formData);
+              
+              const saveResponse = await fetch('/api/save-poi.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: poi.id,
+                  airtable_id: poi.airtable_id,
+                  business_id: poi.poi_id || poi.business_id,
+                  name_ru: formData.name_ru,
+                  name_en: formData.name_en,
+                  prefecture_ru: formData.pref_ru,
+                  prefecture_en: formData.pref_en,
+                  categories_ru: formData.cats_ru,
+                  categories_en: formData.cats_en,
+                  place_id: formData.place_id,
+                  website: formData.website,
+                  working_hours: formData.hours,
+                  description_ru: formData.desc_ru,
+                  description_en: formData.desc_en,
+                  notes: formData.notes,
+                  published: formData.published,
+                  tickets: formData.tickets,
+                  city_id: selectedCity.id,
+                  region_id: selectedRegion.id
+                })
               });
               
-              // Обновляем отображение
-              if (level === 'poi-details') {
-                renderPOIDetails();
-              } else {
-                await renderPois();
+              const result = await saveResponse.json();
+              console.log('💾 Результат сохранения:', result);
+              
+              if (!result.ok) {
+                throw new Error(result.error || 'Ошибка сохранения в БД');
               }
               
+              // ПОСЛЕ успешного сохранения обновляем локальные данные
+              Object.assign(poi, {
+                name: formData.name_ru,
+                name_en: formData.name_en,
+                type: formData.cats_ru[0] || poi.type,
+                categories_ru: formData.cats_ru,
+                categories_en: formData.cats_en,
+                prefecture_ru: formData.pref_ru,
+                prefecture_en: formData.pref_en,
+                place_id: formData.place_id,
+                website: formData.website,
+                hours: formData.hours,
+                description_ru: formData.desc_ru,
+                description_en: formData.desc_en,
+                published: formData.published,
+                notes: formData.notes,
+                tickets: formData.tickets
+              });
+              
+              console.log('✅ Локальные данные обновлены');
+              
+              // Перерисовываем карточки
+              await renderPois();
+              
+              // Уведомление об успешном сохранении
               if (window.osNotify) {
-                window.osNotify('POI обновлён', data.name_ru);
+                const syncStatus = result.airtable_synced ? 'и синхронизирован с Airtable' : '';
+                window.osNotify('✅ POI сохранён', `${formData.name_ru} обновлён в БД ${syncStatus}`);
+              } else {
+                alert(`✅ POI "${formData.name_ru}" успешно сохранён!\n\n` +
+                      `📊 Статистика:\n` +
+                      `- Сохранено в локальную БД: Да\n` +
+                      `- Синхронизировано с Airtable: ${result.airtable_synced ? 'Да' : 'Нет'}\n` +
+                      `- Билетов сохранено: ${result.tickets_saved || 0}`);
               }
+              
             } catch(e) {
-              alert('Не удалось обновить POI: ' + (e.message || 'Неизвестная ошибка'));
+              console.error('❌ Ошибка сохранения POI:', e);
+              alert('❌ Не удалось сохранить POI: ' + (e.message || 'Неизвестная ошибка'));
+              // Перерисовываем с исходными данными
+              await renderPois();
             }
             return;
         } else if (act==='view-tickets'){
