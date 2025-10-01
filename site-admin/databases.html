@@ -981,8 +981,33 @@
 
       // Persisted cache so карточки не пропадают визуально при сбоях сети/серверов
       const LS_REGIONS_KEY = 'konstructour_regions_cache_v1';
-      function loadRegionsCache(){ try{ const s=localStorage.getItem(LS_REGIONS_KEY); return s?JSON.parse(s):[]; }catch(_e){ return []; } }
-      function saveRegionsCache(list){ try{ localStorage.setItem(LS_REGIONS_KEY, JSON.stringify(Array.isArray(list)?list:[])); }catch(_e){} }
+      
+      function loadRegionsCache(){ 
+        try{ 
+          const s=localStorage.getItem(LS_REGIONS_KEY); 
+          const parsed = s ? JSON.parse(s) : [];
+          console.log('📦 loadRegionsCache: загружено', parsed.length, 'регионов из кэша');
+          return parsed;
+        } catch(_e){ 
+          console.error('❌ loadRegionsCache ошибка:', _e);
+          return []; 
+        } 
+      }
+      
+      function saveRegionsCache(list){ 
+        try{ 
+          if (!Array.isArray(list)) {
+            console.warn('⚠️ saveRegionsCache: list не массив', typeof list);
+            return;
+          }
+          const jsonStr = JSON.stringify(list);
+          localStorage.setItem(LS_REGIONS_KEY, jsonStr); 
+          console.log('💾 saveRegionsCache: сохранено', list.length, 'регионов в кэш');
+          console.log('💾 Размер кэша:', (jsonStr.length / 1024).toFixed(2), 'KB');
+        } catch(_e){ 
+          console.error('❌ saveRegionsCache ошибка:', _e);
+        } 
+      }
 
       let level = 'regions';
       let selectedRegion = null;
@@ -3270,14 +3295,24 @@
         console.log('⚡ DOM элемент crumbs:', crumbs);
         
         // ШАГ 1: МГНОВЕННО загружаем из кэша и рендерим
+        console.log('⚡ Проверка кэша localStorage...');
+        console.log('⚡ LS_REGIONS_KEY:', LS_REGIONS_KEY);
+        const cacheData = localStorage.getItem(LS_REGIONS_KEY);
+        console.log('⚡ Сырые данные из кэша:', cacheData ? cacheData.substring(0, 100) + '...' : 'null');
+        
         const cachedRegions = loadRegionsCache();
+        console.log('⚡ После loadRegionsCache():', cachedRegions);
+        console.log('⚡ cachedRegions.length:', cachedRegions ? cachedRegions.length : 'null/undefined');
+        
         if (cachedRegions && cachedRegions.length > 0) {
-          console.log('⚡ МГНОВЕННО: Загружено из кэша:', cachedRegions.length, 'регионов');
+          console.log('✅ МГНОВЕННО: Загружено из кэша:', cachedRegions.length, 'регионов');
           regions = cachedRegions;
+          console.log('✅ regions переменная обновлена, длина:', regions.length);
           renderRegions(); // МГНОВЕННЫЙ рендер кэшированных данных
           console.log('✅ МГНОВЕННЫЙ рендер завершён!');
         } else {
-          console.log('⚠️ Кэш пуст, рендерим loading state');
+          console.log('⚠️ Кэш пуст или невалиден, рендерим loading state');
+          console.log('⚠️ Причина: cachedRegions =', cachedRegions);
           cards.innerHTML = '<div class="flex items-center justify-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><span class="ml-3 text-gray-600">Загрузка регионов...</span></div>';
         }
         
