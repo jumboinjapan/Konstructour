@@ -108,11 +108,11 @@ try {
     echo "  📊 Получено записей городов: " . (isset($citiesData['records']) ? count($citiesData['records']) : 0) . "\n";
     
     if (isset($citiesData['records'])) {
-        // Получаем регионы для сопоставления
+        // Получаем регионы для сопоставления (по Airtable ID)
         $regions = [];
         $stmt = $pdo->query("SELECT id, business_id FROM regions");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $regions[$row['business_id']] = $row['id'];
+            $regions[$row['id']] = $row['id']; // Используем Airtable ID как ключ
         }
         echo "  📊 Загружено регионов для сопоставления: " . count($regions) . "\n";
         
