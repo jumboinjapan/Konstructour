@@ -1363,6 +1363,8 @@
           
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
               (p.poi_id ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+p.poi_id+'</span>' : '')+
+              '<button data-act="edit-poi" data-id="'+p.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+              '<button data-act="del-poi" data-id="'+p.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
             '</div>';
           
           const inner = '<div class="flex items-center justify-between">\
