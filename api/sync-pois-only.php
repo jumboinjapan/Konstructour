@@ -187,7 +187,17 @@ try {
             
             if (!$regionAirtableId) {
                 echo "  ⚠️ Не найден регион для POI {$nameRu}: {$regionId}\n";
-                continue;
+                // Попробуем найти регион по названию (для Кансай)
+                foreach ($regions as $region) {
+                    if (stripos($region['name_ru'], 'Кансай') !== false || stripos($region['name_en'], 'Kansai') !== false) {
+                        $regionAirtableId = $region['id'];
+                        echo "  ✅ Найден регион по названию: {$region['name_ru']} (ID: {$region['id']})\n";
+                        break;
+                    }
+                }
+                if (!$regionAirtableId) {
+                    continue;
+                }
             }
             
             $poiData = [
