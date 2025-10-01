@@ -358,6 +358,28 @@ class Database {
         return $result['last_sync'] ?? null;
     }
     
+    // Поиск Airtable ID по business_id (для Filtering.md принципов)
+    public function getRegionAirtableIdByBusinessId($businessId) {
+        $stmt = $this->db->prepare("SELECT id FROM regions WHERE business_id = ?");
+        $stmt->execute([$businessId]);
+        $result = $stmt->fetch();
+        return $result ? $result['id'] : null;
+    }
+    
+    public function getCityAirtableIdByBusinessId($businessId) {
+        $stmt = $this->db->prepare("SELECT id FROM cities WHERE business_id = ?");
+        $stmt->execute([$businessId]);
+        $result = $stmt->fetch();
+        return $result ? $result['id'] : null;
+    }
+    
+    public function getPoiAirtableIdByBusinessId($businessId) {
+        $stmt = $this->db->prepare("SELECT id FROM pois WHERE business_id = ?");
+        $stmt->execute([$businessId]);
+        $result = $stmt->fetch();
+        return $result ? $result['id'] : null;
+    }
+    
     // Clear all data
     public function clearAll() {
         $this->db->exec("DELETE FROM tickets");

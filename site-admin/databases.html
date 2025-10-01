@@ -3270,8 +3270,8 @@
             const currentRegion = selectedRegion;
             const currentCity = selectedCity;
             
-            // Запускаем синхронизацию с Airtable (используем JSON версию)
-            const syncRes = await fetch('/api/sync-airtable-json.php', {
+            // Запускаем синхронизацию с Airtable (используем Filtering.md принципы)
+            const syncRes = await fetch('/api/sync-airtable-filtering.php', {
               method: 'GET',
               headers: { 'Content-Type': 'application/json' }
             });
