@@ -1460,10 +1460,10 @@
         // Проверяем актуальность данных перед загрузкой
         await checkDataFreshness();
         
-        // Если POI не загружены, показываем сообщение
-        // (загрузка должна была произойти в navigationHandler)
+        // Если POI не загружены, загружаем их
         if (list.length === 0) {
-          console.log('POI list is empty for city:', selectedCity.name);
+          console.log('POI list is empty for city:', selectedCity.name, '- loading...');
+          await loadPoisForCity(selectedCity);
           list = poisByCity[selectedCity.id] || [];
         }
         
