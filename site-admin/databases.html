@@ -16,6 +16,28 @@
       .tab.active{ background:#fff; border:1px solid rgba(139,90,43,.15); }
       .tab-content{ display:none; }
       .tab-content.active{ display:block; }
+      
+      /* Плавная анимация появления карточек */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .fade-in {
+        animation: fadeInUp 0.4s ease-out forwards;
+        opacity: 0;
+      }
+      
+      .region-count-badge {
+        animation: fadeInUp 0.3s ease-out forwards;
+        opacity: 0;
+      }
       /* Fixed sizes to keep API action row stable */
       .api-select{ width: 180px; }
       .api-base-label{ display:inline-block; width: 120px; }
@@ -1086,10 +1108,10 @@
           return getNumericId(a.rid) - getNumericId(b.rid);
         });
         
-        // Рендерим регионы с нулевыми счетчиками для мгновенного отображения
-        const regionsHTML = sortedRegions.map(r=>{
-          const count = 0; // Начинаем с нуля, обновим после загрузки счетчиков
-          dlog('region-card', {id:r.id, name:r.name, count});
+        // Рендерим регионы с предзагруженными счетчиками (ОПТИМИЗИРОВАНО)
+        const regionsHTML = sortedRegions.map((r, idx)=>{
+          const count = (r.citiesCount ?? 0) + (r.poisCount ?? 0); // Используем предзагруженные счетчики
+          dlog('region-card', {id:r.id, name:r.name, count, cities: r.citiesCount, pois: r.poisCount});
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">\
               '+(r.rid ? '<span class="ml-2 px-3 py-1 text-sm rounded border bg-gray-50 text-gray-600">'+r.rid+'</span>' : '')+'\
               <button data-act="edit-region" data-id="'+r.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>\
@@ -1102,13 +1124,13 @@
               </div>\
               '+inlineActions+'\
               <div class="absolute inset-0 flex items-center justify-center pointer-events-none">\
-                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 shadow-sm">\
+                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 shadow-sm region-count-badge" style="animation-delay: '+(idx*50)+'ms">\
                   <i class=\"fas fa-map-marker-alt text-indigo-600\"></i>\
                   <span class=\"text-xs font-medium text-indigo-700\">'+count+'</span>\
                 </div>\
               </div>\
             </div>';
-          return '<a href="#" role="button" class="block" data-go="cities" data-id="'+r.id+'">'+card('', inner)+'</a>';
+          return '<a href="#" role="button" class="block fade-in" data-go="cities" data-id="'+r.id+'" style="animation-delay: '+(idx*50)+'ms">'+card('', inner)+'</a>';
         }).join('');
         
         console.log('Rendering regions HTML:', regionsHTML.substring(0, 200) + '...');
@@ -1125,18 +1147,15 @@
         loadRegionCounts();
       }
 
-      // Загрузка регионов из серверной БД
+      // Загрузка регионов из серверной БД (ОПТИМИЗИРОВАНО)
       async function syncRegionsFromAirtable(){
         try{
-          console.log('Загружаем регионы из серверной БД');
+          console.log('⚡ Быстрая загрузка регионов...');
           const res = await fetch('/api/data-api.php?action=regions', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
-          console.log('API Response status:', res.status);
-          console.log('API Response ok:', res.ok);
           const j = await res.json();
-          console.log('API Response data:', j);
           const items = j.ok ? (j.items || []) : [];
           
           regions = items.map((it, idx) => ({
@@ -1145,21 +1164,36 @@
             rid: it.business_id || ('REG-' + String(idx + 1).padStart(3, '0'))
           }));
           
-          // Сначала быстрый рендер с нулями
+          // Сначала быстрый рендер с placeholder'ами
           citiesByRegion = {};
           renderRegions();
+          console.log('✅ Регионы отображены');
           
-          // Затем предзагрузим количество городов по всем регионам и перерисуем
+          // Затем загружаем только счетчики (быстро!)
           try {
-            await Promise.all(regions.map(async (r) => {
-              try {
-                await loadCitiesForRegion(r);
-              } catch (_e) { 
-                citiesByRegion[r.id] = citiesByRegion[r.id] || []; 
-              }
-            }));
-            renderRegions();
-          } catch (_e) { /* ignore */ }
+            const countsRes = await fetch('/api/region-counts.php');
+            const countsData = await countsRes.json();
+            
+            if (countsData.ok) {
+              // Обновляем счетчики из быстрого API
+              regions.forEach(r => {
+                const count = countsData.counts[r.id];
+                if (count) {
+                  r.citiesCount = count.cities;
+                  r.poisCount = count.pois;
+                }
+              });
+              
+              // Сохраняем счетчики в кэш
+              localStorage.setItem('region_counts_cache', JSON.stringify({
+                timestamp: Date.now(),
+                counts: countsData.counts
+              }));
+              
+              console.log('✅ Счетчики загружены:', countsData.counts);
+              renderRegions(); // Обновляем отображение со счетчиками
+            }
+          } catch (_e) { console.warn('Не удалось загрузить счетчики:', _e); }
         } catch(e){ 
           console.error('syncRegionsFromAirtable failed', e);
           console.error('Error details:', e.message);
@@ -2765,64 +2799,48 @@
         document.dispatchEvent(testEvent);
       }, 1000);
       
-      // Умная загрузка с автоматической проверкой актуальности
+      // ОПТИМИЗИРОВАННАЯ загрузка - только счетчики при старте
       (async function(){
-        console.log('Инициализация системы...');
+        console.log('⚡ Быстрая инициализация системы...');
         
         try {
-          // Сначала проверяем актуальность данных
-          await checkDataFreshness();
+          // Проверяем кэш счетчиков
+          const cache = localStorage.getItem('region_counts_cache');
+          if (cache) {
+            try {
+              const cached = JSON.parse(cache);
+              const age = Date.now() - cached.timestamp;
+              if (age < 5 * 60 * 1000) { // Кэш на 5 минут
+                console.log('✅ Используем кэшированные счетчики');
+              }
+            } catch (_e) {}
+          }
           
-          // Если данные не загружены после проверки, загружаем их
+          // Загружаем только регионы (быстро)
           if (!regions.length) {
-            console.log('Загрузка регионов...');
-        await syncRegionsFromAirtable();
-        if (!regions.length){ await loadRegionsViaProxy(); }
+            console.log('⚡ Загрузка регионов...');
+            await syncRegionsFromAirtable(); // Загружает регионы + счетчики
+            if (!regions.length){ await loadRegionsViaProxy(); }
             if (!regions.length) {
               renderRegions();
               return;
             }
           }
           
-          // Если города не загружены, загружаем их
-          if (Object.keys(citiesByRegion).length === 0) {
-            console.log('Загрузка городов для всех регионов...');
-            for (const region of regions) {
-              await loadCitiesForRegion(region);
-            }
-          }
+          // НЕ загружаем города и POI при старте!
+          // Они загрузятся по требованию при клике на регион
           
-          // Если POI не загружены, загружаем их
-          if (Object.keys(poisByCity).length === 0) {
-            console.log('Загрузка POI для всех городов...');
-            for (const region of regions) {
-              const cities = citiesByRegion[region.id] || [];
-              for (const city of cities) {
-                await loadPoisForCity(city);
-              }
-            }
-          }
-          
-          // Отображаем регионы с правильными счетчиками
-          console.log('Данные готовы:');
-          console.log('regions:', regions.length);
-          console.log('citiesByRegion:', Object.keys(citiesByRegion).length, 'регионов с городами');
-          console.log('poisByCity:', Object.keys(poisByCity).length, 'городов с POI');
-          
-          renderRegions();
-          console.log('Система готова к работе');
+          console.log('✅ Система готова (регионы:', regions.length, ')');
         } catch (error) {
           console.error('Ошибка инициализации:', error);
           renderRegions();
         }
         
-        // Настраиваем обработчик кликов ПОСЛЕ загрузки данных
+        // Настраиваем обработчики
         setupNavigationHandler();
-        
-        // Обработчик кликов для хлебных крошек
         setupBreadcrumbHandler();
         
-        console.log('Navigation handler setup completed after data loading');
+        console.log('✅ Быстрая загрузка завершена');
       })();
 
       // Deploy button placeholder removed per requirements
