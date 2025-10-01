@@ -162,6 +162,9 @@ try {
                 }
             }
             
+            // Tickets 1 - пустой массив для совместимости с Airtable
+            $airtableFields['Tickets 1'] = [];
+            
             // Отправка в Airtable
             $url = "https://api.airtable.com/v0/{$baseId}/{$tableId}";
             $method = 'POST';
