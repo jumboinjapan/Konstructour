@@ -105,6 +105,8 @@ try {
     $pdo->exec("DELETE FROM cities");
     
     $citiesData = airtableRequest('tblHaHc9NV0mA8bSa', $token);
+    echo "  📊 Получено записей городов: " . (isset($citiesData['records']) ? count($citiesData['records']) : 0) . "\n";
+    
     if (isset($citiesData['records'])) {
         // Получаем регионы для сопоставления
         $regions = [];
@@ -112,6 +114,7 @@ try {
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $regions[$row['business_id']] = $row['id'];
         }
+        echo "  📊 Загружено регионов для сопоставления: " . count($regions) . "\n";
         
         foreach ($citiesData['records'] as $record) {
             $fields = $record['fields'];
@@ -126,6 +129,8 @@ try {
                     $regionBusinessId = $regionId;
                 }
             }
+            
+            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Region ID: " . json_encode($fields['Region ID'] ?? 'НЕТ') . " | Business ID: " . ($regionBusinessId ?? 'НЕТ') . "\n";
             
             if ($regionBusinessId && isset($regions[$regionBusinessId])) {
                 $cityData = [
