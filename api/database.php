@@ -37,7 +37,7 @@ class Database {
             )
         ");
         
-        // POI table
+        // POI table (обновлённая схема для синхронизации с Airtable)
         $this->db->exec("
             CREATE TABLE IF NOT EXISTS pois (
                 id TEXT PRIMARY KEY,
@@ -52,6 +52,15 @@ class Database {
                 description TEXT,
                 latitude REAL,
                 longitude REAL,
+                prefecture_ru TEXT,
+                prefecture_en TEXT,
+                categories_ru TEXT,
+                categories_en TEXT,
+                description_ru TEXT,
+                description_en TEXT,
+                website TEXT,
+                working_hours TEXT,
+                notes TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (city_id) REFERENCES cities(id),
@@ -206,18 +215,39 @@ class Database {
     }
     
     public function savePoi($data) {
+        // Обработка массивов категорий
+        $cats_ru_json = isset($data['categories_ru']) && is_array($data['categories_ru']) 
+            ? json_encode($data['categories_ru'], JSON_UNESCAPED_UNICODE) 
+            : null;
+        $cats_en_json = isset($data['categories_en']) && is_array($data['categories_en']) 
+            ? json_encode($data['categories_en'], JSON_UNESCAPED_UNICODE) 
+            : null;
+        
+        // Для обратной совместимости: category = первая категория из массива
+        $category = null;
+        if (isset($data['categories_ru']) && is_array($data['categories_ru']) && count($data['categories_ru']) > 0) {
+            $category = $data['categories_ru'][0];
+        } elseif (isset($data['category'])) {
+            $category = $data['category'];
+        }
+        
         // Сначала пытаемся обновить существующую запись
         $stmt = $this->db->prepare("
             UPDATE pois 
             SET name_ru = ?, name_en = ?, category = ?, place_id = ?, published = ?, 
                 business_id = ?, city_id = ?, region_id = ?, description = ?, 
-                latitude = ?, longitude = ?, updated_at = CURRENT_TIMESTAMP
+                latitude = ?, longitude = ?,
+                prefecture_ru = ?, prefecture_en = ?,
+                categories_ru = ?, categories_en = ?,
+                description_ru = ?, description_en = ?,
+                website = ?, working_hours = ?, notes = ?,
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ");
         $stmt->execute([
             $data['name_ru'],
             $data['name_en'] ?? null,
-            $data['category'] ?? null,
+            $category,
             $data['place_id'] ?? null,
             $data['published'] ? 1 : 0,
             $data['business_id'] ?? null,
@@ -226,6 +256,15 @@ class Database {
             $data['description'] ?? null,
             $data['latitude'] ?? null,
             $data['longitude'] ?? null,
+            $data['prefecture_ru'] ?? null,
+            $data['prefecture_en'] ?? null,
+            $cats_ru_json,
+            $cats_en_json,
+            $data['description_ru'] ?? null,
+            $data['description_en'] ?? null,
+            $data['website'] ?? null,
+            $data['working_hours'] ?? null,
+            $data['notes'] ?? null,
             $data['id']
         ]);
         
@@ -234,14 +273,17 @@ class Database {
             $stmt = $this->db->prepare("
                 INSERT INTO pois (
                     id, name_ru, name_en, category, place_id, published, business_id, 
-                    city_id, region_id, description, latitude, longitude, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                    city_id, region_id, description, latitude, longitude,
+                    prefecture_ru, prefecture_en, categories_ru, categories_en,
+                    description_ru, description_en, website, working_hours, notes,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             ");
             return $stmt->execute([
                 $data['id'],
                 $data['name_ru'],
                 $data['name_en'] ?? null,
-                $data['category'] ?? null,
+                $category,
                 $data['place_id'] ?? null,
                 $data['published'] ? 1 : 0,
                 $data['business_id'] ?? null,
@@ -249,7 +291,16 @@ class Database {
                 is_array($data['region_id']) ? $data['region_id'][0] ?? null : $data['region_id'],
                 $data['description'] ?? null,
                 $data['latitude'] ?? null,
-                $data['longitude'] ?? null
+                $data['longitude'] ?? null,
+                $data['prefecture_ru'] ?? null,
+                $data['prefecture_en'] ?? null,
+                $cats_ru_json,
+                $cats_en_json,
+                $data['description_ru'] ?? null,
+                $data['description_en'] ?? null,
+                $data['website'] ?? null,
+                $data['working_hours'] ?? null,
+                $data['notes'] ?? null
             ]);
         }
         
