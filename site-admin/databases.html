@@ -1254,6 +1254,10 @@
             rid: it.business_id || ('REG-' + String(idx + 1).padStart(3, '0'))
           }));
           
+          // Сохраняем в кэш сразу после загрузки
+          saveRegionsCache(regions);
+          console.log('✅ Регионы сохранены в кэш');
+          
           // Сначала быстрый рендер с placeholder'ами
           citiesByRegion = {};
           renderRegions();
@@ -2578,7 +2582,7 @@
                         <div class="grid grid-cols-2 gap-3">
                           <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">RU</label>
-                            <div class="space-y-1 max-h-80 overflow-y-auto border border-gray-200 rounded p-2 bg-white">
+                            <div class="space-y-1 border border-gray-200 rounded p-2 bg-white" style="max-height: 400px; overflow-y: auto;">
                               ${categories_ru.map((cat) => `
                                 <label class="flex items-center text-xs hover:bg-gray-50 px-1 py-0.5 rounded cursor-pointer">
                                   <input type="checkbox" name="cats_ru" value="${cat}" class="mr-2">
@@ -2589,7 +2593,7 @@
                           </div>
                           <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">EN</label>
-                            <div class="space-y-1 max-h-80 overflow-y-auto border border-gray-200 rounded p-2 bg-white">
+                            <div class="space-y-1 border border-gray-200 rounded p-2 bg-white" style="max-height: 400px; overflow-y: auto;">
                               ${categories_en.map((cat) => `
                                 <label class="flex items-center text-xs hover:bg-gray-50 px-1 py-0.5 rounded cursor-pointer">
                                   <input type="checkbox" name="cats_en" value="${cat}" class="mr-2">
@@ -3152,50 +3156,64 @@
         document.dispatchEvent(testEvent);
       }, 1000);
       
-      // ОПТИМИЗИРОВАННАЯ загрузка - только счетчики при старте
+      // МГНОВЕННАЯ загрузка - сначала кэш, потом API
       (async function(){
-        console.log('⚡ Быстрая инициализация системы...');
-        console.log('⚡ Текущее состояние: regions.length =', regions.length);
+        console.log('⚡ МГНОВЕННАЯ инициализация системы...');
         console.log('⚡ DOM элемент cards:', cards);
         console.log('⚡ DOM элемент crumbs:', crumbs);
         
+        // ШАГ 1: МГНОВЕННО загружаем из кэша и рендерим
+        const cachedRegions = loadRegionsCache();
+        if (cachedRegions && cachedRegions.length > 0) {
+          console.log('⚡ МГНОВЕННО: Загружено из кэша:', cachedRegions.length, 'регионов');
+          regions = cachedRegions;
+          renderRegions(); // МГНОВЕННЫЙ рендер кэшированных данных
+          console.log('✅ МГНОВЕННЫЙ рендер завершён!');
+        } else {
+          console.log('⚠️ Кэш пуст, рендерим loading state');
+          cards.innerHTML = '<div class="flex items-center justify-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><span class="ml-3 text-gray-600">Загрузка регионов...</span></div>';
+        }
+        
+        // Настраиваем обработчики сразу
+        setupNavigationHandler();
+        setupBreadcrumbHandler();
+        
+        // ШАГ 2: Загружаем свежие данные из API в ФОНЕ
         try {
-          // Всегда загружаем регионы при первом открытии страницы
-          console.log('⚡ Загрузка регионов из БД...');
-          await syncRegionsFromAirtable(); // Загружает регионы + счетчики + вызывает renderRegions()
+          console.log('🔄 ФОНОВАЯ загрузка: обновление из БД...');
+          await syncRegionsFromAirtable(); // Загружает свежие данные и перерендеривает
           
           console.log('⚡ После syncRegionsFromAirtable: regions.length =', regions.length);
+          
+          // Сохраняем свежие данные в кэш для следующего раза
+          if (regions.length > 0) {
+            saveRegionsCache(regions);
+            console.log('✅ Свежие данные сохранены в кэш');
+          }
           
           if (!regions.length) {
             console.log('⚠️ Регионы не загружены из БД, пробуем через proxy...');
             await loadRegionsViaProxy();
           }
           
-          if (!regions.length) {
+          if (!regions.length && !cachedRegions.length) {
             console.log('⚠️ Регионы все еще пусты, рендерим пустое состояние');
             renderRegions();
             return;
           }
           
-          // Явно вызываем renderRegions() после успешной загрузки
-          // (syncRegionsFromAirtable уже вызвал его дважды, но на всякий случай)
-          console.log('⚡ Финальный рендер регионов...');
-          renderRegions();
-          
           console.log('✅ Система готова (регионы:', regions.length, ')');
         } catch (error) {
-          console.error('❌ Ошибка инициализации:', error);
+          console.error('❌ Ошибка фоновой загрузки:', error);
           console.error('❌ Error stack:', error.stack);
-          renderRegions(); // Рендерим пустое состояние при ошибке
+          // Если есть кэш - оставляем его, иначе рендерим пустое состояние
+          if (!cachedRegions || cachedRegions.length === 0) {
+            renderRegions();
+          }
         }
         
-        // Настраиваем обработчики
-        setupNavigationHandler();
-        setupBreadcrumbHandler();
-        
-        console.log('✅ Быстрая загрузка завершена');
+        console.log('✅ Инициализация завершена');
         console.log('✅ Финальное состояние: regions.length =', regions.length);
-        console.log('✅ Содержимое cards.innerHTML:', cards.innerHTML.substring(0, 200) + '...');
       })();
 
       // Deploy button placeholder removed per requirements
