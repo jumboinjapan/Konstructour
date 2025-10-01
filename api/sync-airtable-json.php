@@ -65,7 +65,8 @@ try {
     $token = getAirtableToken();
     $log[] = "✅ Токен Airtable получен";
     
-    $pdo = getDatabase();
+    $db = new Database();
+    $pdo = $db->getConnection();
     
     // Синхронизируем регионы
     $log[] = "📊 Синхронизируем регионы...";
@@ -80,7 +81,7 @@ try {
             'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
             'name_en' => $fields['Name (EN)'] ?? 'Unknown'
         ];
-        saveRegion($pdo, $regionData);
+        $db->saveRegion($regionData);
         $regions[$regionData['business_id']] = $regionData['id'];
         $stats['regions']++;
         $log[] = "  ✅ {$regionData['business_id']}";
@@ -103,7 +104,7 @@ try {
                 'name_en' => $fields['Name (EN)'] ?? 'Unknown',
                 'region_id' => $regions[$regionBusinessId]
             ];
-            saveCity($pdo, $cityData);
+            $db->saveCity($cityData);
             $cities[$cityData['business_id']] = $cityData['id'];
             $stats['cities']++;
             $log[] = "  ✅ {$cityData['business_id']}";
@@ -128,7 +129,7 @@ try {
                 'city_id' => $cities[$cityBusinessId],
                 'region_id' => ($regionBusinessId && isset($regions[$regionBusinessId])) ? $regions[$regionBusinessId] : null
             ];
-            savePOI($pdo, $poiData);
+            $db->savePoi($poiData);
             $stats['pois']++;
             $log[] = "  ✅ {$poiData['business_id']}";
         }
