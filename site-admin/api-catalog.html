@@ -478,15 +478,13 @@
             
             // Проверяем доступность конкретной таблицы
             try {
-              const response = await fetch('../api/test-proxy-secure.php', {
+              const response = await fetch('../api/test-proxy-secure.php?provider=airtable', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  provider: 'airtable',
-                  baseId: baseId,
+                  base_id: baseId,
                   table: tableId,
-                  view: viewId,
-                  limit: 1
+                  view: viewId
                 })
               });
               
