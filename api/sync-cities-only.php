@@ -113,12 +113,27 @@ try {
                 continue;
             }
             
+            // Найдем Airtable ID региона по названию
+            $regions = $db->getRegions();
+            $regionAirtableId = null;
+            foreach ($regions as $region) {
+                if ($region['name_ru'] === $regionId || $region['name_en'] === $regionId) {
+                    $regionAirtableId = $region['id'];
+                    break;
+                }
+            }
+            
+            if (!$regionAirtableId) {
+                echo "  ⚠️ Не найден регион для города {$nameRu}: {$regionId}\n";
+                continue;
+            }
+            
             $cityData = [
                 'id' => $record['id'],
                 'business_id' => $businessId,
                 'name_ru' => $nameRu ?? 'Неизвестно',
                 'name_en' => $nameEn ?? 'Unknown',
-                'region_id' => $regionId
+                'region_id' => $regionAirtableId
             ];
             
             $db->saveCity($cityData);
