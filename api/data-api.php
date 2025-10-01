@@ -64,7 +64,7 @@ try {
                 }
                 
                 // ЖЕСТКАЯ ВАЛИДАЦИЯ: проверяем формат city_id (business_id или Airtable ID)
-                if (!validateBusinessId($cityId, 'city') && !preg_match('/^rec[A-Za-z0-9]{14}$/', $cityId)) {
+                if (!validateBusinessId($cityId, 'city') && !preg_match('/^rec[A-Za-z0-9]+$/', $cityId)) {
                     respond(false, ['error' => 'Invalid city ID format. Expected: CTY-XXXX, LOC-XXXX, or Airtable ID'], 400);
                 }
                 
