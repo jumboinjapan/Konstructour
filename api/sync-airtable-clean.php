@@ -73,7 +73,7 @@ try {
                 'name_en' => $fields['Name (EN)'] ?? 'Unknown'
             ];
             $db->saveRegion($regionData);
-            echo "  ✅ {$regionData['name_ru']} ({$regionData['business_id']})\n";
+            echo "  ✅ {$regionData['business_id']}\n";
         }
     }
     
@@ -105,7 +105,7 @@ try {
                         'region_id' => $regionAirtableId
                     ];
                     $db->saveCity($cityData);
-                    echo "  ✅ {$cityData['name_ru']} ({$cityData['business_id']})\n";
+                    echo "  ✅ {$cityData['business_id']}\n";
                 }
             }
         }
@@ -161,7 +161,7 @@ try {
                             'notes' => $fields['Notes / Заметки'] ?? null
                         ];
                         $db->savePoi($poiData);
-                        echo "  ✅ {$poiData['name_ru']} ({$poiData['business_id']})\n";
+                        echo "  ✅ {$poiData['business_id']}\n";
                     }
                 }
             }

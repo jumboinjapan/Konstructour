@@ -111,7 +111,7 @@ try {
             // Подготовка данных для Airtable (только непустые поля)
             $airtableFields = [
                 'POI ID' => $data['business_id'] ?? $data['id'],
-                'POI Name (RU)' => $data['name_ru'],
+                'POI Name (RU)' => $data['name_ru'] ?? '',
                 'POI Name (EN)' => $data['name_en'] ?? ''
             ];
             
