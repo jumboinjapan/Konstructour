@@ -162,6 +162,28 @@ try {
                 }
             }
             
+            // Если city_id или region_id не являются валидными Airtable ID, 
+            // но являются локальными ID, попробуем найти соответствующие Airtable ID
+            if (empty($airtableFields['City Location']) && !empty($data['city_id'])) {
+                // Ищем город по локальному ID и получаем его Airtable ID
+                $stmt = $db->getConnection()->prepare("SELECT id FROM cities WHERE id = ?");
+                $stmt->execute([$data['city_id']]);
+                $city = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($city && preg_match('/^rec[A-Za-z0-9]{14}$/', $city['id'])) {
+                    $airtableFields['City Location'] = [$city['id']];
+                }
+            }
+            
+            if (empty($airtableFields['Regions']) && !empty($data['region_id'])) {
+                // Ищем регион по локальному ID и получаем его Airtable ID
+                $stmt = $db->getConnection()->prepare("SELECT id FROM regions WHERE id = ?");
+                $stmt->execute([$data['region_id']]);
+                $region = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($region && preg_match('/^rec[A-Za-z0-9]{14}$/', $region['id'])) {
+                    $airtableFields['Regions'] = [$region['id']];
+                }
+            }
+            
             // Tickets 1 - пустой массив для совместимости с Airtable
             $airtableFields['Tickets 1'] = [];
             
