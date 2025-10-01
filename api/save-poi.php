@@ -149,15 +149,17 @@ try {
                 $airtableFields['POI Category (EN)'] = $data['categories_en'];
             }
             
-            // City Location (linked record)
-            if (!empty($data['city_id'])) {
+            // City Location (linked record) - только если это валидный Airtable record ID
+            if (!empty($data['city_id']) && preg_match('/^rec[A-Za-z0-9]{14}$/', $data['city_id'])) {
                 $airtableFields['City Location'] = [$data['city_id']];
             }
             
-            // Regions (linked record)
+            // Regions (linked record) - только если это валидный Airtable record ID
             if (!empty($data['region_id'])) {
                 $regionId = is_array($data['region_id']) ? $data['region_id'][0] : $data['region_id'];
-                $airtableFields['Regions'] = [$regionId];
+                if (preg_match('/^rec[A-Za-z0-9]{14}$/', $regionId)) {
+                    $airtableFields['Regions'] = [$regionId];
+                }
             }
             
             // Отправка в Airtable
