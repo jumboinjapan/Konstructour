@@ -106,15 +106,15 @@ try {
         
         $data = [
             'id' => $record['id'],
-            'name_ru' => $record['fields']['Name (RU)'] ?? $record['fields']['Название (RU)'] ?? 'Unknown',
-            'name_en' => $record['fields']['Name (EN)'] ?? $record['fields']['Название (EN)'] ?? null,
-            'category' => $record['fields']['Category'] ?? $record['fields']['Категория'] ?? null,
+            'name_ru' => $record['fields']['POI Name (RU)'] ?? $record['fields']['Name (RU)'] ?? $record['fields']['Название (RU)'] ?? 'Unknown',
+            'name_en' => $record['fields']['POI Name (EN)'] ?? $record['fields']['Name (EN)'] ?? $record['fields']['Название (EN)'] ?? null,
+            'category' => $record['fields']['POI Category (RU)'][0] ?? $record['fields']['Category'] ?? $record['fields']['Категория'] ?? null,
             'place_id' => $record['fields']['Place ID'] ?? null,
             'published' => $record['fields']['Published'] ?? false,
-            'business_id' => $record['fields']['ID'] ?? null,
+            'business_id' => $record['fields']['POI ID'] ?? $record['fields']['ID'] ?? null,
             'city_id' => $cityId,
             'region_id' => $regionId,
-            'description' => $record['fields']['Description'] ?? $record['fields']['Описание'] ?? null,
+            'description' => $record['fields']['Description (RU)'] ?? $record['fields']['Description'] ?? $record['fields']['Описание'] ?? null,
             'latitude' => $record['fields']['Latitude'] ?? null,
             'longitude' => $record['fields']['Longitude'] ?? null
         ];
