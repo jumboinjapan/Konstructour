@@ -90,11 +90,11 @@ try {
             $businessId = null;
             
             foreach ($fields as $fieldName => $fieldValue) {
-                if (stripos($fieldName, 'name') !== false && stripos($fieldName, 'ru') !== false) {
+                if (stripos($fieldName, 'name') !== false && stripos($fieldName, 'ru') !== false && is_string($fieldValue)) {
                     $nameRu = $fieldValue;
-                } elseif (stripos($fieldName, 'name') !== false && stripos($fieldName, 'en') !== false) {
+                } elseif (stripos($fieldName, 'name') !== false && stripos($fieldName, 'en') !== false && is_string($fieldValue)) {
                     $nameEn = $fieldValue;
-                } elseif (stripos($fieldName, 'id') !== false || stripos($fieldName, 'ID') !== false) {
+                } elseif (stripos($fieldName, 'REGION ID') !== false && is_string($fieldValue)) {
                     $businessId = $fieldValue;
                 }
             }
