@@ -62,6 +62,33 @@ try {
         respond(false, ['error' => 'Failed to save to local database'], 500);
     }
     
+    // Сохраняем билеты если есть
+    $ticketsSaved = 0;
+    if (!empty($data['tickets']) && is_array($data['tickets'])) {
+        $conn = $db->getConnection();
+        
+        // Удаляем старые билеты для этого POI
+        $stmt = $conn->prepare("DELETE FROM tickets WHERE poi_id = ?");
+        $stmt->execute([$data['id']]);
+        
+        // Сохраняем новые билеты
+        $stmt = $conn->prepare("
+            INSERT INTO tickets (poi_id, category, price, currency, note, created_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ");
+        
+        foreach ($data['tickets'] as $ticket) {
+            $stmt->execute([
+                $data['id'],
+                $ticket['category'] ?? '',
+                $ticket['price'] ?? 0,
+                $ticket['currency'] ?? 'JPY',
+                $ticket['note'] ?? null
+            ]);
+            $ticketsSaved++;
+        }
+    }
+    
     // Синхронизация с Airtable
     $cfg = [];
     $cfgFile = __DIR__.'/config.php';
@@ -152,10 +179,14 @@ try {
         }
     }
     
+    // TODO: Синхронизация билетов с Airtable (таблица tblKOLhiHMihpWsVl)
+    // Требуется уточнение структуры таблицы билетов и названий полей
+    
     respond(true, [
         'message' => 'POI saved successfully',
         'id' => $data['id'],
         'business_id' => $data['business_id'] ?? null,
+        'tickets_saved' => $ticketsSaved,
         'airtable_synced' => $airtableResult !== null,
         'airtable_response' => $airtableResult
     ]);

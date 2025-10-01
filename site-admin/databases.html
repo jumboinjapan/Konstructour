@@ -2627,6 +2627,21 @@
                     </div>
                   </div>
                   
+                  <!-- Билеты - на всю ширину -->
+                  <div class="bg-gray-50 rounded p-3">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="text-xs font-medium text-gray-700 flex items-center">
+                        <i class="fas fa-ticket-alt mr-1 text-indigo-600 text-xs"></i>
+                        Билеты <span class="text-red-500 ml-1">*</span>
+                        <span class="ml-2 text-xs text-gray-500 font-normal">(минимум 1 тип)</span>
+                      </h4>
+                      <button type="button" id="add-ticket-btn" class="btn-japanese text-xs py-1 px-2">
+                        <i class="fas fa-plus mr-1"></i>Добавить билет
+                      </button>
+                    </div>
+                    <div id="tickets-container" class="space-y-2"></div>
+                  </div>
+                  
                   <!-- Публикация и заметки - внизу на всю ширину -->
                   <div class="bg-gray-50 rounded p-3">
                     <div class="flex items-center justify-between">
@@ -2680,6 +2695,66 @@
               });
             });
             
+            // Управление билетами
+            const ticketsContainer = wrap.querySelector('#tickets-container');
+            const addTicketBtn = wrap.querySelector('#add-ticket-btn');
+            let ticketCounter = 0;
+            
+            const ticketTypes = [
+              {value: 'infant', label: 'Infant 0-5', label_ru: 'Младенец 0-5'},
+              {value: 'child', label: 'Child 6-11', label_ru: 'Ребёнок 6-11'},
+              {value: 'adult', label: 'Adult 12-64', label_ru: 'Взрослый 12-64'},
+              {value: 'senior65', label: 'Senior 65+', label_ru: 'Пожилой 65+'},
+              {value: 'senior60', label: 'Senior 60+', label_ru: 'Пожилой 60+'}
+            ];
+            
+            function addTicketRow(data = null) {
+              const ticketId = ticketCounter++;
+              const ticketRow = document.createElement('div');
+              ticketRow.className = 'ticket-row bg-white border border-gray-200 rounded p-2 flex items-center gap-2';
+              ticketRow.dataset.ticketId = ticketId;
+              
+              ticketRow.innerHTML = `
+                <div class="flex-1 grid grid-cols-3 gap-2">
+                  <div>
+                    <select class="ticket-type input-japanese w-full text-xs py-1" required>
+                      <option value="">Выберите тип</option>
+                      ${ticketTypes.map(t => `<option value="${t.value}">${t.label_ru} / ${t.label}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div>
+                    <input type="number" class="ticket-price input-japanese w-full text-xs py-1" 
+                           placeholder="Цена" min="0" step="100" required>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <select class="ticket-currency input-japanese w-full text-xs py-1">
+                      <option value="JPY">¥ JPY</option>
+                      <option value="USD">$ USD</option>
+                      <option value="EUR">€ EUR</option>
+                    </select>
+                    <button type="button" class="remove-ticket text-red-500 hover:text-red-700 p-1" 
+                            onclick="this.closest('.ticket-row').remove()">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              `;
+              
+              ticketsContainer.appendChild(ticketRow);
+              
+              // Заполняем данные если редактирование
+              if (data) {
+                ticketRow.querySelector('.ticket-type').value = data.category || '';
+                ticketRow.querySelector('.ticket-price').value = data.price || '';
+                ticketRow.querySelector('.ticket-currency').value = data.currency || 'JPY';
+              }
+            }
+            
+            addTicketBtn.addEventListener('click', () => addTicketRow());
+            
+            // Добавляем минимум один билет по умолчанию
+            addTicketRow();
+            
             // Обработчики кнопок
             function done(val){ 
               try{ document.body.removeChild(wrap); }catch{} 
@@ -2704,6 +2779,37 @@
                 return;
               }
               
+              // Валидация билетов
+              const ticketRows = wrap.querySelectorAll('.ticket-row');
+              if (ticketRows.length === 0) {
+                alert('Добавьте хотя бы один тип билета');
+                return;
+              }
+              
+              const tickets = [];
+              let ticketsValid = true;
+              ticketRows.forEach(row => {
+                const type = row.querySelector('.ticket-type').value;
+                const price = row.querySelector('.ticket-price').value;
+                const currency = row.querySelector('.ticket-currency').value;
+                
+                if (!type || !price) {
+                  ticketsValid = false;
+                  return;
+                }
+                
+                tickets.push({
+                  category: type,
+                  price: parseInt(price),
+                  currency: currency
+                });
+              });
+              
+              if (!ticketsValid) {
+                alert('Заполните все поля билетов (тип и цена обязательны)');
+                return;
+              }
+              
               const data = {
                 name_ru: wrap.querySelector('#poi_name_ru').value.trim(),
                 name_en: wrap.querySelector('#poi_name_en').value.trim(),
@@ -2717,7 +2823,8 @@
                 desc_ru: wrap.querySelector('#poi_desc_ru').value.trim(),
                 desc_en: wrap.querySelector('#poi_desc_en').value.trim(),
                 published: wrap.querySelector('#poi_published').checked,
-                notes: wrap.querySelector('#poi_notes').value.trim()
+                notes: wrap.querySelector('#poi_notes').value.trim(),
+                tickets: tickets
               };
               
               done(data);
