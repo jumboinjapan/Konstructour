@@ -87,12 +87,12 @@ try {
     if (isset($citiesData['records'])) {
         foreach ($citiesData['records'] as $record) {
             $fields = $record['fields'];
-            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Regions: " . json_encode($fields['Regions'] ?? 'НЕТ') . "\n";
+            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Region ID: " . json_encode($fields['Region ID'] ?? 'НЕТ') . "\n";
             
-            // СТРОГО: Получаем business_id региона из поля Regions (связанные записи)
+            // СТРОГО: Получаем business_id региона из поля Region ID (связанные записи)
             $regionBusinessId = null;
-            if (isset($fields['Regions'])) {
-                $regions = $fields['Regions'];
+            if (isset($fields['Region ID'])) {
+                $regions = $fields['Region ID'];
                 if (is_array($regions) && !empty($regions)) {
                     $regionBusinessId = $regions[0];
                 } elseif (is_string($regions)) {
