@@ -87,28 +87,30 @@ try {
     if (isset($citiesData['records'])) {
         foreach ($citiesData['records'] as $record) {
             $fields = $record['fields'];
-            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Region ID: " . json_encode($fields['Region ID'] ?? 'НЕТ') . "\n";
+            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Regions: " . json_encode($fields['Regions'] ?? 'НЕТ') . "\n";
             
-            // Проверяем разные форматы Region ID
-            $regionId = null;
-            if (isset($fields['Region ID'])) {
-                if (is_array($fields['Region ID']) && !empty($fields['Region ID'])) {
-                    $regionId = $fields['Region ID'][0];
-                } elseif (is_string($fields['Region ID']) && !empty($fields['Region ID'])) {
-                    $regionId = $fields['Region ID'];
+            // СТРОГО: Получаем business_id региона из поля Regions (связанные записи)
+            $regionBusinessId = null;
+            if (isset($fields['Regions'])) {
+                $regions = $fields['Regions'];
+                if (is_array($regions) && !empty($regions)) {
+                    $regionBusinessId = $regions[0];
+                } elseif (is_string($regions)) {
+                    $regionBusinessId = $regions;
                 }
             }
             
-            if ($regionId) {
-                // Найдем Airtable ID региона по business_id
+            // СТРОГО: Найдем регион по business_id (REG-XXXX)
+            $regionAirtableId = null;
+            if ($regionBusinessId && preg_match('/^REG-\d+$/', $regionBusinessId)) {
                 $regions = $db->getRegions();
-                $regionAirtableId = null;
                 foreach ($regions as $region) {
-                    if ($region['business_id'] === $regionId) {
+                    if ($region['business_id'] === $regionBusinessId) {
                         $regionAirtableId = $region['id'];
                         break;
                     }
                 }
+            }
                 
                 if ($regionAirtableId) {
                     $cityData = [
@@ -130,27 +132,53 @@ try {
     $db->getConnection()->exec("DELETE FROM pois");
     
     $poisData = airtableRequest('tblVCmFcHRpXUT24y', $token);
+    echo "  📊 Получено записей POI: " . (isset($poisData['records']) ? count($poisData['records']) : 0) . "\n";
+    
     if (isset($poisData['records'])) {
         foreach ($poisData['records'] as $record) {
             $fields = $record['fields'];
-            if (isset($fields['City Location']) && is_array($fields['City Location']) && !empty($fields['City Location'])) {
+            echo "  🔍 POI: " . ($fields['POI Name (RU)'] ?? 'Без названия') . " | City: " . json_encode($fields['City Location'] ?? 'НЕТ') . " | Regions: " . json_encode($fields['Regions'] ?? 'НЕТ') . "\n";
+            
+            // СТРОГО: Получаем business_id города из поля City Location
+            $cityBusinessId = null;
+            if (isset($fields['City Location'])) {
+                $cityLocation = $fields['City Location'];
+                if (is_array($cityLocation) && !empty($cityLocation)) {
+                    $cityBusinessId = $cityLocation[0];
+                } elseif (is_string($cityLocation)) {
+                    $cityBusinessId = $cityLocation;
+                }
+            }
+            
+            if ($cityBusinessId && preg_match('/^(CTY|LOC)-\d+$/', $cityBusinessId)) {
                 // Найдем Airtable ID города по business_id
                 $cities = $db->getAllCities();
                 $cityAirtableId = null;
                 foreach ($cities as $city) {
-                    if ($city['business_id'] === $fields['City Location'][0]) {
+                    if ($city['business_id'] === $cityBusinessId) {
                         $cityAirtableId = $city['id'];
                         break;
                     }
                 }
                 
                 if ($cityAirtableId) {
-                    // Найдем Airtable ID региона
-                    $regions = $db->getRegions();
+                    // СТРОГО: Получаем business_id региона из поля Regions
+                    $regionBusinessId = null;
+                    if (isset($fields['Regions'])) {
+                        $regions = $fields['Regions'];
+                        if (is_array($regions) && !empty($regions)) {
+                            $regionBusinessId = $regions[0];
+                        } elseif (is_string($regions)) {
+                            $regionBusinessId = $regions;
+                        }
+                    }
+                    
+                    // СТРОГО: Найдем регион по business_id (REG-XXXX)
                     $regionAirtableId = null;
-                    if (isset($fields['Regions']) && is_array($fields['Regions']) && !empty($fields['Regions'])) {
+                    if ($regionBusinessId && preg_match('/^REG-\d+$/', $regionBusinessId)) {
+                        $regions = $db->getRegions();
                         foreach ($regions as $region) {
-                            if ($region['business_id'] === $fields['Regions'][0]) {
+                            if ($region['business_id'] === $regionBusinessId) {
                                 $regionAirtableId = $region['id'];
                                 break;
                             }
