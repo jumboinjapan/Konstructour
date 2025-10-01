@@ -77,7 +77,7 @@ try {
         $fields = $record['fields'];
         $regionData = [
             'id' => $record['id'],
-            'business_id' => $fields['Region ID'] ?? 'REG-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+            'business_id' => $fields['REGION ID'] ?? 'REG-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
             'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
             'name_en' => $fields['Name (EN)'] ?? 'Unknown'
         ];
@@ -91,6 +91,7 @@ try {
     $log[] = "🏙️ Синхронизируем города...";
     $citiesData = airtableRequest('tblHaHc9NV0mA8bSa', $token);
     $cities = [];
+    $citiesByAirtableId = []; // Маппинг Airtable ID -> business_id
     
     foreach ($citiesData['records'] as $record) {
         $fields = $record['fields'];
@@ -99,13 +100,14 @@ try {
         if ($regionBusinessId && isset($regions[$regionBusinessId])) {
             $cityData = [
                 'id' => $record['id'],
-                'business_id' => $fields['City ID'] ?? 'CTY-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                'business_id' => $fields['CITY ID'] ?? 'CTY-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
                 'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
                 'name_en' => $fields['Name (EN)'] ?? 'Unknown',
                 'region_id' => $regions[$regionBusinessId]
             ];
             $db->saveCity($cityData);
             $cities[$cityData['business_id']] = $cityData['id'];
+            $citiesByAirtableId[$record['id']] = $cityData['business_id']; // Добавляем маппинг
             $stats['cities']++;
             $log[] = "  ✅ {$cityData['business_id']}";
         }
@@ -117,8 +119,11 @@ try {
     
     foreach ($poisData['records'] as $record) {
         $fields = $record['fields'];
-        $cityBusinessId = $fields['City ID'][0] ?? null;
-        $regionBusinessId = $fields['Region ID'][0] ?? null;
+        $cityAirtableId = $fields['City Location'][0] ?? null;
+        $regionAirtableId = $fields['Regions'][0] ?? null;
+        
+        // Находим business_id города по Airtable ID
+        $cityBusinessId = $citiesByAirtableId[$cityAirtableId] ?? null;
         
         if ($cityBusinessId && isset($cities[$cityBusinessId])) {
             $poiData = [
@@ -127,7 +132,7 @@ try {
                 'name_ru' => $fields['POI Name (RU)'] ?? 'Неизвестно',
                 'name_en' => $fields['POI Name (EN)'] ?? 'Unknown',
                 'city_id' => $cities[$cityBusinessId],
-                'region_id' => ($regionBusinessId && isset($regions[$regionBusinessId])) ? $regions[$regionBusinessId] : null
+                'region_id' => null // Пока не используем region_id для POI
             ];
             $db->savePoi($poiData);
             $stats['pois']++;
