@@ -3195,28 +3195,41 @@
                 'Tickets': [] // Билеты будут добавляться отдельно через связь с таблицей Tickets
               };
               
-              // Отправляем на сервер
-              const res = await fetch('/api/db-sync.php', {
+              // Отправляем на сервер через новый API
+              const res = await fetch('/api/save-poi.php', {
                 method: 'POST',
                 headers: { 
-                  'Content-Type': 'application/json',
-                  'X-Admin-Token': window.ADMIN_TOKEN || ''
+                  'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  scope: 'pois',
-                  action: 'create',
-                  data: {
-                    base_id: baseId,
-                    table_id: window.AIRTABLE_POI_TABLE_ID,
-                    fields: airtableFields,
-                    localData: newPoi
-                  }
+                  name_ru: data.name_ru,
+                  name_en: data.name_en,
+                  prefecture_ru: data.pref_ru,
+                  prefecture_en: data.pref_en,
+                  categories_ru: data.cats_ru,
+                  categories_en: data.cats_en,
+                  description_ru: data.desc_ru,
+                  description_en: data.desc_en,
+                  website: data.website,
+                  working_hours: data.hours,
+                  notes: data.notes,
+                  place_id: data.place_id,
+                  city_id: selectedCity.id,
+                  region_id: selectedRegion.id
                 })
               });
               
               const j = await res.json();
               if (!res.ok || !j.ok) {
                 throw new Error((j && j.error) || 'Ошибка сохранения');
+              }
+              
+              // Обновляем локальные данные с полученными ID
+              if (j.id) {
+                newPoi.id = j.id;
+              }
+              if (j.business_id) {
+                newPoi.business_id = j.business_id;
               }
               
               if (window.osNotify) {
