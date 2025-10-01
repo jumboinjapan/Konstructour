@@ -104,11 +104,15 @@ try {
         $regionId = extractLinkedRecordId($record['fields'], ['Region', 'Регион', 'Regions', 'Регионы']);
         $cityId = extractLinkedRecordId($record['fields'], ['City', 'Город', 'Cities', 'Города']);
         
+        // Безопасное извлечение категории из массива
+        $categoryRu = $record['fields']['POI Category (RU)'] ?? null;
+        $category = is_array($categoryRu) && !empty($categoryRu) ? $categoryRu[0] : ($record['fields']['Category'] ?? $record['fields']['Категория'] ?? null);
+        
         $data = [
             'id' => $record['id'],
             'name_ru' => $record['fields']['POI Name (RU)'] ?? $record['fields']['Name (RU)'] ?? $record['fields']['Название (RU)'] ?? 'Unknown',
             'name_en' => $record['fields']['POI Name (EN)'] ?? $record['fields']['Name (EN)'] ?? $record['fields']['Название (EN)'] ?? null,
-            'category' => $record['fields']['POI Category (RU)'][0] ?? $record['fields']['Category'] ?? $record['fields']['Категория'] ?? null,
+            'category' => $category,
             'place_id' => $record['fields']['Place ID'] ?? null,
             'published' => $record['fields']['Published'] ?? false,
             'business_id' => $record['fields']['POI ID'] ?? $record['fields']['ID'] ?? null,
