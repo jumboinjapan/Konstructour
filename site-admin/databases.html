@@ -1254,7 +1254,7 @@
         console.log('Rendered region cards with data-go="cities":', renderedCards.length);
         
         // Переустанавливаем обработчик кликов после рендеринга
-        setupNavigationHandler();
+        setupUnifiedClickHandler();
         
         // Загружаем только счетчики городов в фоне
         loadRegionCounts();
@@ -1437,7 +1437,7 @@
         }).join('') || '<div class="text-gray-500">Нет городов. Нажмите + чтобы добавить.</div>';
         
         // Переустанавливаем обработчик кликов после рендеринга
-        setupNavigationHandler();
+        setupUnifiedClickHandler();
       }
 
       async function renderPois(){
@@ -1679,7 +1679,7 @@
         }
         
         // Переустанавливаем обработчик кликов после рендеринга
-        setupNavigationHandler();
+        setupUnifiedClickHandler();
       }
 
       // УДАЛЕНО: Детальный просмотр POI больше не используется
@@ -2066,132 +2066,237 @@
         document.addEventListener('click', window.breadcrumbHandler);
       }
 
-      // Функция настройки обработчика кликов для навигации
-      function setupNavigationHandler() {
-        console.log('Setting up click handler for navigation...');
+      // Объединённый обработчик событий для навигации и действий
+      function setupUnifiedClickHandler() {
+        console.log('Setting up unified click handler...');
         
-        // Удаляем предыдущий обработчик если он был
-        if (window.navigationHandler) {
-          document.removeEventListener('click', window.navigationHandler);
+        // Удаляем предыдущие обработчики
+        if (window.unifiedClickHandler) {
+          document.removeEventListener('click', window.unifiedClickHandler);
         }
         
-        // Используем делегирование событий для лучшей производительности
-        window.navigationHandler = async function(e){
+        window.unifiedClickHandler = async function(e) {
           console.log('Click detected on:', e.target, 'tagName:', e.target.tagName, 'className:', e.target.className);
           
-          // Ищем элемент с data-go, начиная с текущего элемента и поднимаясь вверх по DOM
-          let go = e.target.closest('[data-go]');
-          console.log('Found data-go element:', !!go, go);
-          
-          if (!go) { 
-            console.log('Click outside actionable element:', e.target);
-            return; 
-          }
-          
-          // Проверяем, что элемент находится внутри #db_cards
-          if (!go.closest('#db_cards')) {
-            console.log('data-go element found but not inside #db_cards, ignoring');
-            return;
-          }
-          
-          // Игнорируем клики по кнопкам действий внутри карточек
-          if (e.target.closest('button[data-act]') || e.target.closest('.poi-actions')) {
-            console.log('Click on action button or action container, ignoring');
+          // 1. Сначала проверяем кнопки действий
+          const actionBtn = e.target.closest('button[data-act]');
+          if (actionBtn) {
+            e.preventDefault();
             e.stopPropagation();
+            await handleActionButton(actionBtn);
             return;
           }
           
-          // Игнорируем клики по ссылкам в хлебных крошках
+          // 2. Затем проверяем навигацию
+          const navElement = e.target.closest('[data-go]');
+          if (navElement && navElement.closest('#db_cards')) {
+            e.preventDefault();
+            await handleNavigation(navElement);
+            return;
+          }
+          
+          // 3. Игнорируем клики по хлебным крошкам (они обрабатываются отдельно)
           if (e.target.closest('[data-level]')) {
-            console.log('Click on breadcrumb, ignoring');
             return;
           }
-          
-        e.preventDefault();
-        const id = go.getAttribute('data-id');
-        const to = go.getAttribute('data-go');
-        console.log('Navigation triggered:', {to, id, element: go});
+        };
         
-        // Мгновенная навигация без await
-        if (to==='cities'){
-          selectedRegion = regions.find(r=>r.id===id) || null;
-          push('cities', { regionId: (selectedRegion ? selectedRegion.id : null) });
+        document.addEventListener('click', window.unifiedClickHandler);
+      }
+      
+      // Обработчик кнопок действий
+      async function handleActionButton(btn) {
+        const act = btn.getAttribute('data-act');
+        const id = btn.getAttribute('data-id');
+        
+        console.log('Action button clicked:', { act, id });
+        
+        if (act === 'edit-region') {
+          await editRegion(id);
+        } else if (act === 'del-region') {
+          await deleteRegion(id);
+        } else if (act === 'edit-city') {
+          await editCity(id);
+        } else if (act === 'del-city') {
+          await deleteCity(id);
+        } else if (act === 'edit-poi') {
+          await editPoi(id);
+        } else if (act === 'del-poi') {
+          await deletePoi(id);
+        } else if (act === 'view-tickets') {
+          await viewTickets(id);
+        }
+      }
+      
+      // Обработчик навигации с проверками состояния
+      async function handleNavigation(navElement) {
+        const id = navElement.getAttribute('data-id');
+        const to = navElement.getAttribute('data-go');
+        
+        console.log('Navigation triggered:', {to, id, element: navElement});
+        
+        try {
+          if (to === 'cities') {
+            await navigateToCities(id);
+          } else if (to === 'pois') {
+            await navigateToPOIs(id);
+          } else if (to === 'tickets') {
+            await navigateToTickets(id);
+          }
+        } catch (error) {
+          console.error('Navigation error:', error);
+          showErrorState('Ошибка навигации: ' + error.message);
+        }
+      }
+      
+      // Навигация к городам с проверками
+      async function navigateToCities(regionId) {
+        console.log('Navigating to cities for region:', regionId);
+        
+        // Проверяем что регион существует
+        const region = regions.find(r => r.id === regionId);
+        if (!region) {
+          console.error('Region not found:', regionId);
+          showErrorState('Регион не найден');
+          return;
+        }
+        
+        // Обновляем состояние
+        selectedRegion = region;
+        selectedCity = null;
+        selectedPoi = null;
+        
+        // Обновляем UI
+        level = 'cities';
+        renderCrumbs();
+        setMappingHeader('city');
+        
+        // Показываем loading
+        showLoadingState('Загрузка городов...');
+        
+        try {
+          // Загружаем города если нужно
+          if (!citiesByRegion[regionId] || citiesByRegion[regionId].length === 0) {
+            await loadCitiesForRegion(region);
+          }
           
-          // Сначала рендерим города с нулевыми счетчиками
+          // Загружаем счетчики POI в фоне
+          loadCityCounts(regionId);
+          
+          // Рендерим города
           renderCities();
           
-          // Затем загружаем данные в фоне
-          loadCitiesForRegion(selectedRegion).then(() => {
-            // Загружаем только счетчики POI в фоне
-            loadCityCounts(selectedRegion.id);
-          });
+          // Обновляем историю
+          push('cities', { regionId });
+          
+        } catch (error) {
+          console.error('Error loading cities:', error);
+          showErrorState('Ошибка загрузки городов');
+        }
+      }
+      
+      // Навигация к POI с проверками
+      async function navigateToPOIs(cityId) {
+        console.log('Navigating to POIs for city:', cityId);
+        
+        // Проверяем что регион выбран
+        if (!selectedRegion) {
+          console.error('No region selected');
+          showErrorState('Регион не выбран');
           return;
         }
-        if (to==='pois'){
-          const list = citiesByRegion[selectedRegion.id] || [];
-          selectedCity = list.find(c=>c.id===id) || null;
-          
-          if (!selectedCity) {
-            console.error('City not found for id:', id);
-            return;
+        
+        // Проверяем что город существует
+        const city = citiesByRegion[selectedRegion.id]?.find(c => c.id === cityId);
+        if (!city) {
+          console.error('City not found:', cityId);
+          showErrorState('Город не найден');
+          return;
+        }
+        
+        // Обновляем состояние
+        selectedCity = city;
+        selectedPoi = null;
+        
+        // Обновляем UI
+        level = 'pois';
+        renderCrumbs();
+        setMappingHeader('poi');
+        
+        // Показываем loading
+        showLoadingState('Загрузка POI...');
+        
+        try {
+          // Загружаем POI если нужно
+          if (!poisByCity[cityId] || poisByCity[cityId].length === 0) {
+            await loadPoisForCity(city);
           }
           
-          console.log('Navigating to POIs for city:', selectedCity);
-          push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
+          // Рендерим POI
+          renderPois();
           
-          // Сначала рендерим с loading state
-          level = 'pois';
-          renderCrumbs();
-          setMappingHeader('poi');
-          cards.innerHTML = '<div class="flex items-center justify-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i></div>';
+          // Обновляем историю
+          push('pois', { regionId: selectedRegion.id, cityId });
           
-          // Загружаем данные и рендерим
-          loadPoisForCity(selectedCity).then(() => {
-            renderPois();
-          }).catch(err => {
-            console.error('Error loading POI:', err);
-            cards.innerHTML = '<div class="text-center text-red-500 py-12">Ошибка загрузки POI. Попробуйте еще раз.</div>';
-          });
-          return;
+        } catch (error) {
+          console.error('Error loading POIs:', error);
+          showErrorState('Ошибка загрузки POI');
         }
-        // poi-details навигация удалена - используйте кнопку "Редактировать" на карточке
-          if (to==='poi-edit'){
-            const list = poisByCity[selectedCity.id] || [];
-            const poi = list.find(p=>p.id===id) || null;
-            if (poi) {
-              const data = await openCreatePOIModal(poi);
-              if (!data) return;
-              Object.assign(poi, {
-                name: data.name_ru,
-                name_en: data.name_en,
-                type: data.cats_ru[0] || poi.type,
-                categories_ru: data.cats_ru,
-                categories_en: data.cats_en,
-                prefecture_ru: data.pref_ru,
-                prefecture_en: data.pref_en,
-                place_id: data.place_id,
-                website: data.website,
-                hours: data.hours,
-                description_ru: data.desc_ru,
-                description_en: data.desc_en,
-                published: data.published,
-                notes: data.notes
-              });
-              await renderPois();
-            }
-          return;
-        }
-        if (to==='tickets'){
-          const list = poisByCity[selectedCity.id] || [];
-          selectedPoi = list.find(p=>p.id===id) || null;
-          push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
-          renderTickets();
-          return;
-        }
-      };
+      }
       
-        document.addEventListener('click', window.navigationHandler);
-      } // Конец функции setupNavigationHandler
+      // Навигация к билетам с проверками
+      async function navigateToTickets(poiId) {
+        console.log('Navigating to tickets for POI:', poiId);
+        
+        // Проверяем что город выбран
+        if (!selectedCity) {
+          console.error('No city selected');
+          showErrorState('Город не выбран');
+          return;
+        }
+        
+        // Проверяем что POI существует
+        const poi = poisByCity[selectedCity.id]?.find(p => p.id === poiId);
+        if (!poi) {
+          console.error('POI not found:', poiId);
+          showErrorState('POI не найден');
+          return;
+        }
+        
+        // Обновляем состояние
+        selectedPoi = poi;
+        
+        // Обновляем UI
+        level = 'tickets';
+        renderCrumbs();
+        setMappingHeader('ticket');
+        
+        // Рендерим билеты
+        renderTickets();
+        
+        // Обновляем историю
+        push('tickets', { regionId: selectedRegion.id, cityId: selectedCity.id, poiId });
+      }
+      
+      // Вспомогательные функции для UI состояний
+      function showLoadingState(message = 'Загрузка...') {
+        cards.innerHTML = `
+          <div class="flex items-center justify-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+            <span class="ml-3 text-gray-600">${message}</span>
+          </div>
+        `;
+      }
+      
+      function showErrorState(message) {
+        cards.innerHTML = `
+          <div class="text-center text-red-500 py-12">
+            <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+            <div>${message}</div>
+            <button onclick="location.reload()" class="mt-4 btn-japanese">Перезагрузить</button>
+          </div>
+        `;
+      }
 
       // Функция настройки обработчика кнопок действий (Edit/Delete)
       function setupActionButtonsHandler() {
@@ -2779,9 +2884,11 @@
               {value: 'infant', label: 'Infant 0-5', label_ru: 'Младенец 0-5'},
               {value: 'primary', label: 'Primary School 6-11', label_ru: 'Начальная школа 6-11'},
               {value: 'middle', label: 'Middle School 13-15', label_ru: 'Средняя школа 13-15'},
-              {value: 'adult', label: 'Adult 16-64', label_ru: 'Взрослый 16-64'},
+              {value: 'adult_16_60', label: 'Adult 16-60', label_ru: 'Взрослый 16-60'},
+              {value: 'adult_16_64', label: 'Adult 16-64', label_ru: 'Взрослый 16-64'},
               {value: 'senior60', label: 'Senior 60+', label_ru: 'Пожилой 60+'},
-              {value: 'senior65', label: 'Senior 65+', label_ru: 'Пожилой 65+'}
+              {value: 'senior65', label: 'Senior 65+', label_ru: 'Пожилой 65+'},
+              {value: 'general', label: 'General Admission', label_ru: 'Общий вход'}
             ];
             
             function addTicketRow(data = null) {
@@ -3372,7 +3479,7 @@
         }
         
         // Настраиваем обработчики сразу
-        setupNavigationHandler();
+        setupUnifiedClickHandler();
         setupBreadcrumbHandler();
         
         // ШАГ 2: Загружаем свежие данные из API в ФОНЕ
