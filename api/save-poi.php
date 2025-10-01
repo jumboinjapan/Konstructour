@@ -27,7 +27,7 @@ if (!$data || !is_array($data)) {
 }
 
 // Валидация обязательных полей
-$required = ['name_ru', 'name_en', 'city_id'];
+$required = ['name_ru', 'name_en'];
 foreach ($required as $field) {
     if (empty($data[$field])) {
         respond(false, ['error' => "Missing required field: $field"], 400);
@@ -39,11 +39,11 @@ try {
     
     // Генерируем ID если это новый POI
     if (empty($data['id'])) {
-        // Получаем максимальный номер POI для города
+        // Получаем максимальный номер POI
         $stmt = $db->getConnection()->prepare("
-            SELECT business_id FROM pois WHERE city_id = ? ORDER BY business_id DESC LIMIT 1
+            SELECT business_id FROM pois ORDER BY business_id DESC LIMIT 1
         ");
-        $stmt->execute([$data['city_id']]);
+        $stmt->execute();
         $lastPoi = $stmt->fetch(PDO::FETCH_ASSOC);
         
         $nextNumber = 1;
