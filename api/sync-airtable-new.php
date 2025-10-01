@@ -102,7 +102,7 @@ try {
     $pc = 0;
     foreach ($pois as $record) {
         $regionId = extractLinkedRecordId($record['fields'], ['Region', 'Регион', 'Regions', 'Регионы']);
-        $cityId = extractLinkedRecordId($record['fields'], ['City', 'Город', 'Cities', 'Города']);
+        $cityId = extractLinkedRecordId($record['fields'], ['City Location', 'City', 'Город', 'Cities', 'Города', 'Location', 'Локация']);
         
         // Безопасное извлечение категории из массива
         $categoryRu = $record['fields']['POI Category (RU)'] ?? null;
