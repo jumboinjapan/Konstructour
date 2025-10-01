@@ -13,7 +13,7 @@ function respond($ok, $data = [], $code = 200) {
 }
 
 $db = new Database();
-$method = $_SERVER['REQUEST_METHOD'];
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action = $_GET['action'] ?? '';
 
 try {
@@ -37,7 +37,21 @@ try {
                     respond(false, ['error' => 'Invalid region ID format. Expected: REG-XXXX'], 400);
                 }
                 
-                $cities = $db->getCitiesByRegion($regionId);
+                // Найдем Airtable ID региона по business_id
+                $regions = $db->getRegions();
+                $regionAirtableId = null;
+                foreach ($regions as $region) {
+                    if ($region['business_id'] === $regionId) {
+                        $regionAirtableId = $region['id'];
+                        break;
+                    }
+                }
+                
+                if (!$regionAirtableId) {
+                    respond(false, ['error' => 'Region not found'], 404);
+                }
+                
+                $cities = $db->getCitiesByRegion($regionAirtableId);
                 respond(true, ['items' => $cities]);
             }
             break;
@@ -54,7 +68,21 @@ try {
                     respond(false, ['error' => 'Invalid city ID format. Expected: CTY-XXXX or LOC-XXXX'], 400);
                 }
                 
-                $pois = $db->getPoisByCity($cityId);
+                // Найдем Airtable ID города по business_id
+                $cities = $db->getAllCities();
+                $cityAirtableId = null;
+                foreach ($cities as $city) {
+                    if ($city['business_id'] === $cityId) {
+                        $cityAirtableId = $city['id'];
+                        break;
+                    }
+                }
+                
+                if (!$cityAirtableId) {
+                    respond(false, ['error' => 'City not found'], 404);
+                }
+                
+                $pois = $db->getPoisByCity($cityAirtableId);
                 respond(true, ['items' => $pois]);
             }
             break;
