@@ -32,7 +32,7 @@ function check_airtable_health() {
 
 // Выполнение синхронизации
 function run_sync() {
-  $url = 'https://www.konstructour.com/api/sync-airtable-new.php';
+  $url = 'https://www.konstructour.com/api/sync-airtable-clean.php';
   $ch = curl_init($url);
   curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
