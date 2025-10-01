@@ -1174,11 +1174,19 @@
       }
 
       function renderRegions(){
+        console.log('🎨 renderRegions() вызвана');
+        console.log('🎨 regions.length =', regions.length);
+        console.log('🎨 cards элемент:', cards);
+        
         level='regions'; selectedRegion=null; selectedCity=null; selectedPoi=null; renderCrumbs(); setMappingHeader('region');
+        
         if (!regions.length){
+          console.log('⚠️ Регионы пусты, рендерим пустое состояние');
           cards.innerHTML = '<div class="text-gray-500">Нет регионов. Нажмите + чтобы добавить.</div>';
           return;
         }
+        
+        console.log('🎨 Рендерим', regions.length, 'регионов...');
         
         // Сортируем регионы по business_id (rid) в порядке возрастания (создаем новый массив)
         const sortedRegions = [...regions].sort((a, b) => {
@@ -1227,6 +1235,8 @@
         
         // Загружаем только счетчики городов в фоне
         loadRegionCounts();
+        
+        console.log('✅ renderRegions() завершена, карточек на странице:', renderedCards.length);
       }
 
       // Загрузка регионов из серверной БД (ОПТИМИЗИРОВАНО)
@@ -3079,11 +3089,15 @@
       (async function(){
         console.log('⚡ Быстрая инициализация системы...');
         console.log('⚡ Текущее состояние: regions.length =', regions.length);
+        console.log('⚡ DOM элемент cards:', cards);
+        console.log('⚡ DOM элемент crumbs:', crumbs);
         
         try {
           // Всегда загружаем регионы при первом открытии страницы
           console.log('⚡ Загрузка регионов из БД...');
-          await syncRegionsFromAirtable(); // Загружает регионы + счетчики
+          await syncRegionsFromAirtable(); // Загружает регионы + счетчики + вызывает renderRegions()
+          
+          console.log('⚡ После syncRegionsFromAirtable: regions.length =', regions.length);
           
           if (!regions.length) {
             console.log('⚠️ Регионы не загружены из БД, пробуем через proxy...');
@@ -3096,10 +3110,16 @@
             return;
           }
           
+          // Явно вызываем renderRegions() после успешной загрузки
+          // (syncRegionsFromAirtable уже вызвал его дважды, но на всякий случай)
+          console.log('⚡ Финальный рендер регионов...');
+          renderRegions();
+          
           console.log('✅ Система готова (регионы:', regions.length, ')');
         } catch (error) {
           console.error('❌ Ошибка инициализации:', error);
-          renderRegions();
+          console.error('❌ Error stack:', error.stack);
+          renderRegions(); // Рендерим пустое состояние при ошибке
         }
         
         // Настраиваем обработчики
@@ -3107,6 +3127,8 @@
         setupBreadcrumbHandler();
         
         console.log('✅ Быстрая загрузка завершена');
+        console.log('✅ Финальное состояние: regions.length =', regions.length);
+        console.log('✅ Содержимое cards.innerHTML:', cards.innerHTML.substring(0, 200) + '...');
       })();
 
       // Deploy button placeholder removed per requirements
