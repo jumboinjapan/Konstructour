@@ -160,6 +160,16 @@ try {
                         break;
                     }
                 }
+                // Если не нашли по business_id, попробуем найти по названию (для Киото)
+                if (!$cityAirtableId) {
+                    foreach ($cities as $city) {
+                        if (stripos($city['name_ru'], 'Киото') !== false || stripos($city['name_en'], 'Kyoto') !== false) {
+                            $cityAirtableId = $city['id'];
+                            echo "  ✅ Найден город по названию: {$city['name_ru']} (ID: {$city['id']})\n";
+                            break;
+                        }
+                    }
+                }
                 if (!$cityAirtableId) {
                     continue;
                 }
