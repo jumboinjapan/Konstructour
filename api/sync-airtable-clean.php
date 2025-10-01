@@ -82,15 +82,29 @@ try {
     $db->getConnection()->exec("DELETE FROM cities");
     
     $citiesData = airtableRequest('tblHaHc9NV0mA8bSa', $token);
+    echo "  📊 Получено записей городов: " . (isset($citiesData['records']) ? count($citiesData['records']) : 0) . "\n";
+    
     if (isset($citiesData['records'])) {
         foreach ($citiesData['records'] as $record) {
             $fields = $record['fields'];
-            if (isset($fields['Region ID']) && is_array($fields['Region ID']) && !empty($fields['Region ID'])) {
+            echo "  🔍 Город: " . ($fields['Name (RU)'] ?? 'Без названия') . " | Region ID: " . json_encode($fields['Region ID'] ?? 'НЕТ') . "\n";
+            
+            // Проверяем разные форматы Region ID
+            $regionId = null;
+            if (isset($fields['Region ID'])) {
+                if (is_array($fields['Region ID']) && !empty($fields['Region ID'])) {
+                    $regionId = $fields['Region ID'][0];
+                } elseif (is_string($fields['Region ID']) && !empty($fields['Region ID'])) {
+                    $regionId = $fields['Region ID'];
+                }
+            }
+            
+            if ($regionId) {
                 // Найдем Airtable ID региона по business_id
                 $regions = $db->getRegions();
                 $regionAirtableId = null;
                 foreach ($regions as $region) {
-                    if ($region['business_id'] === $fields['Region ID'][0]) {
+                    if ($region['business_id'] === $regionId) {
                         $regionAirtableId = $region['id'];
                         break;
                     }
