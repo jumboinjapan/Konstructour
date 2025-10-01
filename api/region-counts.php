@@ -1,12 +1,13 @@
 <?php
 // api/region-counts.php - Быстрая загрузка счетчиков городов и POI для регионов
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/database.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: public, max-age=300'); // Кэш на 5 минут
 
 try {
-  $pdo = getPdo();
+  $db = new Database();
+  $pdo = $db->getConnection();
   
   // Получаем счетчики городов для каждого региона
   $stmt = $pdo->query("
