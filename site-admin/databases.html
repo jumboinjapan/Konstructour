@@ -1038,8 +1038,13 @@
         if (level === 'pois') {
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
           if (selectedRegion) {
+            // Загружаем города если еще не загружены
+            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+              await loadCitiesForRegion(selectedRegion);
+            }
+            
             const list = citiesByRegion[selectedRegion.id] || [];
-          selectedCity = list.find(c=>c.id===state.cityId) || null;
+            selectedCity = list.find(c=>c.id===state.cityId) || null;
             selectedPoi = null;
             renderCrumbs();
             setMappingHeader('poi');
@@ -1049,18 +1054,33 @@
               if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
                 await loadPoisForCity(selectedCity);
               }
+              renderPois(); 
+            } else {
+              console.error('City not found in renderFromState');
+              cards.innerHTML = '<div class="text-center text-red-500 py-12">Город не найден</div>';
             }
+          } else {
+            console.error('Region not found in renderFromState');
+            cards.innerHTML = '<div class="text-center text-red-500 py-12">Регион не найден</div>';
           }
-          renderPois(); 
           return;
         }
         
         if (level === 'poi-details') {
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
           if (selectedRegion) {
+            // Загружаем города если еще не загружены
+            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+              await loadCitiesForRegion(selectedRegion);
+            }
+            
             const listC = citiesByRegion[selectedRegion.id] || [];
             selectedCity = listC.find(c=>c.id===state.cityId) || null;
             if (selectedCity) {
+              // Загружаем POI если еще не загружены
+              if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
+                await loadPoisForCity(selectedCity);
+              }
               const listP = poisByCity[selectedCity.id] || [];
               selectedPoi = listP.find(p=>p.id===state.poiId) || null;
             }
@@ -1074,11 +1094,20 @@
         if (level === 'tickets') {
           selectedRegion = regions.find(r=>r.id===state.regionId) || null;
           if (selectedRegion) {
+            // Загружаем города если еще не загружены
+            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+              await loadCitiesForRegion(selectedRegion);
+            }
+            
             const listC = citiesByRegion[selectedRegion.id] || [];
-          selectedCity = listC.find(c=>c.id===state.cityId) || null;
+            selectedCity = listC.find(c=>c.id===state.cityId) || null;
             if (selectedCity) {
+              // Загружаем POI если еще не загружены
+              if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
+                await loadPoisForCity(selectedCity);
+              }
               const listP = poisByCity[selectedCity.id] || [];
-          selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+              selectedPoi = listP.find(p=>p.id===state.poiId) || null;
             }
           }
           renderCrumbs();
@@ -1302,6 +1331,13 @@
 
       async function renderCities(){
         level='cities'; /* keep selectedCity */ selectedPoi=null; renderCrumbs(); setMappingHeader('city');
+        
+        if (!selectedRegion || !selectedRegion.id) {
+          console.error('renderCities: No selected region');
+          cards.innerHTML = '<div class="text-center text-red-500 py-12">Регион не выбран</div>';
+          return;
+        }
+        
         let list = citiesByRegion[selectedRegion.id] || [];
         
         // Проверяем актуальность данных перед загрузкой
@@ -1366,6 +1402,13 @@
 
       async function renderPois(){
         level='pois'; /* keep selectedPoi */ renderCrumbs(); setMappingHeader('poi');
+        
+        if (!selectedCity || !selectedCity.id) {
+          console.error('renderPois: No selected city');
+          cards.innerHTML = '<div class="text-center text-red-500 py-12">Город не выбран</div>';
+          return;
+        }
+        
         console.log('renderPois called for city:', selectedCity);
         console.log('poisByCity keys:', Object.keys(poisByCity));
         console.log('Looking for POI in poisByCity[' + selectedCity.id + ']:', poisByCity[selectedCity.id]);
@@ -1374,10 +1417,10 @@
         // Проверяем актуальность данных перед загрузкой
         await checkDataFreshness();
         
-        // Если POI не загружены, загружаем их сразу
+        // Если POI не загружены, показываем сообщение
+        // (загрузка должна была произойти в navigationHandler)
         if (list.length === 0) {
-          console.log('POI не загружены, загружаем для города:', selectedCity.name);
-          await loadPoisForCity(selectedCity);
+          console.log('POI list is empty for city:', selectedCity.name);
           list = poisByCity[selectedCity.id] || [];
         }
         
@@ -1485,7 +1528,7 @@
                     </div>
                   </div>
                   
-                  <div class="flex items-center gap-2 ml-3" onclick="event.stopPropagation()">
+                  <div class="flex items-center gap-2 ml-3 poi-actions">
                     <button 
                       data-act="edit-poi" 
                       data-id="${p.id}" 
@@ -1994,8 +2037,9 @@
           }
           
           // Игнорируем клики по кнопкам действий внутри карточек
-          if (e.target.closest('button[data-act]')) {
-            console.log('Click on action button, ignoring');
+          if (e.target.closest('button[data-act]') || e.target.closest('.poi-actions')) {
+            console.log('Click on action button or action container, ignoring');
+            e.stopPropagation();
             return;
           }
           
@@ -2028,17 +2072,44 @@
         if (to==='pois'){
           const list = citiesByRegion[selectedRegion.id] || [];
           selectedCity = list.find(c=>c.id===id) || null;
+          
+          if (!selectedCity) {
+            console.error('City not found for id:', id);
+            return;
+          }
+          
           console.log('Navigating to POIs for city:', selectedCity);
           push('pois', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null) });
-          // Асинхронная загрузка в фоне
+          
+          // Сначала рендерим с loading state
+          level = 'pois';
+          renderCrumbs();
+          setMappingHeader('poi');
+          cards.innerHTML = '<div class="flex items-center justify-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i></div>';
+          
+          // Загружаем данные и рендерим
           loadPoisForCity(selectedCity).then(() => {
-          renderPois();
+            renderPois();
+          }).catch(err => {
+            console.error('Error loading POI:', err);
+            cards.innerHTML = '<div class="text-center text-red-500 py-12">Ошибка загрузки POI. Попробуйте еще раз.</div>';
           });
           return;
         }
         if (to==='poi-details'){
+          if (!selectedCity || !selectedCity.id) {
+            console.error('No city selected when trying to view POI details');
+            return;
+          }
+          
           const list = poisByCity[selectedCity.id] || [];
           selectedPoi = list.find(p=>p.id===id) || null;
+          
+          if (!selectedPoi) {
+            console.error('POI not found for id:', id);
+            return;
+          }
+          
           console.log('Navigating to POI details:', selectedPoi);
           push('poi-details', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
           renderPOIDetails();
