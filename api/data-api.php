@@ -6,6 +6,7 @@ header('Cache-Control: no-store');
 require_once 'database.php';
 require_once 'filter-constants.php';
 require_once 'airtable-data-source.php';
+require_once 'strict-no-test-data.php';
 
 function respond($ok, $data = [], $code = 200) {
     http_response_code($code);
@@ -19,13 +20,7 @@ $action = $_GET['action'] ?? '';
 
 try {
     // Проверяем доступность Airtable
-    try {
-        $airtable = new AirtableDataSource();
-    } catch (Exception $e) {
-        // Если токен недоступен, используем fallback для локальной разработки
-        require_once 'local-dev-fallback.php';
-        exit;
-    }
+    $airtable = new AirtableDataSource();
     
     switch ($action) {
         case 'regions':

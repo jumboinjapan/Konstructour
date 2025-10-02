@@ -20,7 +20,7 @@ class AirtableDataSource {
         if ($token) return $token;
         
         // Если токен недоступен, выбрасываем исключение
-        throw new Exception('Airtable token not configured. Token must be set via GitHub Secrets (AIRTABLE_TOKEN environment variable). Local development uses fallback demo data.');
+        throw new Exception('Airtable token not configured. Token must be set via GitHub Secrets (AIRTABLE_TOKEN environment variable).');
     }
     
     private function airtableRequest($tableId, $params = []) {
