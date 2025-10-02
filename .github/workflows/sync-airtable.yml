@@ -33,9 +33,20 @@ jobs:
         echo "🔄 Starting Airtable sync..."
         
         # Запускаем синхронизацию на сервере
-        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        SYNC_RESULT=$(ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           cd ${{ secrets.SERVER_PATH }} &&
-          php api/sync-real-airtable.php
-        "
+          php api/sync-airtable-filtering.php
+        ")
         
-        echo "✅ Airtable sync completed!"
+        # Проверяем результат синхронизации
+        echo "Sync result: $SYNC_RESULT"
+        
+        # Валидируем JSON ответ
+        if echo "$SYNC_RESULT" | jq -e '.ok == true' > /dev/null; then
+          echo "✅ Airtable sync completed successfully!"
+          echo "Stats: $(echo "$SYNC_RESULT" | jq '.stats')"
+        else
+          echo "❌ Airtable sync failed!"
+          echo "Error: $(echo "$SYNC_RESULT" | jq '.error // "Unknown error"')"
+          exit 1
+        fi
