@@ -1805,10 +1805,10 @@
           if (j.ok && j.stats) {
             // Обновляем счетчики городов для всех регионов
             regions.forEach(region => {
-              const cityCount = j.stats.cities_by_region[region.id] || 0;
+              const cityCount = j.stats.cities_by_region[region.business_id] || 0;
               // Обновляем счетчик в UI если мы на уровне регионов
               if (level === 'regions') {
-                const regionElement = document.querySelector(`[data-go="cities"][data-id="${region.id}"]`);
+                const regionElement = document.querySelector(`[data-go="cities"][data-id="${region.business_id}"]`);
                 if (regionElement) {
                   const countElement = regionElement.querySelector('.text-xs.font-medium');
                   if (countElement) {
