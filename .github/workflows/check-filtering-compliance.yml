@@ -30,9 +30,15 @@ jobs:
           exit 1
         fi
         
-        # Проверяем, что data-api.php не содержит прямых обращений к Airtable
-        if grep -q "AirtableDataSource\|getRegionsFromAirtable\|api.airtable.com" api/data-api.php; then
-          echo "❌ data-api.php содержит прямые обращения к Airtable"
+        # Проверяем, что data-api.php использует правильную архитектуру (кэш + Airtable)
+        if ! grep -q "getCachedRegions\|cacheRegions" api/data-api.php; then
+          echo "❌ data-api.php не использует кэширование"
+          exit 1
+        fi
+        
+        # Проверяем, что используется SecretManager
+        if ! grep -q "secret-manager.php" api/data-api.php; then
+          echo "❌ data-api.php не использует SecretManager"
           exit 1
         fi
         
@@ -40,6 +46,53 @@ jobs:
         if [ ! -f "api/enforce-filtering.php" ]; then
           echo "❌ Отсутствует api/enforce-filtering.php"
           exit 1
+        fi
+        
+        # Проверяем через PHP API (если доступен)
+        echo "🔍 Проверка через PHP API..."
+        if command -v php >/dev/null 2>&1; then
+          # Создаем простой тест для проверки API
+          cat > test_compliance.php << 'EOF'
+<?php
+// Простая проверка API без веб-сервера
+try {
+    // Проверяем, что файлы существуют
+    if (!file_exists('api/enforce-filtering.php')) {
+        echo "❌ enforce-filtering.php не найден\n";
+        exit(1);
+    }
+    
+    if (!file_exists('api/secret-manager.php')) {
+        echo "❌ secret-manager.php не найден\n";
+        exit(1);
+    }
+    
+    if (!file_exists('api/data-api.php')) {
+        echo "❌ data-api.php не найден\n";
+        exit(1);
+    }
+    
+    // Проверяем содержимое data-api.php
+    $dataApiContent = file_get_contents('api/data-api.php');
+    if (strpos($dataApiContent, 'getCachedRegions') === false) {
+        echo "❌ data-api.php не содержит getCachedRegions\n";
+        exit(1);
+    }
+    
+    if (strpos($dataApiContent, 'secret-manager.php') === false) {
+        echo "❌ data-api.php не содержит secret-manager.php\n";
+        exit(1);
+    }
+    
+    echo "✅ PHP API проверки пройдены\n";
+} catch (Exception $e) {
+    echo "❌ Ошибка PHP API: " . $e->getMessage() . "\n";
+    exit(1);
+}
+EOF
+          
+          php test_compliance.php
+          rm test_compliance.php
         fi
         
         echo "✅ Все проверки пройдены успешно!"
