@@ -437,7 +437,7 @@
         console.log('\n=== ГОРОДА ПО РЕГИОНАМ ===');
         if (window.citiesByRegion) {
           Object.keys(window.citiesByRegion).forEach(regionId => {
-            const region = window.regions?.find(r => r.id === regionId);
+            const region = window.regions?.find(r => r.business_id === regionId);
             console.log(`Регион ${region?.name || regionId}:`);
             window.citiesByRegion[regionId].forEach((city, idx) => {
               console.log(`  Город ${idx + 1}:`, {
@@ -455,7 +455,7 @@
         console.log('\n=== POI ПО ГОРОДАМ ===');
         if (window.poisByCity) {
           Object.keys(window.poisByCity).forEach(cityId => {
-            const city = Object.values(window.citiesByRegion || {}).flat().find(c => c.id === cityId);
+            const city = Object.values(window.citiesByRegion || {}).flat().find(c => c.business_id === cityId);
             console.log(`Город ${city?.name || cityId}:`);
             window.poisByCity[cityId].forEach((poi, idx) => {
               console.log(`  POI ${idx + 1}:`, {
@@ -574,7 +574,7 @@
       // Обновление конкретного региона
       window.refreshRegionData = async function(regionId) {
         console.log('Обновление данных региона:', regionId);
-        const region = regions.find(r => r.id === regionId);
+        const region = regions.find(r => r.business_id === regionId);
         if (!region) return;
         
         // Очищаем кэш для этого региона
@@ -589,7 +589,7 @@
       // Обновление конкретного города
       window.refreshCityData = async function(cityId) {
         console.log('Обновление данных города:', cityId);
-        const city = Object.values(citiesByRegion).flat().find(c => c.id === cityId);
+        const city = Object.values(citiesByRegion).flat().find(c => c.business_id === cityId);
         if (!city) return;
         
         // Очищаем кэш для этого города
@@ -615,7 +615,7 @@
         
         // Перезагружаем POI для всех городов
         for (const region of regions) {
-          const cities = citiesByRegion[region.id] || [];
+          const cities = citiesByRegion[region.business_id] || [];
           for (const city of cities) {
             await loadPoisForCity(city);
           }
@@ -1056,7 +1056,7 @@
         }
         
         if (level === 'cities') {
-          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          selectedRegion = regions.find(r=>r.business_id===state.regionId) || null;
           selectedCity = null;
           selectedPoi = null;
           renderCrumbs();
@@ -1064,7 +1064,7 @@
           
           if (selectedRegion) {
             // Загружаем города если еще не загружены
-            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+            if (!citiesByRegion[selectedRegion.business_id] || citiesByRegion[selectedRegion.business_id].length === 0) {
               await loadCitiesForRegion(selectedRegion);
             }
             await preloadPoisCountsForRegion(selectedRegion);
@@ -1074,22 +1074,22 @@
         }
         
         if (level === 'pois') {
-          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          selectedRegion = regions.find(r=>r.business_id===state.regionId) || null;
           if (selectedRegion) {
             // Загружаем города если еще не загружены
-            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+            if (!citiesByRegion[selectedRegion.business_id] || citiesByRegion[selectedRegion.business_id].length === 0) {
               await loadCitiesForRegion(selectedRegion);
             }
             
-            const list = citiesByRegion[selectedRegion.id] || [];
-          selectedCity = list.find(c=>c.id===state.cityId) || null;
+            const list = citiesByRegion[selectedRegion.business_id] || [];
+          selectedCity = list.find(c=>c.business_id===state.cityId) || null;
             selectedPoi = null;
             renderCrumbs();
             setMappingHeader('poi');
             
             if (selectedCity) {
               // Загружаем POI если еще не загружены
-              if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
+              if (!poisByCity[selectedCity.business_id] || poisByCity[selectedCity.business_id].length === 0) {
                 await loadPoisForCity(selectedCity);
               }
               renderPois(); 
@@ -1107,15 +1107,15 @@
         // poi-details level удалён - перенаправляем на список POI
         if (level === 'poi-details') {
           level = 'pois';
-          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          selectedRegion = regions.find(r=>r.business_id===state.regionId) || null;
           if (selectedRegion) {
-            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+            if (!citiesByRegion[selectedRegion.business_id] || citiesByRegion[selectedRegion.business_id].length === 0) {
               await loadCitiesForRegion(selectedRegion);
             }
-            const listC = citiesByRegion[selectedRegion.id] || [];
-            selectedCity = listC.find(c=>c.id===state.cityId) || null;
+            const listC = citiesByRegion[selectedRegion.business_id] || [];
+            selectedCity = listC.find(c=>c.business_id===state.cityId) || null;
             if (selectedCity) {
-              if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
+              if (!poisByCity[selectedCity.business_id] || poisByCity[selectedCity.business_id].length === 0) {
                 await loadPoisForCity(selectedCity);
             }
               renderPois();
@@ -1125,22 +1125,22 @@
         }
         
         if (level === 'tickets') {
-          selectedRegion = regions.find(r=>r.id===state.regionId) || null;
+          selectedRegion = regions.find(r=>r.business_id===state.regionId) || null;
           if (selectedRegion) {
             // Загружаем города если еще не загружены
-            if (!citiesByRegion[selectedRegion.id] || citiesByRegion[selectedRegion.id].length === 0) {
+            if (!citiesByRegion[selectedRegion.business_id] || citiesByRegion[selectedRegion.business_id].length === 0) {
               await loadCitiesForRegion(selectedRegion);
             }
             
-            const listC = citiesByRegion[selectedRegion.id] || [];
-          selectedCity = listC.find(c=>c.id===state.cityId) || null;
+            const listC = citiesByRegion[selectedRegion.business_id] || [];
+          selectedCity = listC.find(c=>c.business_id===state.cityId) || null;
             if (selectedCity) {
               // Загружаем POI если еще не загружены
-              if (!poisByCity[selectedCity.id] || poisByCity[selectedCity.id].length === 0) {
+              if (!poisByCity[selectedCity.business_id] || poisByCity[selectedCity.business_id].length === 0) {
                 await loadPoisForCity(selectedCity);
               }
-              const listP = poisByCity[selectedCity.id] || [];
-          selectedPoi = listP.find(p=>p.id===state.poiId) || null;
+              const listP = poisByCity[selectedCity.business_id] || [];
+          selectedPoi = listP.find(p=>p.business_id===state.poiId) || null;
             }
           }
           renderCrumbs();
@@ -1256,7 +1256,7 @@
                 </div>\
               </div>\
             </div>';
-          return '<a href="#" role="button" class="block fade-in" data-go="cities" data-id="'+r.id+'" style="animation-delay: '+(idx*50)+'ms">'+card('', inner)+'</a>';
+          return '<a href="#" role="button" class="block fade-in" data-go="cities" data-id="'+r.business_id+'" style="animation-delay: '+(idx*50)+'ms">'+card('', inner)+'</a>';
         }).join('');
         
         console.log('Rendering regions HTML:', regionsHTML.substring(0, 200) + '...');
@@ -1393,7 +1393,7 @@
           return;
         }
         
-        let list = citiesByRegion[selectedRegion.id] || [];
+        let list = citiesByRegion[selectedRegion.business_id] || [];
         
         // Проверяем актуальность данных перед загрузкой
         await checkDataFreshness();
@@ -1402,7 +1402,7 @@
         if (list.length === 0) {
           console.log('Города не загружены, загружаем для региона:', selectedRegion.name);
           await loadCitiesForRegion(selectedRegion);
-          list = citiesByRegion[selectedRegion.id] || [];
+          list = citiesByRegion[selectedRegion.business_id] || [];
         }
         
         // Загружаем только счетчики POI для городов в фоне
@@ -1426,14 +1426,14 @@
         });
         
         // Если список пуст — показываем кнопку добавления через ту же +
-        function findCityNameById(id){ const x=(sortedCities||[]).find(v=>v.id===id); return x?x.name:''; }
+        function findCityNameById(id){ const x=(sortedCities||[]).find(v=>v.business_id===id); return x?x.name:''; }
         cards.innerHTML = sortedCities.map(c=>{
-          const count = (poisByCity[c.id]||[]).length;
-          console.log(`City ${c.name} (${c.id}) pill count: ${count}, poisByCity[${c.id}]:`, poisByCity[c.id]);
+          const count = (poisByCity[c.business_id]||[]).length;
+          console.log(`City ${c.name} (${c.business_id}) pill count: ${count}, poisByCity[${c.business_id}]:`, poisByCity[c.business_id]);
           const inlineActions = '<div class="flex items-center gap-2 opacity-80">'+
               (c.code ? '<span class="ml-2 px-2 py-0.5 text-xs rounded border bg-gray-50 text-gray-600">'+c.code+'</span>' : '')+
-              '<button data-act="edit-city" data-id="'+c.id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
-              '<button data-act="del-city" data-id="'+c.id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
+              '<button data-act="edit-city" data-id="'+c.business_id+'" title="Редактировать" class="text-gray-600 hover:text-gray-900"><i class="fas fa-pen"></i></button>'+
+              '<button data-act="del-city" data-id="'+c.business_id+'" title="Удалить" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>'+
             '</div>';
           const inner = '<div class="flex items-center justify-between">\
               <div class="flex items-center gap-2">\
@@ -1448,7 +1448,7 @@
                 </div>\
               </div>\
             </div>';
-          return '<div class="cursor-pointer" data-go="pois" data-id="'+c.id+'">'+card('', inner)+'</div>';
+          return '<div class="cursor-pointer" data-go="pois" data-id="'+c.business_id+'">'+card('', inner)+'</div>';
         }).join('') || '<div class="text-gray-500">Нет городов. Нажмите + чтобы добавить.</div>';
         
         // Переустанавливаем обработчик кликов после рендеринга
@@ -1458,7 +1458,7 @@
       async function renderPois(){
         level='pois'; /* keep selectedPoi */ renderCrumbs(); setMappingHeader('poi');
         
-        if (!selectedCity || !selectedCity.id) {
+        if (!selectedCity || !selectedCity.business_id) {
           console.error('renderPois: No selected city');
           cards.innerHTML = '<div class="text-center text-red-500 py-12">Город не выбран</div>';
           return;
@@ -1469,8 +1469,8 @@
         
         console.log('renderPois called for city:', selectedCity);
         console.log('poisByCity keys:', Object.keys(poisByCity));
-        console.log('Looking for POI in poisByCity[' + selectedCity.id + ']:', poisByCity[selectedCity.id]);
-        let list = poisByCity[selectedCity.id] || [];
+        console.log('Looking for POI in poisByCity[' + selectedCity.id + ']:', poisByCity[selectedCity.business_id]);
+        let list = poisByCity[selectedCity.business_id] || [];
         
         // Проверяем актуальность данных перед загрузкой
         await checkDataFreshness();
@@ -1479,7 +1479,7 @@
         if (list.length === 0) {
           console.log('POI list is empty for city:', selectedCity.name, '- loading...');
           await loadPoisForCity(selectedCity);
-          list = poisByCity[selectedCity.id] || [];
+          list = poisByCity[selectedCity.business_id] || [];
         }
         
         console.log('POI list for city:', list);
@@ -1884,10 +1884,10 @@
             return getNumericId(a.id) - getNumericId(b.id);
           });
           
-          citiesByRegion[region.id] = sortedCities;
+          citiesByRegion[region.business_id] = sortedCities;
           console.log(`Загружено городов для ${region.name}:`, cities.length);
         }catch(e){ 
-          citiesByRegion[region.id] = []; 
+          citiesByRegion[region.business_id] = []; 
           console.warn('Ошибка загрузки городов:', e);
         }
       }
@@ -1896,11 +1896,11 @@
         console.log('=== LOAD POIS FOR CITY DEBUG ===');
         console.log('City:', city.name, 'ID:', city.id);
         console.log('Current poisByCity keys:', Object.keys(poisByCity));
-        console.log('Current poisByCity[city.id]:', poisByCity[city.id]);
+        console.log('Current poisByCity[city.business_id]:', poisByCity[city.business_id]);
         
         // Если POI уже загружены для этого города и не принудительное обновление, не перезагружаем
-        if (!forceRefresh && poisByCity[city.id] && poisByCity[city.id].length > 0) {
-          console.log('POI already loaded for city:', city.name, 'count:', poisByCity[city.id].length);
+        if (!forceRefresh && poisByCity[city.business_id] && poisByCity[city.business_id].length > 0) {
+          console.log('POI already loaded for city:', city.name, 'count:', poisByCity[city.business_id].length);
           return;
         }
         
@@ -1936,18 +1936,18 @@
             return getNumericId(a.id) - getNumericId(b.id);
           });
           
-          poisByCity[city.id] = sortedPois;
+          poisByCity[city.business_id] = sortedPois;
           console.log(`Загружено POI для ${city.name}:`, pois.length);
         } catch(e){ 
           console.error('Error loading POIs for city:', city.name, e);
-          poisByCity[city.id] = []; 
+          poisByCity[city.business_id] = []; 
         }
       }
 
         // Предзагрузка POI для региона - загружаем параллельно и неблокирующе
       async function preloadPoisCountsForRegion(region){
         try{
-          const list = citiesByRegion[region.id] || [];
+          const list = citiesByRegion[region.business_id] || [];
           if (!list.length) return;
           
           // Полная очистка poisByCity для предотвращения "перетекания" POI между регионами
@@ -1957,7 +1957,7 @@
           
           // Инициализируем пустые массивы для всех городов текущего региона
           list.forEach(city => {
-            poisByCity[city.id] = [];
+            poisByCity[city.business_id] = [];
           });
             
           console.log('Loading POI for region:', region.name, 'Total cities:', list.length);
@@ -1992,13 +1992,13 @@
                 return getNumericId(a.id) - getNumericId(b.id);
               });
               
-              poisByCity[city.id] = sortedPois;
+              poisByCity[city.business_id] = sortedPois;
               console.log(`Loaded ${pois.length} POI for city ${city.name}`);
               
               // Обновляем UI после загрузки каждого города
               if (level === 'cities') {
                 // Обновляем только счетчик для этого города
-                const cityElement = document.querySelector(`[data-go="pois"][data-id="${city.id}"]`);
+                const cityElement = document.querySelector(`[data-go="pois"][data-id="${city.business_id}"]`);
                 if (cityElement) {
                   const countElement = cityElement.querySelector('.text-xs.font-medium');
                   if (countElement) {
@@ -2010,7 +2010,7 @@
               return pois.length;
             } catch (e) {
               console.warn(`Error loading POI for city ${city.name}:`, e);
-              poisByCity[city.id] = [];
+              poisByCity[city.business_id] = [];
               return 0;
             }
           });
@@ -2175,8 +2175,8 @@
       async function navigateToCities(regionId) {
         console.log('Navigating to cities for region:', regionId);
         
-        // Проверяем что регион существует
-        const region = regions.find(r => r.id === regionId);
+        // Проверяем что регион существует (ищем по business_id)
+        const region = regions.find(r => r.business_id === regionId);
         if (!region) {
           console.error('Region not found:', regionId);
           showErrorState('Регион не найден');
@@ -2198,12 +2198,12 @@
         
         try {
           // Загружаем города если нужно
-          if (!citiesByRegion[regionId] || citiesByRegion[regionId].length === 0) {
+          if (!citiesByRegion[region.business_id] || citiesByRegion[region.business_id].length === 0) {
             await loadCitiesForRegion(region);
           }
           
           // Загружаем счетчики POI в фоне
-          loadCityCounts(regionId);
+          loadCityCounts(region.business_id);
           
           // Рендерим города
           renderCities();
@@ -2229,7 +2229,7 @@
         }
         
         // Проверяем что город существует
-        const city = citiesByRegion[selectedRegion.id]?.find(c => c.id === cityId);
+        const city = citiesByRegion[selectedRegion.business_id]?.find(c => c.business_id === cityId);
         if (!city) {
           console.error('City not found:', cityId);
           showErrorState('Город не найден');
@@ -2278,7 +2278,7 @@
         }
         
         // Проверяем что POI существует
-        const poi = poisByCity[selectedCity.id]?.find(p => p.id === poiId);
+        const poi = poisByCity[selectedCity.business_id]?.find(p => p.business_id === poiId);
         if (!poi) {
           console.error('POI not found:', poiId);
           showErrorState('POI не найден');
@@ -2382,7 +2382,7 @@
         const act = btn.getAttribute('data-act');
         const id = btn.getAttribute('data-id');
         if (act==='edit-region'){
-          const r = regions.find(x=>x.id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){
+          const r = regions.find(x=>x.business_id===id); if(!r) return; const n=prompt('Название региона:', r.name); if(n){
             const old = r.name; r.name=n.trim(); renderRegions();
             try{
               await fetch('/api/db-sync.php',{
@@ -2393,11 +2393,11 @@
             }catch(e){ r.name = old; renderRegions(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
           }
         } else if (act==='del-region'){
-          const r = regions.find(x=>x.id===id);
-          regions = regions.filter(x=>x.id!==id); delete citiesByRegion[id]; renderRegions();
+          const r = regions.find(x=>x.business_id===id);
+          regions = regions.filter(x=>x.business_id!==id); delete citiesByRegion[selectedRegion.business_id]; renderRegions();
           if (r) deleteRegionOnServer(r);
         } else if (act==='edit-city'){
-          const list = citiesByRegion[selectedRegion.id]||[]; const c=list.find(x=>x.id===id); if(!c) return; const n=prompt('Название города/локации:', c.name); if(n){
+          const list = citiesByRegion[selectedRegion.business_id]||[]; const c=list.find(x=>x.business_id===id); if(!c) return; const n=prompt('Название города/локации:', c.name); if(n){
             const old=c.name; c.name=n.trim(); await renderCities();
             try{
               await fetch('/api/db-sync.php',{
@@ -2408,11 +2408,11 @@
             }catch(e){ c.name=old; await renderCities(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
           }
         } else if (act==='del-city'){
-          const list = citiesByRegion[selectedRegion.id]||[]; citiesByRegion[selectedRegion.id] = list.filter(x=>x.id!==id); delete poisByCity[id]; await renderCities();
+          const list = citiesByRegion[selectedRegion.business_id]||[]; citiesByRegion[selectedRegion.business_id] = list.filter(x=>x.business_id!==id); delete poisByCity[selectedCity.business_id]; await renderCities();
         } else if (act==='edit-poi'){
             // Открываем форму редактирования POI
-            const list = poisByCity[selectedCity.id]||[];
-            const poi = list.find(x=>x.id===id);
+            const list = poisByCity[selectedCity.business_id]||[];
+            const poi = list.find(x=>x.business_id===id);
             if (!poi) return;
             
             const formData = await openCreatePOIModal(poi);
@@ -2503,18 +2503,18 @@
             return;
         } else if (act==='view-tickets'){
           // Переходим к билетам POI
-          const list = poisByCity[selectedCity.id]||[];
-          selectedPoi = list.find(x=>x.id===id) || null;
+          const list = poisByCity[selectedCity.business_id]||[];
+          selectedPoi = list.find(x=>x.business_id===id) || null;
           if (selectedPoi) {
-            push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
+            push('tickets', { regionId: (selectedRegion ? selectedRegion.business_id : null), cityId: (selectedCity ? selectedCity.business_id : null), poiId: (selectedPoi ? selectedPoi.business_id : null) });
             renderTickets();
           }
         } else if (act==='del-poi'){
-          const list = poisByCity[selectedCity.id]||[]; poisByCity[selectedCity.id] = list.filter(x=>x.id!==id); delete ticketsByPoi[id]; await renderPois();
+          const list = poisByCity[selectedCity.business_id]||[]; poisByCity[selectedCity.business_id] = list.filter(x=>x.business_id!==id); delete ticketsByPoi[selectedPoi.business_id]; await renderPois();
         } else if (act==='edit-ticket'){
-          const list = ticketsByPoi[selectedPoi.id]||[]; const t = list.find(x=>x.id===id); if(!t) return; const c=prompt('Категория:', t.category)||t.category; const p=prompt('Цена (¥):', String(t.price))||String(t.price); const n=prompt('Примечание:', t.note||'')||t.note; t.category=c.trim(); t.price=parseInt(p,10)||t.price; t.note=n.trim(); renderTickets();
+          const list = ticketsByPoi[selectedPoi.business_id]||[]; const t = list.find(x=>x.business_id===id); if(!t) return; const c=prompt('Категория:', t.category)||t.category; const p=prompt('Цена (¥):', String(t.price))||String(t.price); const n=prompt('Примечание:', t.note||'')||t.note; t.category=c.trim(); t.price=parseInt(p,10)||t.price; t.note=n.trim(); renderTickets();
         } else if (act==='del-ticket'){
-          const list = ticketsByPoi[selectedPoi.id]||[]; ticketsByPoi[selectedPoi.id] = list.filter(x=>x.id!==id); renderTickets();
+          const list = ticketsByPoi[selectedPoi.business_id]||[]; ticketsByPoi[selectedPoi.business_id] = list.filter(x=>x.business_id!==id); renderTickets();
         }
       });
 
@@ -2567,16 +2567,16 @@
         document.querySelector('.fixed')?.remove();
         
         // Переходим к билетам
-        const list = poisByCity[selectedCity.id] || [];
-        selectedPoi = list.find(p=>p.id===poiId) || null;
-        push('tickets', { regionId: (selectedRegion ? selectedRegion.id : null), cityId: (selectedCity ? selectedCity.id : null), poiId: (selectedPoi ? selectedPoi.id : null) });
+        const list = poisByCity[selectedCity.business_id] || [];
+        selectedPoi = list.find(p=>p.business_id===poiId) || null;
+        push('tickets', { regionId: (selectedRegion ? selectedRegion.business_id : null), cityId: (selectedCity ? selectedCity.business_id : null), poiId: (selectedPoi ? selectedPoi.business_id : null) });
         renderTickets();
       };
       
       // Функция для сохранения записи POI (экспорт в JSON)
       window.savePOIRecord = function(poiId) {
-        const list = poisByCity[selectedCity.id] || [];
-        const poi = list.find(p=>p.id===poiId) || null;
+        const list = poisByCity[selectedCity.business_id] || [];
+        const poi = list.find(p=>p.business_id===poiId) || null;
         if (!poi) return;
         
         // Создаем объект для экспорта
@@ -3150,7 +3150,7 @@
             
             try {
               // Генерируем ID для нового POI в формате POI-00000x
-          const list = poisByCity[selectedCity.id] || (poisByCity[selectedCity.id]=[]);
+          const list = poisByCity[selectedCity.business_id] || (poisByCity[selectedCity.business_id]=[]);
               const nextNumber = list.length + 1;
               const id = 'POI-' + String(nextNumber).padStart(6, '0');
               
@@ -3262,8 +3262,8 @@
             } catch(e) {
               alert('Не удалось сохранить POI: ' + (e.message || 'Неизвестная ошибка'));
               // Откатываем изменения
-              const list = poisByCity[selectedCity.id] || [];
-              poisByCity[selectedCity.id] = list.filter(p => p.id !== id);
+              const list = poisByCity[selectedCity.business_id] || [];
+              poisByCity[selectedCity.business_id] = list.filter(p => p.id !== id);
               await renderPois();
             }
         } else if (level==='tickets'){
@@ -3347,17 +3347,17 @@
               // Перезагружаем города для всех регионов
               for (const region of regions) {
                 await loadCitiesForRegion(region, true);
-                const cities = citiesByRegion[region.id] || [];
+                const cities = citiesByRegion[region.business_id] || [];
                 console.log(`✅ Города для ${region.name}: ${cities.length}`);
               }
               
               // Перезагружаем POI для всех городов
               let totalPOI = 0;
               for (const region of regions) {
-                const cities = citiesByRegion[region.id] || [];
+                const cities = citiesByRegion[region.business_id] || [];
                 for (const city of cities) {
                   await loadPoisForCity(city, true);
-                  const poiCount = poisByCity[city.id]?.length || 0;
+                  const poiCount = poisByCity[city.business_id]?.length || 0;
                   totalPOI += poiCount;
                 }
               }
@@ -3431,7 +3431,7 @@
               await syncRegionsFromAirtable();
               for (const region of regions) {
                 await loadCitiesForRegion(region);
-                const cities = citiesByRegion[region.id] || [];
+                const cities = citiesByRegion[region.business_id] || [];
                 for (const city of cities) {
                   await loadPoisForCity(city);
                 }
@@ -3632,7 +3632,7 @@
           items = items.filter(r=>r.id !== id);
           render();
         } else if (action === 'edit'){
-          const it = items.find(x=>x.id===id);
+          const it = items.find(x=>x.business_id===id);
           if (!it) return;
           const newName = prompt('Новое название:', it.name) || it.name;
           const newType = prompt('Тип записи (Город|Локация):', it.type) || it.type;
@@ -3745,7 +3745,7 @@
           if (selectedPoiId === id) selectedPoiId = '';
           render();
         } else if (action === 'edit'){
-          const it = items.find(x=>x.id===id);
+          const it = items.find(x=>x.business_id===id);
           if (!it) return;
           const newName = prompt('Новое название:', it.name) || it.name;
           const newType = prompt('Тип объекта:', it.type) || it.type;
@@ -3766,9 +3766,9 @@
 
       function updateTicketsPanel(){
         if (!ticketsTbody || !ticketsTitle) return;
-        const poi = items.find(x=>x.id===selectedPoiId);
+        const poi = items.find(x=>x.business_id===selectedPoiId);
         ticketsTitle.textContent = poi ? poi.name : '— не выбран —';
-        const list = poi ? ensureArr(poi.id) : [];
+        const list = poi ? ensureArr(poi.business_id) : [];
         ticketsTbody.innerHTML = '';
         if (!poi){
           const tr = document.createElement('tr');
@@ -3823,10 +3823,10 @@
         const id = btn.getAttribute('data-id');
         const arr = ensureArr(selectedPoiId);
         if (action==='t-delete'){
-          const idx = arr.findIndex(x=>x.id===id);
+          const idx = arr.findIndex(x=>x.business_id===id);
           if (idx>=0){ arr.splice(idx,1); updateTicketsPanel(); }
         } else if (action==='t-edit'){
-          const t = arr.find(x=>x.id===id); if (!t) return;
+          const t = arr.find(x=>x.business_id===id); if (!t) return;
           const newCategory = prompt('Категория:', t.category) || t.category;
           const newPriceStr = prompt('Цена (¥):', String(t.price)) || String(t.price);
           const newNote = prompt('Примечание:', t.note||'') || t.note;
