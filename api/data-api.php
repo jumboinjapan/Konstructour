@@ -1,11 +1,10 @@
 <?php
-// api/airtable-api.php
-// API который работает ТОЛЬКО с Airtable согласно Filtering.md
-
+// Data API for admin panel
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-require_once 'airtable-data-source.php';
+require_once 'database.php';
+require_once 'filter-constants.php';
 
 function respond($ok, $data = [], $code = 200) {
     http_response_code($code);
@@ -13,142 +12,131 @@ function respond($ok, $data = [], $code = 200) {
     exit;
 }
 
+$db = new Database();
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$action = $_GET['action'] ?? '';
+
 try {
-    $airtable = new AirtableDataSource();
-    
-    // Проверяем доступность Airtable
-    if (!$airtable->isAirtableAvailable()) {
-        respond(false, [
-            'error' => 'Airtable not configured',
-            'message' => 'Airtable token not found. Configure AIRTABLE_TOKEN environment variable or secret file.'
-        ], 503);
-    }
-    
-    if (!$airtable->testConnection()) {
-        respond(false, [
-            'error' => 'Airtable connection failed',
-            'message' => 'Cannot connect to Airtable. Check token and network.'
-        ], 503);
-    }
-    
-    $action = $_GET['action'] ?? '';
-    
     switch ($action) {
         case 'regions':
-            $regions = $airtable->getRegionsFromAirtable();
-            $processedRegions = [];
-            
-            foreach ($regions as $record) {
-                $fields = $record['fields'] ?? [];
-                $businessId = $fields['REGION ID'] ?? null;
-                
-                if (!$businessId || !preg_match('/^REG-\d+$/', $businessId)) {
-                    continue; // Пропускаем записи без корректного business_id
-                }
-                
-                $processedRegions[] = [
-                    'id' => $record['id'],
-                    'business_id' => $businessId,
-                    'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
-                    'name_en' => $fields['Name (EN)'] ?? 'Unknown'
-                ];
+            if ($method === 'GET') {
+                $regions = $db->getValidRegions();
+                respond(true, ['items' => $regions]);
             }
-            
-            respond(true, ['items' => $processedRegions]);
             break;
             
         case 'cities':
-            $regionId = $_GET['region_id'] ?? '';
-            if (!$regionId) {
-                respond(false, ['error' => 'Region ID required'], 400);
-            }
-            
-            if (!preg_match('/^REG-\d+$/', $regionId)) {
-                respond(false, ['error' => 'Invalid region ID format'], 400);
-            }
-            
-            $cities = $airtable->getCitiesFromAirtable();
-            $processedCities = [];
-            
-            foreach ($cities as $record) {
-                $fields = $record['fields'] ?? [];
-                $businessId = $fields['CITY ID'] ?? null;
-                $regionBusinessId = $fields['Region ID'] ?? null;
-                
-                if (!$businessId || !preg_match('/^(CTY|LOC)-\d+$/', $businessId)) {
-                    continue;
+            if ($method === 'GET') {
+                $regionId = $_GET['region_id'] ?? '';
+                if (!$regionId) {
+                    respond(false, ['error' => 'Region ID required'], 400);
                 }
                 
-                if ($regionBusinessId !== $regionId) {
-                    continue; // Фильтруем по региону
+                // ЖЕСТКАЯ ВАЛИДАЦИЯ: проверяем формат region_id
+                if (!validateBusinessId($regionId, 'region')) {
+                    respond(false, ['error' => 'Invalid region ID format. Expected: REG-XXXX'], 400);
                 }
                 
-                $processedCities[] = [
-                    'id' => $record['id'],
-                    'business_id' => $businessId,
-                    'name_ru' => $fields['Name (RU)'] ?? 'Неизвестно',
-                    'name_en' => $fields['Name (EN)'] ?? 'Unknown',
-                    'region_id' => $regionBusinessId
-                ];
+                // Найдем Airtable ID региона по business_id
+                $regions = $db->getRegions();
+                $regionAirtableId = null;
+                foreach ($regions as $region) {
+                    if ($region['business_id'] === $regionId) {
+                        $regionAirtableId = $region['id'];
+                        break;
+                    }
+                }
+                
+                if (!$regionAirtableId) {
+                    respond(false, ['error' => 'Region not found'], 404);
+                }
+                
+                $cities = $db->getValidCitiesByRegion($regionAirtableId);
+                respond(true, ['items' => $cities]);
             }
-            
-            respond(true, ['items' => $processedCities]);
             break;
             
         case 'pois':
-            $cityId = $_GET['city_id'] ?? '';
-            if (!$cityId) {
-                respond(false, ['error' => 'City ID required'], 400);
-            }
-            
-            if (!preg_match('/^(CTY|LOC)-\d+$/', $cityId)) {
-                respond(false, ['error' => 'Invalid city ID format'], 400);
-            }
-            
-            $pois = $airtable->getPoisFromAirtable();
-            $processedPois = [];
-            
-            foreach ($pois as $record) {
-                $fields = $record['fields'] ?? [];
-                $businessId = $fields['POI ID'] ?? null;
-                $cityBusinessId = $fields['City Location'] ?? null;
-                
-                if (!$businessId || !preg_match('/^POI-\d+$/', $businessId)) {
-                    continue;
+            if ($method === 'GET') {
+                $cityId = $_GET['city_id'] ?? '';
+                if (!$cityId) {
+                    respond(false, ['error' => 'City ID required'], 400);
                 }
                 
-                if ($cityBusinessId !== $cityId) {
-                    continue; // Фильтруем по городу
+                // ЖЕСТКАЯ ВАЛИДАЦИЯ: только business_id
+                if (!validateBusinessId($cityId, 'city')) {
+                    respond(false, ['error' => 'Invalid city ID format. Expected: CTY-XXXX or LOC-XXXX'], 400);
                 }
                 
-                $processedPois[] = [
-                    'id' => $record['id'],
-                    'business_id' => $businessId,
-                    'name_ru' => $fields['POI Name (RU)'] ?? 'Неизвестно',
-                    'name_en' => $fields['POI Name (EN)'] ?? 'Unknown',
-                    'city_id' => $cityBusinessId
-                ];
+                // Найдем Airtable ID города по business_id
+                $cities = $db->getAllCities();
+                $cityAirtableId = null;
+                foreach ($cities as $city) {
+                    if ($city['business_id'] === $cityId) {
+                        $cityAirtableId = $city['id'];
+                        break;
+                    }
+                }
+                
+                if (!$cityAirtableId) {
+                    respond(false, ['error' => 'City not found'], 404);
+                }
+                
+                $pois = $db->getValidPoisByCity($cityAirtableId);
+                respond(true, ['items' => $pois]);
             }
-            
-            respond(true, ['items' => $processedPois]);
             break;
             
-        case 'health':
-            respond(true, [
-                'message' => 'Airtable API is working',
-                'airtable_available' => true,
-                'connection_test' => true
-            ]);
+        case 'stats':
+            if ($method === 'GET') {
+                $stats = $db->getStats();
+                $stats['cities_by_region'] = $db->getCityCountsByRegion();
+                respond(true, ['stats' => $stats]);
+            }
+            break;
+            
+        case 'city-stats':
+            if ($method === 'GET') {
+                $regionId = $_GET['region_id'] ?? '';
+                if (!$regionId) {
+                    respond(false, ['error' => 'Region ID required'], 400);
+                }
+                
+                // Валидируем business_id
+                if (!validateBusinessId($regionId, 'region')) {
+                    respond(false, ['error' => 'Invalid region ID format'], 400);
+                }
+                
+                // Найдем Airtable ID региона по business_id
+                $regions = $db->getRegions();
+                $regionAirtableId = null;
+                foreach ($regions as $region) {
+                    if ($region['business_id'] === $regionId) {
+                        $regionAirtableId = $region['id'];
+                        break;
+                    }
+                }
+                
+                if (!$regionAirtableId) {
+                    respond(false, ['error' => 'Region not found'], 404);
+                }
+                
+                $stats = $db->getPoiCountsByCity($regionAirtableId);
+                respond(true, ['stats' => $stats]);
+            }
+            break;
+            
+        case 'sync':
+            if ($method === 'POST') {
+                // This will be handled by sync script
+                respond(true, ['message' => 'Sync initiated']);
+            }
             break;
             
         default:
             respond(false, ['error' => 'Invalid action'], 400);
     }
-    
 } catch (Exception $e) {
-    respond(false, [
-        'error' => $e->getMessage(),
-        'message' => 'Airtable API error'
-    ], 500);
+    respond(false, ['error' => $e->getMessage()], 500);
 }
 ?>
