@@ -1,2 +1,10 @@
 {"ts":1759387193,"type":"js-error","msg":"Uncaught TypeError: e.target.matches is not a function","ctx":[],"ip":"::1"}
 {"ts":1759387193,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387727,"type":"js-error","msg":"Uncaught TypeError: e.target.matches is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387727,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387730,"type":"js-error","msg":"Uncaught TypeError: e.target.matches is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387730,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387762,"type":"js-error","msg":"Uncaught TypeError: e.target.matches is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387762,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387764,"type":"js-error","msg":"Uncaught TypeError: e.target.matches is not a function","ctx":[],"ip":"::1"}
+{"ts":1759387764,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
