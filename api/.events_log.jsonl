@@ -8,3 +8,5 @@
 {"ts":1759387762,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
 {"ts":1759387764,"type":"js-error","msg":"Uncaught TypeError: e.target.matches is not a function","ctx":[],"ip":"::1"}
 {"ts":1759387764,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
+{"ts":1759390561,"type":"js-error","msg":"Uncaught TypeError: e.target.matches is not a function","ctx":[],"ip":"::1"}
+{"ts":1759390561,"type":"js-unhandled","msg":"e.target.closest is not a function","ctx":[],"ip":"::1"}
