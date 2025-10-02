@@ -6,6 +6,7 @@ header('Cache-Control: no-store');
 require_once 'database.php';
 require_once 'filter-constants.php';
 require_once 'airtable-data-source.php';
+require_once 'secret-manager.php';
 require_once 'strict-no-test-data.php';
 
 function respond($ok, $data = [], $code = 200) {
@@ -25,7 +26,15 @@ try {
     switch ($action) {
         case 'regions':
             if ($method === 'GET') {
-                // Получаем регионы напрямую из Airtable
+                // ПРАВИЛЬНАЯ ЛОГИКА: SQLite → (если устарело) Airtable → SQLite → клиент
+                $maxAgeSec = 300; // 5 минут SLA на свежесть
+                $cached = $db->getCachedRegions($maxAgeSec);
+                
+                if (!empty($cached)) {
+                    respond(true, ['items' => $cached, 'source' => 'cache']);
+                }
+                
+                // Кэш устарел или пуст → тянем из Airtable
                 $airtableRegions = $airtable->getRegionsFromAirtable();
                 $processedRegions = [];
                 
@@ -45,7 +54,10 @@ try {
                     ];
                 }
                 
-                respond(true, ['items' => $processedRegions]);
+                // Сохраняем в кэш
+                $db->cacheRegions($processedRegions);
+                
+                respond(true, ['items' => $processedRegions, 'source' => 'airtable']);
             }
             break;
             

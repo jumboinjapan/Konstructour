@@ -10,7 +10,37 @@ class Database {
     }
     
     private function initTables() {
-        // Regions table
+        // Cache tables for Airtable data
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS cache_regions (
+                business_id TEXT PRIMARY KEY,
+                data TEXT NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                expires_at DATETIME NOT NULL
+            )
+        ");
+        
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS cache_cities (
+                business_id TEXT PRIMARY KEY,
+                region_business_id TEXT NOT NULL,
+                data TEXT NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                expires_at DATETIME NOT NULL
+            )
+        ");
+        
+        $this->db->exec("
+            CREATE TABLE IF NOT EXISTS cache_pois (
+                business_id TEXT PRIMARY KEY,
+                city_business_id TEXT NOT NULL,
+                data TEXT NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                expires_at DATETIME NOT NULL
+            )
+        ");
+        
+        // Regions table (legacy, kept for compatibility)
         $this->db->exec("
             CREATE TABLE IF NOT EXISTS regions (
                 id TEXT PRIMARY KEY,
@@ -96,6 +126,141 @@ class Database {
     
     public function getConnection() {
         return $this->db;
+    }
+    
+    // ===== CACHE METHODS =====
+    
+    /**
+     * Получить кэшированные регионы
+     */
+    public function getCachedRegions($maxAgeSec = 300) {
+        $stmt = $this->db->prepare("
+            SELECT data FROM cache_regions 
+            WHERE expires_at > datetime('now') 
+            ORDER BY updated_at DESC
+        ");
+        $stmt->execute();
+        $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        $regions = [];
+        foreach ($results as $data) {
+            $regions = array_merge($regions, json_decode($data, true));
+        }
+        
+        return $regions;
+    }
+    
+    /**
+     * Сохранить регионы в кэш
+     */
+    public function cacheRegions($regions) {
+        $expiresAt = date('Y-m-d H:i:s', time() + 300); // 5 минут
+        
+        foreach ($regions as $region) {
+            $stmt = $this->db->prepare("
+                INSERT OR REPLACE INTO cache_regions 
+                (business_id, data, expires_at) 
+                VALUES (?, ?, ?)
+            ");
+            $stmt->execute([
+                $region['business_id'],
+                json_encode($region),
+                $expiresAt
+            ]);
+        }
+    }
+    
+    /**
+     * Получить кэшированные города для региона
+     */
+    public function getCachedCitiesByRegion($regionBusinessId, $maxAgeSec = 300) {
+        $stmt = $this->db->prepare("
+            SELECT data FROM cache_cities 
+            WHERE region_business_id = ? 
+            AND expires_at > datetime('now')
+            ORDER BY updated_at DESC
+        ");
+        $stmt->execute([$regionBusinessId]);
+        $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        $cities = [];
+        foreach ($results as $data) {
+            $cities = array_merge($cities, json_decode($data, true));
+        }
+        
+        return $cities;
+    }
+    
+    /**
+     * Сохранить города в кэш
+     */
+    public function cacheCitiesByRegion($regionBusinessId, $cities) {
+        $expiresAt = date('Y-m-d H:i:s', time() + 300); // 5 минут
+        
+        foreach ($cities as $city) {
+            $stmt = $this->db->prepare("
+                INSERT OR REPLACE INTO cache_cities 
+                (business_id, region_business_id, data, expires_at) 
+                VALUES (?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $city['business_id'],
+                $regionBusinessId,
+                json_encode($city),
+                $expiresAt
+            ]);
+        }
+    }
+    
+    /**
+     * Получить кэшированные POI для города
+     */
+    public function getCachedPoisByCity($cityBusinessId, $maxAgeSec = 300) {
+        $stmt = $this->db->prepare("
+            SELECT data FROM cache_pois 
+            WHERE city_business_id = ? 
+            AND expires_at > datetime('now')
+            ORDER BY updated_at DESC
+        ");
+        $stmt->execute([$cityBusinessId]);
+        $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        $pois = [];
+        foreach ($results as $data) {
+            $pois = array_merge($pois, json_decode($data, true));
+        }
+        
+        return $pois;
+    }
+    
+    /**
+     * Сохранить POI в кэш
+     */
+    public function cachePoisByCity($cityBusinessId, $pois) {
+        $expiresAt = date('Y-m-d H:i:s', time() + 300); // 5 минут
+        
+        foreach ($pois as $poi) {
+            $stmt = $this->db->prepare("
+                INSERT OR REPLACE INTO cache_pois 
+                (business_id, city_business_id, data, expires_at) 
+                VALUES (?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $poi['business_id'],
+                $cityBusinessId,
+                json_encode($poi),
+                $expiresAt
+            ]);
+        }
+    }
+    
+    /**
+     * Очистить устаревший кэш
+     */
+    public function cleanExpiredCache() {
+        $this->db->exec("DELETE FROM cache_regions WHERE expires_at <= datetime('now')");
+        $this->db->exec("DELETE FROM cache_cities WHERE expires_at <= datetime('now')");
+        $this->db->exec("DELETE FROM cache_pois WHERE expires_at <= datetime('now')");
     }
     
     // Regions methods

@@ -2,7 +2,7 @@
 // api/airtable-data-source.php
 // ЕДИНСТВЕННЫЙ источник данных из Airtable согласно Filtering.md
 
-require_once 'secret-airtable.php';
+require_once 'secret-manager.php';
 require_once 'config.php';
 
 class AirtableDataSource {
@@ -15,12 +15,17 @@ class AirtableDataSource {
     }
     
     private function getAirtableToken() {
-        // ТОЛЬКО GitHub Secrets - никаких локальных токенов!
-        $token = getenv('AIRTABLE_TOKEN') ?: getenv('AIRTABLE_PAT') ?: getenv('AIRTABLE_API_KEY');
-        if ($token) return $token;
-        
-        // Если токен недоступен, выбрасываем исключение
-        throw new Exception('Airtable token not configured. Token must be set via GitHub Secrets (AIRTABLE_TOKEN environment variable).');
+        // Используем SecretManager для получения токена из секретного файла
+        try {
+            return SecretManager::getAirtableToken();
+        } catch (SecretError $e) {
+            // Для локальной разработки пробуем более мягкую валидацию
+            try {
+                return SecretManager::getAirtableTokenForDev();
+            } catch (SecretError $e2) {
+                throw new Exception('Airtable token not configured. ' . $e2->getMessage());
+            }
+        }
     }
     
     private function airtableRequest($tableId, $params = []) {

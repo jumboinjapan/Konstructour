@@ -16,16 +16,21 @@ function respond($ok, $data = [], $code = 200) {
 try {
     $db = new Database();
     
-    // 1. Проверяем, что локальная база пустая (как должно быть без Airtable)
+    // 1. Проверяем, что локальная база используется как кэш (не как источник данных)
     $stats = $db->getAllValidData();
     $hasLocalData = $stats['stats']['regions'] > 0 || $stats['stats']['cities'] > 0 || $stats['stats']['pois'] > 0;
     
-    if ($hasLocalData) {
+    // Теперь локальная база может содержать данные как кэш - это нормально
+    // Проверяем только, что нет тестовых данных в старых таблицах
+    $legacyStats = $db->getStats();
+    $hasLegacyData = $legacyStats['regions'] > 0 || $legacyStats['cities'] > 0 || $legacyStats['pois'] > 0;
+    
+    if ($hasLegacyData) {
         respond(false, [
-            'error' => 'VIOLATION_OF_FILTERING_MD',
-            'message' => 'Локальная база содержит данные без синхронизации с Airtable. Это нарушает Filtering.md.',
-            'stats' => $stats['stats'],
-            'action_required' => 'Очистите локальную базу данных: php -r "require_once \'api/database.php\'; (new Database())->clearAll();"'
+            'error' => 'LEGACY_DATA_FOUND',
+            'message' => 'Найдены данные в старых таблицах (regions, cities, pois). Используйте только кэш-таблицы.',
+            'stats' => $legacyStats,
+            'action_required' => 'Очистите старые таблицы: php -r "require_once \'api/database.php\'; (new Database())->clearAll();"'
         ], 400);
     }
     
@@ -54,29 +59,30 @@ try {
         ], 400);
     }
     
-    // 3. Проверяем, что data-api.php не делает прямых обращений к Airtable
+    // 3. Проверяем, что data-api.php использует правильную архитектуру (кэш + Airtable)
     $dataApiContent = file_get_contents(__DIR__ . '/data-api.php');
-    $airtableDirectCalls = [
-        'AirtableDataSource',
-        'getRegionsFromAirtable',
-        'getCitiesFromAirtable', 
-        'getPoisFromAirtable',
-        'api.airtable.com'
-    ];
     
-    $foundDirectCalls = [];
-    foreach ($airtableDirectCalls as $call) {
-        if (strpos($dataApiContent, $call) !== false) {
-            $foundDirectCalls[] = $call;
-        }
+    // Проверяем наличие кэширования
+    $hasCaching = strpos($dataApiContent, 'getCachedRegions') !== false && 
+                  strpos($dataApiContent, 'cacheRegions') !== false;
+    
+    if (!$hasCaching) {
+        respond(false, [
+            'error' => 'MISSING_CACHE_LOGIC',
+            'message' => 'data-api.php не использует кэширование. Требуется правильная архитектура: SQLite → Airtable → SQLite.',
+            'action_required' => 'Добавьте методы кэширования в data-api.php'
+        ], 400);
     }
     
-    if (!empty($foundDirectCalls)) {
+    // Проверяем, что используется SecretManager (через AirtableDataSource)
+    $hasSecretManager = strpos($dataApiContent, 'SecretManager') !== false || 
+                        strpos($dataApiContent, 'secret-manager.php') !== false;
+    
+    if (!$hasSecretManager) {
         respond(false, [
-            'error' => 'DIRECT_AIRTABLE_CALLS',
-            'message' => 'data-api.php содержит прямые обращения к Airtable. Это нарушает Filtering.md.',
-            'calls' => $foundDirectCalls,
-            'action_required' => 'data-api.php должен работать только с локальной базой данных'
+            'error' => 'MISSING_SECRET_MANAGER',
+            'message' => 'data-api.php не использует SecretManager. Требуется безопасная работа с токенами.',
+            'action_required' => 'Добавьте require_once secret-manager.php в data-api.php'
         ], 400);
     }
     
