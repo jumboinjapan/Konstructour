@@ -231,56 +231,64 @@ class Database {
             $category = $data['category'];
         }
         
-        // Сначала пытаемся обновить существующую запись
-        $stmt = $this->db->prepare("
-            UPDATE pois 
-            SET name_ru = ?, name_en = ?, category = ?, place_id = ?, published = ?, 
-                business_id = ?, city_id = ?, region_id = ?, description = ?, 
-                latitude = ?, longitude = ?,
-                prefecture_ru = ?, prefecture_en = ?,
-                categories_ru = ?, categories_en = ?,
-                description_ru = ?, description_en = ?,
-                website = ?, working_hours = ?, notes = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        ");
-        $stmt->execute([
-            $data['name_ru'],
-            $data['name_en'] ?? null,
-            $category,
-            $data['place_id'] ?? null,
-            ($data['published'] ?? false) ? 1 : 0,
-            $data['business_id'] ?? null,
-            $data['city_id'],
-            is_array($data['region_id']) ? $data['region_id'][0] ?? null : $data['region_id'],
-            $data['description'] ?? null,
-            $data['latitude'] ?? null,
-            $data['longitude'] ?? null,
-            $data['prefecture_ru'] ?? null,
-            $data['prefecture_en'] ?? null,
-            $cats_ru_json,
-            $cats_en_json,
-            $data['description_ru'] ?? null,
-            $data['description_en'] ?? null,
-            $data['website'] ?? null,
-            $data['working_hours'] ?? null,
-            $data['notes'] ?? null,
-            $data['id']
-        ]);
-        
-        // Если запись не была обновлена, вставляем новую
-        if ($stmt->rowCount() === 0) {
+        // Сначала пытаемся обновить существующую запись по business_id
+        if (isset($data['business_id']) && $data['business_id']) {
             $stmt = $this->db->prepare("
-                INSERT INTO pois (
-                    id, name_ru, name_en, category, place_id, published, business_id, 
-                    city_id, region_id, description, latitude, longitude,
-                    prefecture_ru, prefecture_en, categories_ru, categories_en,
-                    description_ru, description_en, website, working_hours, notes,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                UPDATE pois 
+                SET name_ru = ?, name_en = ?, category = ?, place_id = ?, published = ?, 
+                    city_id = ?, region_id = ?, description = ?, 
+                    latitude = ?, longitude = ?,
+                    prefecture_ru = ?, prefecture_en = ?,
+                    categories_ru = ?, categories_en = ?,
+                    description_ru = ?, description_en = ?,
+                    website = ?, working_hours = ?, notes = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE business_id = ?
             ");
-            return $stmt->execute([
-                $data['id'],
+            $stmt->execute([
+                $data['name_ru'],
+                $data['name_en'] ?? null,
+                $category,
+                $data['place_id'] ?? null,
+                ($data['published'] ?? false) ? 1 : 0,
+                $data['city_id'],
+                is_array($data['region_id']) ? $data['region_id'][0] ?? null : $data['region_id'],
+                $data['description'] ?? null,
+                $data['latitude'] ?? null,
+                $data['longitude'] ?? null,
+                $data['prefecture_ru'] ?? null,
+                $data['prefecture_en'] ?? null,
+                $cats_ru_json,
+                $cats_en_json,
+                $data['description_ru'] ?? null,
+                $data['description_en'] ?? null,
+                $data['website'] ?? null,
+                $data['working_hours'] ?? null,
+                $data['notes'] ?? null,
+                $data['business_id']
+            ]);
+            
+            // Если запись была обновлена, возвращаем успех
+            if ($stmt->rowCount() > 0) {
+                return true;
+            }
+        }
+        
+        // Если запись не была обновлена по business_id, пытаемся по id
+        if (isset($data['id']) && $data['id']) {
+            $stmt = $this->db->prepare("
+                UPDATE pois 
+                SET name_ru = ?, name_en = ?, category = ?, place_id = ?, published = ?, 
+                    business_id = ?, city_id = ?, region_id = ?, description = ?, 
+                    latitude = ?, longitude = ?,
+                    prefecture_ru = ?, prefecture_en = ?,
+                    categories_ru = ?, categories_en = ?,
+                    description_ru = ?, description_en = ?,
+                    website = ?, working_hours = ?, notes = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ");
+            $stmt->execute([
                 $data['name_ru'],
                 $data['name_en'] ?? null,
                 $category,
@@ -300,11 +308,49 @@ class Database {
                 $data['description_en'] ?? null,
                 $data['website'] ?? null,
                 $data['working_hours'] ?? null,
-                $data['notes'] ?? null
+                $data['notes'] ?? null,
+                $data['id']
             ]);
+            
+            // Если запись была обновлена, возвращаем успех
+            if ($stmt->rowCount() > 0) {
+                return true;
+            }
         }
         
-        return true;
+        // Если запись не была обновлена, вставляем новую
+        $stmt = $this->db->prepare("
+            INSERT INTO pois (
+                id, name_ru, name_en, category, place_id, published, business_id, 
+                city_id, region_id, description, latitude, longitude,
+                prefecture_ru, prefecture_en, categories_ru, categories_en,
+                description_ru, description_en, website, working_hours, notes,
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ");
+        return $stmt->execute([
+            $data['id'],
+            $data['name_ru'],
+            $data['name_en'] ?? null,
+            $category,
+            $data['place_id'] ?? null,
+            ($data['published'] ?? false) ? 1 : 0,
+            $data['business_id'] ?? null,
+            $data['city_id'],
+            is_array($data['region_id']) ? $data['region_id'][0] ?? null : $data['region_id'],
+            $data['description'] ?? null,
+            $data['latitude'] ?? null,
+            $data['longitude'] ?? null,
+            $data['prefecture_ru'] ?? null,
+            $data['prefecture_en'] ?? null,
+            $cats_ru_json,
+            $cats_en_json,
+            $data['description_ru'] ?? null,
+            $data['description_en'] ?? null,
+            $data['website'] ?? null,
+            $data['working_hours'] ?? null,
+            $data['notes'] ?? null
+        ]);
     }
     
     // Statistics

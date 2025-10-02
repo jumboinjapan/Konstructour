@@ -37,8 +37,11 @@ foreach ($required as $field) {
 try {
     $db = new Database();
     
-    // Генерируем ID если это новый POI
-    if (empty($data['id'])) {
+    // Определяем, редактируем ли существующую запись
+    $isEdit = !empty($data['business_id']) && !empty($data['id']);
+    
+    // Генерируем ID только для новых записей
+    if (!$isEdit && empty($data['id'])) {
         // Получаем максимальный номер POI
         $stmt = $db->getConnection()->prepare("
             SELECT business_id FROM pois ORDER BY business_id DESC LIMIT 1
