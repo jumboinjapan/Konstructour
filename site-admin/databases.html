@@ -3269,7 +3269,9 @@
             const j = await res.json();
             if (!res.ok || !j.ok) throw new Error((j && (j.error || j.details?.error?.message)) || ('HTTP '+res.status));
             if (window.osNotify){ window.osNotify('Город сохранён', (j.linked? 'Связь с регионом установлена' : 'Создан без связи: проверьте поле связи')); }
-            await loadCitiesForRegion(selectedRegion); await preloadPoisCountsForRegion(selectedRegion); await renderCities();
+            await loadCitiesForRegion(selectedRegion); 
+            await preloadPoisCountsForRegion(selectedRegion); 
+            await renderCities();
           }catch(e){ alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
         } else if (level==='pois'){
             const data = await openCreatePOIModal();
@@ -3436,6 +3438,9 @@
             if (currentLevel === 'cities' && currentRegion) {
               console.log(`📍 Обновляем города для региона: ${currentRegion.name}`);
               
+              // Восстанавливаем состояние ПЕРЕД загрузкой
+              selectedRegion = currentRegion;
+              
               // Перезагружаем города из серверной БД
               await loadCitiesForRegion(currentRegion, true);
               
@@ -3445,23 +3450,25 @@
                 await loadPoisForCity(city, true);
               }
               
-              // Восстанавливаем состояние
-              selectedRegion = currentRegion;
+              // Отображаем города
               await renderCities();
+              
               console.log(`✅ Обновление городов завершено: ${cities.length} городов`);
               
             } else if (currentLevel === 'pois' && currentCity) {
               console.log(`📍 Обновляем POI для города: ${currentCity.name}`);
               
+              // Восстанавливаем состояние ПЕРЕД загрузкой
+              selectedRegion = currentRegion;
+              selectedCity = currentCity;
+              
               // Перезагружаем POI из серверной БД
               await loadPoisForCity(currentCity, true);
               
-              // Восстанавливаем состояние
-              selectedRegion = currentRegion;
-              selectedCity = currentCity;
+              // Отображаем POI
               await renderPois();
               
-              const poiCount = poisByCity[currentCity.id]?.length || 0;
+              const poiCount = poisByCity[currentCity.business_id]?.length || 0;
               console.log(`✅ Обновление POI завершено: ${poiCount} POI`);
               
             } else {
