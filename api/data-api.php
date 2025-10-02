@@ -19,7 +19,13 @@ $action = $_GET['action'] ?? '';
 
 try {
     // Проверяем доступность Airtable
-    $airtable = new AirtableDataSource();
+    try {
+        $airtable = new AirtableDataSource();
+    } catch (Exception $e) {
+        // Если токен недоступен, используем fallback для локальной разработки
+        require_once 'local-dev-fallback.php';
+        exit;
+    }
     
     switch ($action) {
         case 'regions':
