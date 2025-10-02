@@ -1177,7 +1177,7 @@
           if (level === 'cities'){
             parts.push('<span class="text-gray-800">'+selectedRegion.name+'</span>');
           } else {
-            parts.push('<a href="#" data-level="cities" data-region-id="'+selectedRegion.id+'" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>');
+            parts.push('<a href="#" data-level="cities" data-region-id="'+selectedRegion.business_id+'" class="text-indigo-600 hover:underline">'+selectedRegion.name+'</a>');
           }
         }
         // City
@@ -1186,7 +1186,7 @@
           if (level === 'pois' || level === 'poi-details'){
             parts.push('<span class="text-gray-800">'+selectedCity.name+'</span>');
           } else {
-            parts.push('<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+selectedCity.id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>');
+            parts.push('<a href="#" data-level="pois" data-region-id="'+(selectedRegion?selectedRegion.business_id:'')+'" data-city-id="'+selectedCity.business_id+'" class="text-indigo-600 hover:underline">'+selectedCity.name+'</a>');
           }
         }
         // POI
@@ -1195,7 +1195,7 @@
           if (level === 'poi-details' || level === 'tickets'){
             parts.push('<span class="text-gray-800">'+selectedPoi.name+'</span>');
           } else {
-            parts.push('<a href="#" data-level="poi-details" data-region-id="'+(selectedRegion?selectedRegion.id:'')+'" data-city-id="'+(selectedCity?selectedCity.id:'')+'" data-poi-id="'+selectedPoi.id+'" class="text-indigo-600 hover:underline">'+selectedPoi.name+'</a>');
+            parts.push('<a href="#" data-level="poi-details" data-region-id="'+(selectedRegion?selectedRegion.business_id:'')+'" data-city-id="'+(selectedCity?selectedCity.business_id:'')+'" data-poi-id="'+(selectedPoi.poi_id || selectedPoi.business_id)+'" class="text-indigo-600 hover:underline">'+selectedPoi.name+'</a>');
           }
         }
         crumbs.innerHTML = parts.join('');
@@ -2383,7 +2383,7 @@
           renderPois();
           
           // Обновляем историю
-          push('pois', { regionId: selectedRegion.id, cityId });
+          push('pois', { regionId: selectedRegion.business_id, cityId });
           
         } catch (error) {
           console.error('Error loading POIs:', error);
@@ -2422,7 +2422,7 @@
         renderTickets();
         
         // Обновляем историю
-        push('tickets', { regionId: selectedRegion.id, cityId: selectedCity.id, poiId });
+        push('tickets', { regionId: selectedRegion.business_id, cityId: selectedCity.business_id, poiId });
       }
       
       // Вспомогательные функции для UI состояний

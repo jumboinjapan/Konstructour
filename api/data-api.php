@@ -21,7 +21,11 @@ try {
         case 'regions':
             if ($method === 'GET') {
                 $regions = $db->getRegions();
-                respond(true, ['items' => $regions]);
+                // Фильтруем некорректные ID
+                $validRegions = array_filter($regions, function($region) {
+                    return !isInvalidId($region['business_id'] ?? '');
+                });
+                respond(true, ['items' => array_values($validRegions)]);
             }
             break;
             
@@ -52,7 +56,11 @@ try {
                 }
                 
                 $cities = $db->getCitiesByRegion($regionAirtableId);
-                respond(true, ['items' => $cities]);
+                // Фильтруем некорректные ID
+                $validCities = array_filter($cities, function($city) {
+                    return !isInvalidId($city['business_id'] ?? '');
+                });
+                respond(true, ['items' => array_values($validCities)]);
             }
             break;
             
@@ -83,7 +91,11 @@ try {
                 }
                 
                 $pois = $db->getPoisByCity($cityAirtableId);
-                respond(true, ['items' => $pois]);
+                // Фильтруем некорректные ID
+                $validPois = array_filter($pois, function($poi) {
+                    return !isInvalidId($poi['business_id'] ?? '');
+                });
+                respond(true, ['items' => array_values($validPois)]);
             }
             break;
             

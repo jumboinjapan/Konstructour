@@ -143,4 +143,102 @@ function getHierarchyField($type) {
             return null;
     }
 }
+
+/**
+ * Проверка ID на корректность: business_id или нет
+ * 
+ * @param string $id ID для проверки
+ * @return bool true если ID некорректный (не соответствует паттернам business_id)
+ */
+function isInvalidId($id) {
+    if (empty($id)) return true; // Пустые ID считаем некорректными
+    
+    // Проверяем все паттерны business_id
+    if (preg_match(REGION_ID_PATTERN, $id)) return false;
+    if (preg_match(CITY_ID_PATTERN, $id)) return false;
+    if (preg_match(POI_ID_PATTERN, $id)) return false;
+    
+    return true; // всё остальное — устаревшее
+}
+
+/**
+ * Сканирование базы данных на предмет некорректных ID
+ * 
+ * @param PDO $db Подключение к базе данных
+ * @return array Массив некорректных записей
+ */
+function findInvalidIds(PDO $db) {
+    $invalid = [];
+
+    try {
+        // Проверяем регионы
+        $stmt = $db->query("SELECT id, business_id FROM regions");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (isInvalidId($row['business_id'])) {
+                $invalid[] = [
+                    'table' => 'regions',
+                    'id' => $row['id'],
+                    'bad_id' => $row['business_id'],
+                    'type' => 'region'
+                ];
+            }
+        }
+
+        // Проверяем города
+        $stmt = $db->query("SELECT id, business_id FROM cities");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (isInvalidId($row['business_id'])) {
+                $invalid[] = [
+                    'table' => 'cities',
+                    'id' => $row['id'],
+                    'bad_id' => $row['business_id'],
+                    'type' => 'city'
+                ];
+            }
+        }
+
+        // Проверяем POI
+        $stmt = $db->query("SELECT id, business_id FROM pois");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (isInvalidId($row['business_id'])) {
+                $invalid[] = [
+                    'table' => 'pois',
+                    'id' => $row['id'],
+                    'bad_id' => $row['business_id'],
+                    'type' => 'poi'
+                ];
+            }
+        }
+
+    } catch (Exception $e) {
+        error_log("Ошибка при сканировании некорректных ID: " . $e->getMessage());
+    }
+
+    return $invalid;
+}
+
+/**
+ * Логирование некорректных ID
+ * 
+ * @param array $invalidIds Массив некорректных записей
+ * @param string $logFile Путь к файлу лога
+ */
+function logInvalidIds($invalidIds, $logFile = 'airtable_invalid.log') {
+    if (empty($invalidIds)) return;
+    
+    $logEntry = date('Y-m-d H:i:s') . " - Найдено " . count($invalidIds) . " некорректных ID:\n";
+    
+    foreach ($invalidIds as $record) {
+        $logEntry .= sprintf(
+            "  %s: ID=%s, bad_business_id=%s\n",
+            $record['table'],
+            $record['id'],
+            $record['bad_id']
+        );
+    }
+    
+    $logEntry .= "\n";
+    
+    file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+}
 ?>
