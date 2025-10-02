@@ -45,6 +45,9 @@
         <button id="btnRefresh" class="px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-black transition-colors">
           <i class="fa-solid fa-rotate mr-2"></i>Обновить
         </button>
+        <button id="btnForceRefresh" class="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
+          <i class="fa-solid fa-sync-alt mr-2"></i>Принудительно
+        </button>
         <label class="ml-3 text-gray-600">Автообновление:
           <select id="autoRefresh" class="ml-2 border rounded px-2 py-1 text-sm">
             <option value="0">Выкл</option>
@@ -313,7 +316,7 @@
 
   async function runParity(){
     const dot = $('#parDot'); setDot(dot,'warn');
-    const out = await fetchJson(url('/api/data-parity.php'));
+    const out = await fetchJson(url('/api/data-parity.php?t=' + Date.now()));
     $('#parRaw').textContent = out.raw || '';
     const j = out.json || {};
     const ok = !!j.ok;
@@ -640,6 +643,12 @@
 
   // UI bindings
   $('#btnRefresh').addEventListener('click', runAll);
+  $('#btnForceRefresh').addEventListener('click', () => {
+    // Очищаем кэш и принудительно обновляем
+    localStorage.clear();
+    sessionStorage.clear();
+    runAll();
+  });
   $('#btnShowHealth').addEventListener('click', ()=> $('#hAirtRaw').classList.toggle('hidden'));
   $('#btnWho').addEventListener('click', ()=> $('#whoRaw').classList.toggle('hidden'));
   $('#btnParity').addEventListener('click', ()=> $('#parRaw').classList.toggle('hidden'));
