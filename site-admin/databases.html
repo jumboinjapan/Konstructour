@@ -1834,11 +1834,13 @@
           const j = await res.json();
           if (j.ok && j.stats) {
             // Обновляем счетчики POI для каждого города
-            Object.keys(j.stats).forEach(cityId => {
-              const poiCount = j.stats[cityId] || 0;
+            // j.stats содержит Airtable ID как ключи, но нам нужны business_id
+            const cities = citiesByRegion[regionId] || [];
+            cities.forEach(city => {
+              const poiCount = j.stats[city.id] || 0; // city.id - это Airtable ID
               // Обновляем счетчик в UI если мы на уровне городов
               if (level === 'cities') {
-                const cityElement = document.querySelector(`[data-go="pois"][data-id="${cityId}"]`);
+                const cityElement = document.querySelector(`[data-go="pois"][data-id="${city.business_id}"]`);
                 if (cityElement) {
                   const countElement = cityElement.querySelector('.text-xs.font-medium');
                   if (countElement) {

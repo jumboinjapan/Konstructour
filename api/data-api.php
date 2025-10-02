@@ -101,7 +101,27 @@ try {
                 if (!$regionId) {
                     respond(false, ['error' => 'Region ID required'], 400);
                 }
-                $stats = $db->getPoiCountsByCity($regionId);
+                
+                // Валидируем business_id
+                if (!validateBusinessId($regionId, 'region')) {
+                    respond(false, ['error' => 'Invalid region ID format'], 400);
+                }
+                
+                // Найдем Airtable ID региона по business_id
+                $regions = $db->getRegions();
+                $regionAirtableId = null;
+                foreach ($regions as $region) {
+                    if ($region['business_id'] === $regionId) {
+                        $regionAirtableId = $region['id'];
+                        break;
+                    }
+                }
+                
+                if (!$regionAirtableId) {
+                    respond(false, ['error' => 'Region not found'], 404);
+                }
+                
+                $stats = $db->getPoiCountsByCity($regionAirtableId);
                 respond(true, ['stats' => $stats]);
             }
             break;

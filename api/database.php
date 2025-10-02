@@ -332,10 +332,9 @@ class Database {
             }
         }
         
-        // Если запись не была обновлена по business_id, это ошибка
-        // Согласно Filtering.md, мы используем только business_id для логики
-        if (isset($data['business_id']) && $data['business_id']) {
-            throw new Exception("POI с business_id '{$data['business_id']}' не найден для обновления. Проверьте корректность ID.");
+        // Если запись не была обновлена по business_id, проверяем, есть ли ID для вставки
+        if (!isset($data['id']) || !$data['id']) {
+            throw new Exception("POI с business_id '{$data['business_id']}' не найден для обновления и не указан ID для вставки.");
         }
         
         // Если запись не была обновлена, вставляем новую
