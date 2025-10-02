@@ -8,6 +8,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 require_once 'database.php';
+require_once 'filter-constants.php';
 
 function respond($ok, $data = [], $code = 200) {
     http_response_code($code);
@@ -36,6 +37,11 @@ foreach ($required as $field) {
 
 try {
     $db = new Database();
+    
+    // Валидируем business_id если он предоставлен
+    if (!empty($data['business_id']) && !validateBusinessId($data['business_id'], 'poi')) {
+        throw new Exception("Некорректный business_id: '{$data['business_id']}'. Ожидается формат POI-XXXXXX");
+    }
     
     // Определяем, редактируем ли существующую запись
     $isEdit = !empty($data['business_id']) && !empty($data['id']);
