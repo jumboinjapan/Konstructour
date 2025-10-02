@@ -1588,7 +1588,7 @@
                   <div class="flex items-center gap-2 ml-3 poi-actions">
                     <button 
                       data-act="edit-poi" 
-                      data-id="${p.id}" 
+                      data-id="${p.poi_id || p.business_id}" 
                       title="Редактировать" 
                       class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                     >
@@ -1596,7 +1596,7 @@
                     </button>
                     <button 
                       data-act="del-poi" 
-                      data-id="${p.id}" 
+                      data-id="${p.poi_id || p.business_id}" 
                       title="Удалить" 
                       class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
@@ -1744,8 +1744,8 @@
                 </div>
               </div>
               <div class="flex gap-2">
-                <button class="btn-japanese" data-act="edit-poi" data-id="${poi.id}">Редактировать</button>
-                <button class="btn-japanese accent" data-act="view-tickets" data-id="${poi.id}">Билеты</button>
+                <button class="btn-japanese" data-act="edit-poi" data-id="${poi.poi_id || poi.business_id}">Редактировать</button>
+                <button class="btn-japanese accent" data-act="view-tickets" data-id="${poi.poi_id || poi.business_id}">Билеты</button>
               </div>
             </div>
             
@@ -2134,19 +2134,144 @@
         console.log('Action button clicked:', { act, id });
         
         if (act === 'edit-region') {
-          await editRegion(id);
+          const r = regions.find(x=>x.business_id===id); 
+          if(!r) return; 
+          const n=prompt('Название региона:', r.name); 
+          if(n){
+            const old = r.name; 
+            r.name=n.trim(); 
+            renderRegions();
+            try{
+              await fetch('/api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                body: JSON.stringify({ scope:'regions', action:'update', data:{ id: r.id, name: r.name } })
+              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+              if (window.osNotify) window.osNotify('Обновлено','Регион переименован');
+            }catch(e){ r.name = old; renderRegions(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+          }
         } else if (act === 'del-region') {
-          await deleteRegion(id);
+          const r = regions.find(x=>x.business_id===id);
+          regions = regions.filter(x=>x.business_id!==id); 
+          delete citiesByRegion[selectedRegion.business_id]; 
+          renderRegions();
+          if (r) deleteRegionOnServer(r);
         } else if (act === 'edit-city') {
-          await editCity(id);
+          const list = citiesByRegion[selectedRegion.business_id]||[]; 
+          const c=list.find(x=>x.business_id===id); 
+          if(!c) return; 
+          const n=prompt('Название города/локации:', c.name); 
+          if(n){
+            const old=c.name; 
+            c.name=n.trim(); 
+            await renderCities();
+            try{
+              await fetch('/api/db-sync.php',{
+                method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin-Token': (window.ADMIN_TOKEN||'') },
+                body: JSON.stringify({ scope:'cities', action:'update', data:{ id: c.id, name: c.name } })
+              }).then(async res=>{ if(!res.ok){ throw new Error('HTTP '+res.status); } const j=await res.json(); if(!j.ok) throw new Error(j.error||'Airtable'); });
+              if (window.osNotify) window.osNotify('Обновлено','Название сохранено');
+            }catch(e){ c.name=old; await renderCities(); alert('Не удалось сохранить: '+(e && e.message ? e.message : '')); }
+          }
         } else if (act === 'del-city') {
-          await deleteCity(id);
+          const list = citiesByRegion[selectedRegion.business_id]||[]; 
+          citiesByRegion[selectedRegion.business_id] = list.filter(x=>x.business_id!==id); 
+          delete poisByCity[selectedCity.business_id]; 
+          await renderCities();
         } else if (act === 'edit-poi') {
-          await editPoi(id);
+          // Открываем форму редактирования POI
+          const list = poisByCity[selectedCity.business_id]||[];
+          const poi = list.find(x=>x.business_id===id);
+          if (!poi) return;
+          
+          const formData = await openCreatePOIModal(poi);
+          if (!formData) return;
+          
+          try {
+            // Показываем индикатор сохранения
+            cards.innerHTML = '<div class="flex items-center justify-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><span class="ml-3 text-gray-600">Сохранение POI...</span></div>';
+            
+            // СОХРАНЕНИЕ В БД И AIRTABLE через API
+            console.log('💾 Сохранение POI через API...', formData);
+            
+            const saveResponse = await fetch('/api/save-poi.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: poi.id,
+                airtable_id: poi.airtable_id,
+                business_id: poi.poi_id || poi.business_id,
+                name_ru: formData.name_ru,
+                name_en: formData.name_en,
+                prefecture_ru: formData.pref_ru,
+                prefecture_en: formData.pref_en,
+                categories_ru: formData.cats_ru,
+                categories_en: formData.cats_en,
+                place_id: formData.place_id,
+                website: formData.website,
+                working_hours: formData.hours,
+                description_ru: formData.desc_ru,
+                description_en: formData.desc_en,
+                notes: formData.notes,
+                published: formData.published,
+                tickets: formData.tickets,
+                city_id: selectedCity.id,
+                region_id: selectedRegion.id
+              })
+            });
+            
+            const result = await saveResponse.json();
+            console.log('💾 Результат сохранения:', result);
+            
+            if (!result.ok) {
+              throw new Error(result.error || 'Ошибка сохранения в БД');
+            }
+            
+            // ПОСЛЕ успешного сохранения обновляем локальные данные
+            Object.assign(poi, {
+              name: formData.name_ru,
+              name_en: formData.name_en,
+              type: formData.cats_ru[0] || poi.type,
+              categories_ru: formData.cats_ru,
+              categories_en: formData.cats_en,
+              prefecture_ru: formData.pref_ru,
+              prefecture_en: formData.pref_en,
+              place_id: formData.place_id,
+              website: formData.website,
+              hours: formData.hours,
+              description_ru: formData.desc_ru,
+              description_en: formData.desc_en,
+              published: formData.published,
+              notes: formData.notes,
+              tickets: formData.tickets
+            });
+            
+            console.log('✅ Локальные данные обновлены');
+            
+            // Перерисовываем карточки
+              await renderPois();
+            
+            // Уведомление об успехе
+            if (window.osNotify) window.osNotify('✅ Успешно', 'POI обновлен');
+            
+          } catch (e) {
+            console.error('❌ Ошибка сохранения POI:', e);
+            alert('❌ Не удалось сохранить POI: ' + (e.message || 'Неизвестная ошибка'));
+            // Перерисовываем с исходными данными
+            await renderPois();
+          }
         } else if (act === 'del-poi') {
-          await deletePoi(id);
+          const list = poisByCity[selectedCity.business_id]||[]; 
+          poisByCity[selectedCity.business_id] = list.filter(x=>x.business_id!==id); 
+          delete ticketsByPoi[selectedPoi.business_id]; 
+          await renderPois();
         } else if (act === 'view-tickets') {
-          await viewTickets(id);
+          // Переходим к билетам POI
+          const list = poisByCity[selectedCity.business_id]||[];
+          selectedPoi = list.find(x=>x.business_id===id) || null;
+          if (selectedPoi) {
+            push('tickets', { regionId: (selectedRegion ? selectedRegion.business_id : null), cityId: (selectedCity ? selectedCity.business_id : null), poiId: (selectedPoi ? selectedPoi.business_id : null) });
+            renderTickets();
+          }
         }
       }
       
