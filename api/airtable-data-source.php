@@ -15,17 +15,12 @@ class AirtableDataSource {
     }
     
     private function getAirtableToken() {
-        // В продакшене токен приходит из GitHub Secrets через переменные окружения
+        // ТОЛЬКО GitHub Secrets - никаких локальных токенов!
         $token = getenv('AIRTABLE_TOKEN') ?: getenv('AIRTABLE_PAT') ?: getenv('AIRTABLE_API_KEY');
         if ($token) return $token;
         
-        // Для локальной разработки используем токен из config.php
-        $configToken = $this->config['airtable']['api_key'] ?? null;
-        if ($configToken && $configToken !== 'patTest123456789') {
-            return $configToken;
-        }
-        
-        throw new Exception('Airtable token not configured. In production, set AIRTABLE_TOKEN environment variable from GitHub Secrets. For local development, configure real token in config.php');
+        // Если токен недоступен, выбрасываем исключение
+        throw new Exception('Airtable token not configured. Token must be set via GitHub Secrets (AIRTABLE_TOKEN environment variable). Local development uses fallback demo data.');
     }
     
     private function airtableRequest($tableId, $params = []) {

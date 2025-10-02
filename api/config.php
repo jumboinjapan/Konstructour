@@ -2,12 +2,12 @@
 return array (
   'airtable' => 
   array (
-    'api_key' => 'patTest123456789',
+    'api_key' => null,
   ),
   'airtable_registry' => 
   array (
     'baseId' => 'apppwhjFN82N9zNqm',
-    'api_key' => 'patTest123456789',
+    'api_key' => null,
     'tables' => 
     array (
       'region' => 
