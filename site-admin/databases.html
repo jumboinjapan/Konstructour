@@ -1387,7 +1387,7 @@
         // Восстанавливаем grid классы для городов
         cards.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
         
-        if (!selectedRegion || !selectedRegion.id) {
+        if (!selectedRegion || !selectedRegion.business_id) {
           console.error('renderCities: No selected region');
           cards.innerHTML = '<div class="text-center text-red-500 py-12">Регион не выбран</div>';
           return;
@@ -1410,7 +1410,7 @@
           console.log('Loading POI counts for cities in region:', selectedRegion.name);
           preloadInProgress = true;
           // Загружаем только счетчики в фоне
-          loadCityCounts(selectedRegion.id).finally(() => {
+          loadCityCounts(selectedRegion.business_id).finally(() => {
             preloadInProgress = false;
           });
         }
@@ -1469,7 +1469,7 @@
         
         console.log('renderPois called for city:', selectedCity);
         console.log('poisByCity keys:', Object.keys(poisByCity));
-        console.log('Looking for POI in poisByCity[' + selectedCity.id + ']:', poisByCity[selectedCity.business_id]);
+        console.log('Looking for POI in poisByCity[' + selectedCity.business_id + ']:', poisByCity[selectedCity.business_id]);
         let list = poisByCity[selectedCity.business_id] || [];
         
         // Проверяем актуальность данных перед загрузкой
@@ -2305,8 +2305,8 @@
         if (!region) {
           console.error('Region not found:', regionId);
           showErrorState('Регион не найден');
-            return;
-          }
+          return;
+        }
           
         // Обновляем состояние
         selectedRegion = region;
@@ -3438,7 +3438,7 @@
               await loadCitiesForRegion(currentRegion, true);
               
               // Предзагружаем POI для подсчета в пилюлях
-              const cities = citiesByRegion[currentRegion.id] || [];
+              const cities = citiesByRegion[currentRegion.business_id] || [];
               for (const city of cities) {
                 await loadPoisForCity(city, true);
               }
