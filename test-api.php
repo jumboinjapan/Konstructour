@@ -8,9 +8,9 @@ try {
     $db = new Database();
     
     // Test regions
-    echo "=== REGIONS ===\n";
-    $regions = $db->getRegions();
-    echo "Total regions: " . count($regions) . "\n";
+    echo "=== REGIONS (VALID ONLY) ===\n";
+    $regions = $db->getValidRegions();
+    echo "Total valid regions: " . count($regions) . "\n";
     foreach ($regions as $region) {
         echo "- {$region['name_ru']} (ID: {$region['id']}, Business ID: {$region['business_id']})\n";
     }
@@ -18,9 +18,9 @@ try {
     // Test cities for first region
     if (!empty($regions)) {
         $firstRegion = $regions[0];
-        echo "\n=== CITIES FOR {$firstRegion['name_ru']} ===\n";
-        $cities = $db->getCitiesByRegion($firstRegion['id']);
-        echo "Total cities: " . count($cities) . "\n";
+        echo "\n=== CITIES FOR {$firstRegion['name_ru']} (VALID ONLY) ===\n";
+        $cities = $db->getValidCitiesByRegion($firstRegion['id']);
+        echo "Total valid cities: " . count($cities) . "\n";
         foreach ($cities as $city) {
             echo "- {$city['name_ru']} (ID: {$city['id']}, Business ID: {$city['business_id']})\n";
         }

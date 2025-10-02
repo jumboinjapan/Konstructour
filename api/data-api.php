@@ -20,12 +20,8 @@ try {
     switch ($action) {
         case 'regions':
             if ($method === 'GET') {
-                $regions = $db->getRegions();
-                // Фильтруем некорректные ID
-                $validRegions = array_filter($regions, function($region) {
-                    return !isInvalidId($region['business_id'] ?? '');
-                });
-                respond(true, ['items' => array_values($validRegions)]);
+                $regions = $db->getValidRegions();
+                respond(true, ['items' => $regions]);
             }
             break;
             
@@ -55,12 +51,8 @@ try {
                     respond(false, ['error' => 'Region not found'], 404);
                 }
                 
-                $cities = $db->getCitiesByRegion($regionAirtableId);
-                // Фильтруем некорректные ID
-                $validCities = array_filter($cities, function($city) {
-                    return !isInvalidId($city['business_id'] ?? '');
-                });
-                respond(true, ['items' => array_values($validCities)]);
+                $cities = $db->getValidCitiesByRegion($regionAirtableId);
+                respond(true, ['items' => $cities]);
             }
             break;
             
@@ -90,12 +82,8 @@ try {
                     respond(false, ['error' => 'City not found'], 404);
                 }
                 
-                $pois = $db->getPoisByCity($cityAirtableId);
-                // Фильтруем некорректные ID
-                $validPois = array_filter($pois, function($poi) {
-                    return !isInvalidId($poi['business_id'] ?? '');
-                });
-                respond(true, ['items' => array_values($validPois)]);
+                $pois = $db->getValidPoisByCity($cityAirtableId);
+                respond(true, ['items' => $pois]);
             }
             break;
             

@@ -6,35 +6,32 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 try {
-    // Простая проверка через data-api.php
-    $stats = json_decode(file_get_contents('https://www.konstructour.com/api/data-api.php?action=stats'), true);
+    // Используем локальную базу данных для получения валидных данных
+    require_once 'database.php';
+    $db = new Database();
+    $validData = $db->getAllValidData();
     
-    if ($stats && $stats['ok']) {
-        $counts = $stats['stats'];
-        $regions = $counts['regions'] ?? 0;
-        $cities = $counts['cities'] ?? 0;
-        $pois = $counts['pois'] ?? 0;
+    $regions = $validData['stats']['regions'];
+    $cities = $validData['stats']['cities'];
+    $pois = $validData['stats']['pois'];
         
-        echo json_encode([
-            'ok' => true,
-            'status' => 'ok',
-            'counts' => [
-                'sqlite' => [
-                    'regions' => $regions,
-                    'cities' => $cities,
-                    'pois' => $pois
-                ]
-            ],
-            'orphans' => [
-                'cities' => 0,
-                'pois' => 0
-            ],
-            'message' => "Данные синхронизированы: $regions регионов, $cities городов, $pois POI",
-            'timestamp' => date('c')
-        ]);
-    } else {
-        throw new Exception("Не удалось получить статистику");
-    }
+    echo json_encode([
+        'ok' => true,
+        'status' => 'ok',
+        'counts' => [
+            'sqlite' => [
+                'regions' => $regions,
+                'cities' => $cities,
+                'pois' => $pois
+            ]
+        ],
+        'orphans' => [
+            'cities' => 0,
+            'pois' => 0
+        ],
+        'message' => "Валидные данные: $regions регионов, $cities городов, $pois POI",
+        'timestamp' => date('c')
+    ]);
     
 } catch (Exception $e) {
     http_response_code(500);

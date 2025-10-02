@@ -104,6 +104,14 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
+    public function getValidRegions() {
+        require_once 'filter-constants.php';
+        $regions = $this->getRegions();
+        return array_filter($regions, function($region) {
+            return !isInvalidId($region['business_id'] ?? '');
+        });
+    }
+    
     public function getRegion($id) {
         $stmt = $this->db->prepare("SELECT * FROM regions WHERE id = ?");
         $stmt->execute([$id]);
@@ -146,6 +154,14 @@ class Database {
         $stmt = $this->db->prepare("SELECT * FROM cities WHERE region_id = ? ORDER BY name_ru");
         $stmt->execute([$regionId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getValidCitiesByRegion($regionId) {
+        require_once 'filter-constants.php';
+        $cities = $this->getCitiesByRegion($regionId);
+        return array_filter($cities, function($city) {
+            return !isInvalidId($city['business_id'] ?? '');
+        });
     }
     
     public function getCityById($id) {
@@ -206,6 +222,48 @@ class Database {
         $stmt = $this->db->prepare("SELECT * FROM pois WHERE city_id = ? ORDER BY name_ru");
         $stmt->execute([$cityId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getValidPoisByCity($cityId) {
+        require_once 'filter-constants.php';
+        $pois = $this->getPoisByCity($cityId);
+        return array_filter($pois, function($poi) {
+            return !isInvalidId($poi['business_id'] ?? '');
+        });
+    }
+    
+    // Универсальный метод для получения всех валидных данных
+    public function getAllValidData() {
+        require_once 'filter-constants.php';
+        
+        $regions = $this->getValidRegions();
+        $cities = [];
+        $pois = [];
+        
+        // Получаем все валидные города
+        foreach ($regions as $region) {
+            $regionCities = $this->getValidCitiesByRegion($region['id']);
+            foreach ($regionCities as $city) {
+                $cities[] = $city;
+                
+                // Получаем все валидные POI для каждого города
+                $cityPois = $this->getValidPoisByCity($city['id']);
+                foreach ($cityPois as $poi) {
+                    $pois[] = $poi;
+                }
+            }
+        }
+        
+        return [
+            'regions' => $regions,
+            'cities' => $cities,
+            'pois' => $pois,
+            'stats' => [
+                'regions' => count($regions),
+                'cities' => count($cities),
+                'pois' => count($pois)
+            ]
+        ];
     }
     
     public function getPoi($id) {

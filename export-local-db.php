@@ -46,9 +46,9 @@ try {
     
     // Export regions
     echo "📊 Экспорт регионов...\n";
-    $regions = $db->getRegions();
+    $regions = $db->getValidRegions();
     $allData['regions'] = $regions;
-    echo "✅ Регионы: " . count($regions) . " записей\n";
+    echo "✅ Регионы: " . count($regions) . " записей (только валидные)\n";
     
     // Export cities
     echo "📊 Экспорт городов...\n";
