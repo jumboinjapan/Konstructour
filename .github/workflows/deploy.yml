@@ -108,3 +108,21 @@ jobs:
         fi
         echo '✅ Deployment completed!'
         REMOTE
+        
+        # Health checks
+        echo "🔎 Checking Airtable health…"
+        HEALTH_JSON=$(curl -sS "$API_BASE/api/health-airtable.php" || echo '{}')
+        echo "$HEALTH_JSON" | jq . || echo "$HEALTH_JSON"
+
+        echo "🔎 Proxy WhoAmI…"
+        curl -sS -X POST "$API_BASE/api/test-proxy-secure.php?provider=airtable" \
+          -H "Content-Type: application/json" \
+          -d '{"whoami":true}' || true
+        echo
+
+        if echo "$HEALTH_JSON" | jq -e '.ok == true' >/dev/null 2>&1; then
+          echo "✅ Airtable Health OK"
+        else
+          echo "❌ Airtable Health NOT OK"
+          exit 1
+        fi

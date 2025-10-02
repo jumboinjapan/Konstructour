@@ -1,6 +1,7 @@
 <?php
 // api/cron-sync.php
 require_once 'secret-airtable.php';
+require_once 'config.features.php';
 
 // Логирование
 function log_message($message) {
@@ -70,6 +71,24 @@ try {
   // Запускаем синхронизацию
   log_message("Starting sync");
   $syncResult = run_sync();
+  
+  // Справочники — раз в неделю
+  if (defined('SYNC_REFERENCES_ENABLED') && SYNC_REFERENCES_ENABLED && (date('N') == 1)) {
+    log_message("Running weekly references sync");
+    @file_get_contents(__DIR__ . '/sync-references.php');
+  }
+  
+  // Билеты — временно выключено флагом
+  if (defined('SYNC_TICKETS_ENABLED') && SYNC_TICKETS_ENABLED) {
+    log_message("Running tickets sync");
+    @file_get_contents(__DIR__ . '/sync-tickets.php');
+  }
+  
+  // Батч-синхронизация POI
+  if (defined('BATCH_UPSERT_ENABLED') && BATCH_UPSERT_ENABLED) {
+    log_message("Running POI batch sync");
+    @file_get_contents(__DIR__ . '/poi-batch-sync.php');
+  }
   
   if ($syncResult['ok']) {
     $regions = $syncResult['regions'] ?? 0;

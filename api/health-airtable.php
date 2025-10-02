@@ -1,6 +1,6 @@
 <?php
 // api/health-airtable.php
-require_once __DIR__ . '/secret-airtable.php';
+require_once __DIR__ . '/secret-manager.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -33,7 +33,7 @@ try {
   $startTime = microtime(true);
   
   // Детальная диагностика состояния
-  $secretPath = airtable_secret_path();
+  $secretPath = SecretManager::path();
   $fileExists = file_exists($secretPath);
   $fileReadable = $fileExists && is_readable($secretPath);
   $phpUser = get_current_user();
@@ -45,9 +45,9 @@ try {
   
   if ($fileReadable) {
     try {
-      $tokens = load_airtable_tokens();
-      $hasCurrent = !empty($tokens['current']);
-      $hasNext = !empty($tokens['next']);
+      $tokens = SecretManager::load();
+      $hasCurrent = !empty($tokens['current']['token']);
+      $hasNext = !empty($tokens['next']['token']);
     } catch (Exception $e) {
       // Файл есть, но не читается или содержит невалидный JSON
     }
@@ -93,7 +93,7 @@ try {
   
   // Проверяем whoami для current токена
   if ($hasCurrent) {
-    $currentResult = airtable_whoami_with_metrics($tokens['current']);
+    $currentResult = airtable_whoami_with_metrics($tokens['current']['token']);
     $auth['current'] = $currentResult['ok'];
     $metrics['current'] = [
       'latency_ms' => $currentResult['latency_ms'],
@@ -125,7 +125,7 @@ try {
   
   // Проверяем whoami для next токена
   if ($hasNext) {
-    $nextResult = airtable_whoami_with_metrics($tokens['next']);
+    $nextResult = airtable_whoami_with_metrics($tokens['next']['token']);
     $auth['next'] = $nextResult['ok'];
     $metrics['next'] = [
       'latency_ms' => $nextResult['latency_ms'],
@@ -134,8 +134,7 @@ try {
     
     if ($nextResult['ok']) {
       // Автоматически промоутим next -> current
-      store_airtable_token('current', $tokens['next']);
-      store_airtable_token('next', null);
+      SecretManager::promoteNext();
       
       error_log("[HEALTH-AIRTABLE] PROMOTE next->current");
       
