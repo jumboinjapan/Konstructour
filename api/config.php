@@ -1,9 +1,13 @@
 <?php
 return array (
+  'airtable' => 
+  array (
+    'api_key' => 'patTest123456789',
+  ),
   'airtable_registry' => 
   array (
     'baseId' => 'apppwhjFN82N9zNqm',
-    'api_key' => 'PLACEHOLDER_FOR_REAL_API_KEY',
+    'api_key' => 'patTest123456789',
     'tables' => 
     array (
       'region' => 
