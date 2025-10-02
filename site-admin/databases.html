@@ -1832,24 +1832,41 @@
             headers: { 'Content-Type': 'application/json' }
           });
           const j = await res.json();
+          console.log('API response for city-stats:', j);
+          
           if (j.ok && j.stats) {
             // Обновляем счетчики POI для каждого города
             // j.stats содержит Airtable ID как ключи, но нам нужны business_id
             const cities = citiesByRegion[regionId] || [];
+            console.log('Cities to update counts for:', cities);
+            
             cities.forEach(city => {
               const poiCount = j.stats[city.id] || 0; // city.id - это Airtable ID
+              console.log(`Updating count for city ${city.name} (${city.business_id}): ${poiCount} POI`);
+              
               // Обновляем счетчик в UI если мы на уровне городов
               if (level === 'cities') {
                 const cityElement = document.querySelector(`[data-go="pois"][data-id="${city.business_id}"]`);
+                console.log('City element found:', cityElement);
+                
                 if (cityElement) {
                   const countElement = cityElement.querySelector('.text-xs.font-medium');
+                  console.log('Count element found:', countElement);
+                  
                   if (countElement) {
                     countElement.textContent = poiCount;
+                    console.log(`Updated count for ${city.name}: ${poiCount}`);
+                  } else {
+                    console.warn(`Count element not found for city ${city.name}`);
                   }
+                } else {
+                  console.warn(`City element not found for ${city.business_id}`);
                 }
               }
             });
             console.log('Счетчики городов обновлены');
+          } else {
+            console.warn('API returned error or no stats:', j);
           }
         }catch(e){
           console.warn('Ошибка загрузки счетчиков городов:', e);
