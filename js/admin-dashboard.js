@@ -415,7 +415,7 @@ async function openErrorsModal(){
 }
 
 function escapeHtml(str){
-    if (typeof str !== 'string') return String(str);
+    str = String(str);
     return str.replace(/[&<>"]/g, function(c){
         return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] || c;
     });
@@ -551,7 +551,7 @@ function showError(message) {
     error.innerHTML = `
         <div class="flex items-center">
             <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
-            <span class="text-sm text-red-800">${message}</span>
+            <span class="text-sm text-red-800">${escapeHtml(message)}</span>
         </div>
     `;
     
